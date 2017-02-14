@@ -13,6 +13,7 @@ using std::string;
 %option never-interactive
 
 whitespace   ([ \t\n]*)
+comment \/\/.*\n
 
 int_const [0-9][0-9]*
 str_const "((\\") | [^"])*"
