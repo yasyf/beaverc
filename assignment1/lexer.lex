@@ -12,9 +12,27 @@ using std::string;
 %option noyywrap
 %option never-interactive
 
-int_const [0-9][0-9]*
-
 whitespace   ([ \t\n]*)
+
+int_const [0-9][0-9]*
+str_const "((\\") | [^"])*"
+bool_const true | false
+none_const None
+
+name [_[:alpha:]][_[:alnum:]]*
+
+if_keyword if
+else_keyword else
+while_keyword while
+global_keyword global
+return_keyword return
+fun_keyword fun
+
+comparison_operator < | > | <= | >=| ==
+arithmetic_operator + | -
+product_operator \* | \/
+
+
 %{
 // Initial declarations
 // In this section of the file, you can define named regular expressions.
@@ -29,23 +47,37 @@ whitespace   ([ \t\n]*)
 {comment}      { /* skip */ }
 
 
-{int_const}    { 
-		//Rule to identify an integer constant. 
-		//The return value indicates the type of token;
-		//in this case T_int as defined in parser.yy.
-		//The actual value of the constant is returned
-		//in the intconst field of yylval (defined in the union
-		//type in parser.yy).
-			yylval->intconst = atoi(yytext);
-			return T_int;
+{int_const}    {
+      yylval->intconst = atoi(yytext);
+      return T_int;
+    }
+
+{str_const}    {
+
+      yylval->str_const = string(yytext);
+      return T_str;
+    }
+
+{bool_const}    {
+      yylval->str_const = (string(yytext) == "true");
+      return T_bool;
+    }
+
+{none_const}    {
+      return T_none;
+    }
+
+{name}    {
+			yylval->name = string(yytext);
+      return T_name;
 		}
 
 %{
-// The rest of your lexical rules go here. 
-// rules have the form 
+// The rest of your lexical rules go here.
+// rules have the form
 // pattern action
 // we have defined a few rules for you above, but you need
-// to provide additional lexical rules for string constants, 
+// to provide additional lexical rules for string constants,
 // operators, keywords and identifiers.
 %}
 

@@ -3,14 +3,14 @@
 #include <iostream>
 #include <string>
 #define YY_DECL int yylex (YYSTYPE* yylval, YYLTYPE * yylloc, yyscan_t yyscanner)
-#ifndef FLEX_SCANNER 
+#ifndef FLEX_SCANNER
 #include "lexer.h"
-#endif 
+#endif
 
 using namespace std;
 
 //The macro below is used by bison for error reporting
-//it comes from stacck overflow 
+//it comes from stacck overflow
 //http://stackoverflow.com/questions/656703/how-does-flex-support-bison-location-exactly
 #define YY_USER_ACTION \
     yylloc->first_line = yylloc->last_line; \
@@ -36,7 +36,7 @@ using namespace std;
 %define api.pure full
 %parse-param {yyscan_t yyscanner} {Statement*& out}
 %lex-param {yyscan_t yyscanner}
-%locations 
+%locations
 %define parse.error verbose
 
 %code provides{
@@ -47,23 +47,32 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 
 
 //The union directive defines a union type that will be used to store
-//the return values of all the parse rules. We have initialized for you 
-//with an intconst field that you can use to store an integer, and a 
-//stmt field with a pointer to a statement. Note that one limitation 
+//the return values of all the parse rules. We have initialized for you
+//with an intconst field that you can use to store an integer, and a
+//stmt field with a pointer to a statement. Note that one limitation
 //is that you can only use primitive types and pointers in the union.
 %union {
+    bool boolconst;
+    string strconst;
 	int intconst;
+    string name;
 	Statement*   stmt;
 }
 
-//Below is where you define your tokens and their types. 
+//Below is where you define your tokens and their types.
 //for example, we have defined for you a T_int token, with type intconst
 //the type is the name of a field from the union above
 %token<intconst> T_int
+%token<strconst> T_str
+%token<boolconst> T_bool
+%token T_none
+
+
+%token<name> T_name
 
 //Use the %type directive to specify the types of AST nodes produced by each production.
-//For example, you will have a program non-terimnal in your grammar, and it will 
-//return a Statement*. As with tokens, the name of the type comes 
+//For example, you will have a program non-terimnal in your grammar, and it will
+//return a Statement*. As with tokens, the name of the type comes
 //from the union defined earlier.
 
 %type<stmt> Program
@@ -77,7 +86,7 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 
 //Your grammar rules should be written here.
 
-Program: 
+Program:
 %%
 
 // Error reporting function. You should not have to modify this.
