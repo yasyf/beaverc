@@ -29,9 +29,9 @@ global_keyword global
 return_keyword return
 fun_keyword fun
 
-comparison_operator < | > | <= | >=| ==
-arithmetic_operator + | -
-product_operator \* | \/
+comparison_operator "<"|">"|"<="|">="|"=="
+arithmetic_operator "+"|"-"
+product_operator "*"|"/"
 
 
 %{
@@ -42,35 +42,9 @@ product_operator \* | \/
 
 %%
 
-
-{whitespace}   { /* skip */ }
-
-{comment}      { /* skip */ }
-
-
-{int_const} {
-  yylval->intconst = atoi(yytext);
-  return T_int;
-}
-
-{str_const} {
-  yylval->strconst = string(yytext);
-  return T_str;
-}
-
-{bool_const} {
-  yylval->boolconst = (string(yytext) == "true");
-  return T_bool;
-}
-
-{none_const} {
-  return T_none;
-}
-
-{name} {
-  yylval->strconst = string(yytext);
-  return T_name;
-}
+%{
+  // Keywords
+%}
 
 {if_keyword} {
   return T_if;
@@ -96,6 +70,10 @@ product_operator \* | \/
   return T_fun;
 }
 
+%{
+  // Operators
+%}
+
 {comparison_operator} {
   yylval->strconst = string(yytext);
   return T_comp_op;
@@ -110,6 +88,49 @@ product_operator \* | \/
   yylval->strconst = string(yytext);
   return T_prod_op;
 }
+
+
+%{
+  // Constants
+%}
+
+{int_const} {
+  yylval->intconst = atoi(yytext);
+  return T_int;
+}
+
+{str_const} {
+  yylval->strconst = string(yytext);
+  return T_str;
+}
+
+{bool_const} {
+  yylval->boolconst = (string(yytext) == "true");
+  return T_bool;
+}
+
+{none_const} {
+  return T_none;
+}
+
+%{
+  // Identifiers
+%}
+
+{name} {
+  yylval->strconst = string(yytext);
+  return T_name;
+}
+
+
+%{
+  // Skips
+%}
+
+{whitespace}   { /* skip */ }
+
+{comment}      { /* skip */ }
+
 
 
 %%
