@@ -13,7 +13,7 @@ using std::string;
 %option never-interactive
 
 whitespace   ([ \t\n]*)
-comment \/\/.*\n
+comment (\/\/.*\n)
 
 int_const [0-9][0-9]*
 str_const \"((\\\")|[^"])*\"
@@ -48,39 +48,69 @@ product_operator \* | \/
 {comment}      { /* skip */ }
 
 
-{int_const}    {
-      yylval->intconst = atoi(yytext);
-      return T_int;
-    }
+{int_const} {
+  yylval->intconst = atoi(yytext);
+  return T_int;
+}
 
-{str_const}    {
+{str_const} {
+  yylval->strconst = string(yytext);
+  return T_str;
+}
 
-      yylval->str_const = string(yytext);
-      return T_str;
-    }
+{bool_const} {
+  yylval->boolconst = (string(yytext) == "true");
+  return T_bool;
+}
 
-{bool_const}    {
-      yylval->str_const = (string(yytext) == "true");
-      return T_bool;
-    }
+{none_const} {
+  return T_none;
+}
 
-{none_const}    {
-      return T_none;
-    }
+{name} {
+  yylval->strconst = string(yytext);
+  return T_name;
+}
 
-{name}    {
-			yylval->name = string(yytext);
-      return T_name;
-		}
+{if_keyword} {
+  return T_if;
+}
 
-%{
-// The rest of your lexical rules go here.
-// rules have the form
-// pattern action
-// we have defined a few rules for you above, but you need
-// to provide additional lexical rules for string constants,
-// operators, keywords and identifiers.
-%}
+{else_keyword} {
+  return T_else;
+}
+
+{while_keyword} {
+  return T_while;
+}
+
+{global_keyword} {
+  return T_global;
+}
+
+{return_keyword} {
+  return T_return;
+}
+
+{fun_keyword} {
+  return T_fun;
+}
+
+{comparison_operator} {
+  yylval->strconst = string(yytext);
+  return T_comp_op;
+}
+
+{arithmetic_operator} {
+  yylval->strconst = string(yytext);
+  return T_arith_op;
+}
+
+{product_operator} {
+  yylval->strconst = string(yytext);
+  return T_prod_op;
+}
+
 
 %%
 

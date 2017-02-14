@@ -55,20 +55,31 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
     bool boolconst;
     string strconst;
 	int intconst;
-    string name;
 	Statement*   stmt;
 }
 
 //Below is where you define your tokens and their types.
 //for example, we have defined for you a T_int token, with type intconst
 //the type is the name of a field from the union above
+
 %token<intconst> T_int
 %token<strconst> T_str
 %token<boolconst> T_bool
 %token T_none
 
+%token<strconst> T_name
 
-%token<name> T_name
+%token T_if
+%token T_else
+%token T_while
+%token T_global
+%token T_return
+%token T_fun
+
+%token<strconst> T_comp_op
+%token<strconst> T_arith_op
+%token<strconst> T_prod_op
+
 
 //Use the %type directive to specify the types of AST nodes produced by each production.
 //For example, you will have a program non-terimnal in your grammar, and it will
