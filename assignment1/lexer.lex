@@ -16,8 +16,8 @@ whitespace   ([ \t\n]*)
 comment \/\/.*\n
 
 int_const [0-9][0-9]*
-str_const "((\\") | [^"])*"
-bool_const true | false
+str_const \"((\\\")|[^"])*\"
+bool_const true|false
 none_const None
 
 name [_[:alpha:]][_[:alnum:]]*
