@@ -55,7 +55,10 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
     bool boolconst;
     string strconst;
 	int intconst;
-	Statement*   stmt;
+    Block* block;
+    Program* program;
+    Statement* statement;
+	Assignment* assignment;
 }
 
 //Below is where you define your tokens and their types.
@@ -86,7 +89,10 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 //return a Statement*. As with tokens, the name of the type comes
 //from the union defined earlier.
 
-%type<stmt> Program
+%type<program> Program
+%type<block> Block
+%type<statement> Statement
+%type<assignment> Assignment
 
 %start Program
 
@@ -95,9 +101,79 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 
 %%
 
-//Your grammar rules should be written here.
+// Program
 
-Program:
+Program: Program Statement {
+            $$ = $1;
+            $1->block->Append($2);
+        }
+    | %empty { $$ = new Program(); }
+    ;
+
+// Block
+
+Block: '{' StatementList '}';
+
+StatementList: StatementList Statement {
+                    $$ = $1;
+                    $1->Append($2);
+                }
+            | %empty { $$ = new Block(); }
+            ;
+
+// Statement
+
+Statement: Assignment | CallStatement | Global | IfStatement | WhileLoop | Return;
+
+// Assignment
+
+Assignment: LHS '=' Expression ';' { $$ = new Assignment($1, $2); };
+
+// CallStatement
+
+CallStatement: Call ';';
+
+Call: LHS '(' ArgList ')' { $$ = new CallStatement($1, $2); };
+
+ArgList: ArgList ',' Expression {
+                $$ = $1;
+                $1.push_back($2);
+            }
+        | %empty { $$ = vector<Expression>(); }
+        ;
+
+// Global
+
+Global: T_global T_name ';' { $$ = new Global($2); };
+
+// IfStatement
+
+IfStatement: T_if '(' Expression ')' Block ElseBlock { $$ = new IfStatement($2, $3, $4); };
+
+ElseBlock: T_else Block { $$ = $2 }
+        | %empty { $$ = new Block(); }
+        ;
+
+// WhileLoop
+
+WhileLoop: T_while '(' Expression ')' Block { $$ = new WhileLoop($2, $3); };
+
+// Return
+
+Return: T_return Expression ';' { $$ = new Return($2); };
+
+// Expression
+
+// TODO
+
+// Units
+
+LHS: LHS '.' T_name { $$ = new FieldDereference($1, $2); }
+    | LHS '[' Expression ']' { $$ = new IndexExpression($1, $2); }
+    | T_name { $$ = new LHS($1); }
+    ;
+
+
 %%
 
 // Error reporting function. You should not have to modify this.
