@@ -46,7 +46,7 @@ public:
 
 // LHS
 
-class LHS: public AST_node {
+class LHS: public Unit {
 public:
   string name;
 
@@ -83,12 +83,19 @@ public:
   Assignment(LHS *lhs, Expression *expr) : lhs(lhs), expr(expr) {}
 };
 
-class CallStatement: public Statement {
+class Call: public Unit {
 public:
   LHS *target;
   vector<Expression> arguments;
 
-  CallStatement(LHS *target, vector<Expression> arguments) : target(target), arguments(arguments) {}
+  Call(LHS *target, vector<Expression> arguments) : target(target), arguments(arguments) {}
+};
+
+class CallStatement: public Statement {
+public:
+  Call *call;
+
+  CallStatement(Call *call) : call(call) {}
 };
 
 class Global: public Statement {
@@ -127,6 +134,29 @@ public:
 // Expression
 
 class Expression : public AST_node {
+};
+
+
+class Unit : public Expression {
+};
+
+template <class T>
+class Constant : public Unit {
+  T value;
+
+  Constant(T value) : value(value) {}
+}
+
+class StringConstant : public Constant<string> {
+  using Constant::Constant;
+};
+
+class IntConstant : public Constant<int> {
+  using Constant::Constant;
+};
+
+class BoolConstant : public Constant<bool> {
+  using Constant::Constant;
 };
 
 // Function

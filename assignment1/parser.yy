@@ -59,6 +59,19 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
     Program* program;
     Statement* statement;
 	Assignment* assignment;
+    CallStatement* callstmt;
+    Global* global;
+    IfStatement* ifstmt;
+    WhileLoop* while;
+    Return* retstmt;
+    Expression* expr;
+    Function* func;
+    Record* record;
+    Unit* unit;
+    Constant* constant;
+    LHS* lhs;
+    Call* call;
+    vector<Expression>* arglist;
 }
 
 //Below is where you define your tokens and their types.
@@ -103,8 +116,31 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 
 %type<program> Program
 %type<block> Block
+%type<block> StatementList
 %type<statement> Statement
 %type<assignment> Assignment
+%type<callstmt> CallStatement
+%type<global> Global
+%type<ifstmt> IfStatement
+%type<while> WhileLoop
+%type<retstmt> Return
+%type<block> ElseBlock
+%type<expr> Expression
+%type<func> Function
+%type<expr> Boolean
+%type<expr> Conjunction
+%type<expr> BoolUnit
+%type<expr> Predicate
+%type<expr> Arithmetic
+%type<expr> Product
+%type<record> Record
+%type<record> RecordContents
+%type<expr> Unit
+%type<unit> PositiveUnit
+%type<constant> Constant
+%type<lhs> LHS
+%type<call> Call
+%type<arglist> ArgList
 
 %start Program
 
@@ -121,7 +157,7 @@ Program: Program Statement {
 
 // Block
 
-Block: '{' StatementList '}' { $$ = $2 };
+Block: '{' StatementList '}' { $$ = $2; };
 
 StatementList: StatementList Statement {
                     $$ = $1;
@@ -132,7 +168,13 @@ StatementList: StatementList Statement {
 
 // Statement
 
-Statement: Assignment | CallStatement | Global | IfStatement | WhileLoop | Return;
+Statement: Assignment   { $$ = $1; }
+        | CallStatement { $$ = $1; }
+        | Global        { $$ = $1; }
+        | IfStatement   { $$ = $1; }
+        | WhileLoop     { $$ = $1; }
+        | Return        { $$ = $1; }
+        ;
 
 // Assignment
 
@@ -140,7 +182,7 @@ Assignment: LHS '=' Expression ';' { $$ = new Assignment($1, $3); };
 
 // CallStatement
 
-CallStatement: Call ';';
+CallStatement: Call ';' { $$ = new CallStatement($1); };
 
 // Global
 
@@ -164,11 +206,14 @@ Return: T_return Expression ';' { $$ = new Return($2); };
 
 // Expression
 
-Expression: Function | Boolean | Record;
+Expression: Function { $$ = $1; }
+        | Boolean { $$ = $1; }
+        | Record  { $$ = $1; }
+        ;
 
 // Function
 
-Function: T_fun '(' ArgList ')' Block { $$ = new Function($3, $5); };
+Function: T_fun '(' ArgList ')' Block { $$ = new Function($3, *$5); };
 
 // Boolean
 
@@ -180,7 +225,7 @@ Conjunction: Conjunction AND BoolUnit { $$ = new BinaryOp<AND>($1, $3); }
         | BoolUnit
         ;
 
-BoolUnit: NOT Predicate { $$ = new UnaryOp<NOT>($2) }
+BoolUnit: NOT Predicate { $$ = new UnaryOp<NOT>($2); }
         | Predicate
         ;
 
@@ -216,29 +261,32 @@ RecordContents: RecordContents T_name ':' Expression ';' {
 // Units
 
 Unit: MINUS PositiveUnit { $$ = new UnaryOp<MINUS>($2); }
-    | PositiveUnit
+    | PositiveUnit       { $$ = $1; }
     ;
 
-PositiveUnit: LHS
-            | Constant
-            | Call
-            | '(' Boolean ')' { $$ = $2 }
+PositiveUnit: LHS             { $$ = $1; }
+            | Constant        { $$ = $1; }
+            | Call            { $$ = $1; }
+            | '(' Boolean ')' { $$ = $2; }
             ;
 
-Constant: T_int | T_str | T_bool;
+Constant: T_int { $$ = new IntConstant($1); }
+        | T_str { $$ = new StringConstant($1); }
+        | T_bool { $$ = new BoolConstant($1); }
+        ;
 
-LHS: LHS '.' T_name { $$ = new FieldDereference($1, $2); }
-    | LHS '[' Expression ']' { $$ = new IndexExpression($1, $2); }
+LHS: LHS '.' T_name { $$ = new FieldDereference($1, $3); }
+    | LHS '[' Expression ']' { $$ = new IndexExpression($1, $3); }
     | T_name { $$ = new LHS($1); }
     ;
 
-Call: LHS '(' ArgList ')' { $$ = new CallStatement($1, $3); };
+Call: LHS '(' ArgList ')' { $$ = new Call($1, *$3); };
 
 ArgList: ArgList ',' Expression {
                 $$ = $1;
-                $1.push_back($2);
+                $1->push_back($3);
             }
-        | %empty { $$ = vector<Expression>(); }
+        | %empty { $$ = new vector<Expression>(); }
         ;
 
 %%
