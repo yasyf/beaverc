@@ -7,17 +7,19 @@
 
 using namespace std;
 
-#define TRACE_PARSE 1
+#define TRACE 1
 
 
 int main(int argc, char** argv){
-  #if TRACE_PARSE
-    yydebug = 1;
-  #endif
-
   void* scanner;
   yylex_init(&scanner);
   yyset_in(stdin, scanner);
+
+  #if TRACE
+    yydebug = 1;
+    yyset_debug(1, scanner);
+  #endif
+
   Statement* output;
   int rvalue = yyparse(scanner, output);
   if(rvalue == 1){
