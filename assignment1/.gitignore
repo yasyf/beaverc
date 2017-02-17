@@ -1,2 +1,7 @@
-lex.yy.c
-parser.tab.cc
+*.out
+*.o
+lexer.c
+lexer.h
+parser.cpp
+parser.h
+main

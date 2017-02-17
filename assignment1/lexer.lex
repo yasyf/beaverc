@@ -75,17 +75,17 @@ product_operator "*"|"/"
 %}
 
 {comparison_operator} {
-  yylval->strconst = string(yytext);
+  yylval->strconst = new string(yytext);
   return T_comp_op;
 }
 
 {arithmetic_operator} {
-  yylval->strconst = string(yytext);
+  yylval->strconst = new string(yytext);
   return T_arith_op;
 }
 
 {product_operator} {
-  yylval->strconst = string(yytext);
+  yylval->strconst = new string(yytext);
   return T_prod_op;
 }
 
@@ -100,7 +100,7 @@ product_operator "*"|"/"
 }
 
 {str_const} {
-  yylval->strconst = string(yytext);
+  yylval->strconst = new string(yytext);
   return T_str;
 }
 
@@ -118,7 +118,7 @@ product_operator "*"|"/"
 %}
 
 {name} {
-  yylval->strconst = string(yytext);
+  yylval->strconst = new string(yytext);
   return T_name;
 }
 

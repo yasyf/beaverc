@@ -53,7 +53,7 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 //is that you can only use primitive types and pointers in the union.
 %union {
     bool boolconst;
-    string strconst;
+    string* strconst;
 	int intconst;
     Block* block;
     Program* program;
@@ -62,16 +62,16 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
     CallStatement* callstmt;
     Global* global;
     IfStatement* ifstmt;
-    WhileLoop* while;
+    WhileLoop* whileloop;
     Return* retstmt;
     Expression* expr;
     Function* func;
     Record* record;
     Unit* unit;
-    Constant* constant;
     LHS* lhs;
     Call* call;
-    vector<Expression>* arglist;
+    vector<Expression *>* exprvec;
+    vector<Name *>* namevec;
 }
 
 //Below is where you define your tokens and their types.
@@ -96,18 +96,18 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 %token<strconst> T_arith_op
 %token<strconst> T_prod_op
 
-%left OR "|"
-%left AND "&"
-%left NOT "!"
-%left LT "<"
-%left LTE "<="
-%left GT ">"
-%left GTE ">="
-%left EQ "=="
-%left PLUS "+"
-%left MINUS "-"
-%left MUL "*"
-%left DIV "/"
+%left T_or "|"
+%left T_and "&"
+%left T_not "!"
+%left T_lt "<"
+%left T_lte "<="
+%left T_gt ">"
+%left T_gte ">="
+%left T_eq "=="
+%left T_plus "+"
+%left T_minus "-"
+%left T_mul "*"
+%left T_div "/"
 
 //Use the %type directive to specify the types of AST nodes produced by each production.
 //For example, you will have a program non-terimnal in your grammar, and it will
@@ -122,7 +122,7 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 %type<callstmt> CallStatement
 %type<global> Global
 %type<ifstmt> IfStatement
-%type<while> WhileLoop
+%type<whileloop> WhileLoop
 %type<retstmt> Return
 %type<block> ElseBlock
 %type<expr> Expression
@@ -136,11 +136,12 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 %type<record> Record
 %type<record> RecordContents
 %type<expr> Unit
-%type<unit> PositiveUnit
-%type<constant> Constant
+%type<expr> PositiveUnit
+%type<unit> Constant
 %type<lhs> LHS
 %type<call> Call
-%type<arglist> ArgList
+%type<exprvec> ArgList
+%type<namevec> NameList
 
 %start Program
 
@@ -186,13 +187,13 @@ CallStatement: Call ';' { $$ = new CallStatement($1); };
 
 // Global
 
-Global: T_global T_name ';' { $$ = new Global($2); };
+Global: T_global T_name ';' { $$ = new Global(*$2); };
 
 // IfStatement
 
 IfStatement: T_if '(' Expression ')' Block ElseBlock { $$ = new IfStatement($3, $5, $6); };
 
-ElseBlock: T_else Block { $$ = $2 }
+ElseBlock: T_else Block { $$ = $2; }
         | %empty { $$ = new Block(); }
         ;
 
@@ -213,37 +214,37 @@ Expression: Function { $$ = $1; }
 
 // Function
 
-Function: T_fun '(' ArgList ')' Block { $$ = new Function($3, *$5); };
+Function: T_fun '(' NameList ')' Block { $$ = new Function(*$3, $5); };
 
 // Boolean
 
-Boolean: Boolean OR Conjunction { $$ = new BinaryOp<OR>($1, $3); }
+Boolean: Boolean T_or Conjunction { $$ = new BinaryOp<OR>($1, $3); }
         | Conjunction
         ;
 
-Conjunction: Conjunction AND BoolUnit { $$ = new BinaryOp<AND>($1, $3); }
+Conjunction: Conjunction T_and BoolUnit { $$ = new BinaryOp<AND>($1, $3); }
         | BoolUnit
         ;
 
-BoolUnit: NOT Predicate { $$ = new UnaryOp<NOT>($2); }
+BoolUnit: T_not Predicate { $$ = new UnaryOp<NOT>($2); }
         | Predicate
         ;
 
-Predicate: Predicate LT Arithmetic { $$ = new BinaryOp<LT>($1, $3); }
-        | Predicate LTE Arithmetic { $$ = new BinaryOp<LTE>($1, $3); }
-        | Predicate GT Arithmetic { $$ = new BinaryOp<GT>($1, $3); }
-        | Predicate GTE Arithmetic { $$ = new BinaryOp<GTE>($1, $3); }
-        | Predicate EQ Arithmetic { $$ = new BinaryOp<EQ>($1, $3); }
+Predicate: Predicate T_lt Arithmetic { $$ = new BinaryOp<LT>($1, $3); }
+        | Predicate T_lte Arithmetic { $$ = new BinaryOp<LTE>($1, $3); }
+        | Predicate T_gt Arithmetic { $$ = new BinaryOp<GT>($1, $3); }
+        | Predicate T_gte Arithmetic { $$ = new BinaryOp<GTE>($1, $3); }
+        | Predicate T_eq Arithmetic { $$ = new BinaryOp<EQ>($1, $3); }
         | Arithmetic
         ;
 
-Arithmetic: Arithmetic PLUS Product { $$ = BinaryOp<PLUS>($1, $3); }
-        | Arithmetic MINUS Product { $$ = BinaryOp<MINUS>($1, $3); }
+Arithmetic: Arithmetic T_plus Product { $$ = new BinaryOp<PLUS>($1, $3); }
+        | Arithmetic T_minus Product { $$ = new BinaryOp<MINUS>($1, $3); }
         | Product
         ;
 
-Product: Product MUL Unit { $$ = new BinaryOp<MUL>($1, $3); }
-    | Product DIV Unit { $$ = new BinaryOp<DIV>($1, $3); }
+Product: Product T_mul Unit { $$ = new BinaryOp<MUL>($1, $3); }
+    | Product T_div Unit { $$ = new BinaryOp<DIV>($1, $3); }
     | Unit
     ;
 
@@ -253,14 +254,14 @@ Record: '{' RecordContents '}' { $$ = $2; };
 
 RecordContents: RecordContents T_name ':' Expression ';' {
                     $$ = $1;
-                    $1.Add($2, $4);
+                    $1->Add(*$2, $4);
                 }
             | %empty { $$ = new Record(); }
             ;
 
 // Units
 
-Unit: MINUS PositiveUnit { $$ = new UnaryOp<MINUS>($2); }
+Unit: T_minus PositiveUnit { $$ = new UnaryOp<MINUS>($2); }
     | PositiveUnit       { $$ = $1; }
     ;
 
@@ -270,14 +271,14 @@ PositiveUnit: LHS             { $$ = $1; }
             | '(' Boolean ')' { $$ = $2; }
             ;
 
-Constant: T_int { $$ = new IntConstant($1); }
-        | T_str { $$ = new StringConstant($1); }
-        | T_bool { $$ = new BoolConstant($1); }
+Constant: T_int { $$ = new Constant<int>($1); }
+        | T_str { $$ = new Constant<string>(*$1); }
+        | T_bool { $$ = new Constant<bool>($1); }
         ;
 
-LHS: LHS '.' T_name { $$ = new FieldDereference($1, $3); }
+LHS: LHS '.' T_name { $$ = new FieldDereference($1, new Name(*$3)); }
     | LHS '[' Expression ']' { $$ = new IndexExpression($1, $3); }
-    | T_name { $$ = new LHS($1); }
+    | T_name { $$ = new Name(*$1); }
     ;
 
 Call: LHS '(' ArgList ')' { $$ = new Call($1, *$3); };
@@ -286,7 +287,14 @@ ArgList: ArgList ',' Expression {
                 $$ = $1;
                 $1->push_back($3);
             }
-        | %empty { $$ = new vector<Expression>(); }
+        | %empty { $$ = new vector<Expression *>(); }
+        ;
+
+NameList: NameList ',' T_name {
+                $$ = $1;
+                $1->push_back(new Name(*$3));
+            }
+        | %empty { $$ = new vector<Name *>(); }
         ;
 
 %%

@@ -21,7 +21,6 @@ int main(int argc, char** argv){
 	cout<<"Parsing failed"<<endl;
 	return 1;
   }
-  PrettyPrinter printer;
-  output->accept(printer);
-
+  // PrettyPrinter printer;
+  // output->accept(printer);
 }

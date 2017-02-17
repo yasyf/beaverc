@@ -1,202 +1,180 @@
 #pragma once
 
-#include <iostream>
-#include <memory>
 #include <vector>
 #include <map>
+#include <string>
 
 class SystemException {
-	string msg_;
+	std::string msg_;
 public:
-	SystemException(const string& msg) :msg_(msg) {}
+	SystemException(const std::string& msg) :msg_(msg) {}
 };
 
 #define Assert(cond, msg) if(!(cond)){ std::cerr<<msg<<endl; throw SystemException("Bad stuff"); }
 
-using namespace std;
-
-
 #include "Visitor.h"
 
-
+enum Op {OR, AND, NOT, LT, LTE, GT, GTE, EQ, PLUS, MINUS, MUL, DIV};
 
 class AST_node {
+public:
+	// virtual void accept(Visitor& v) = 0;
+};
+
+class Expression : public AST_node {
+};
+
+class Unit : public Expression {
+};
+
+class Statement: public AST_node {
+};
+
+class Block: public AST_node {
+  std::vector<Statement *> statements;
 
 public:
-	virtual void accept(Visitor& v) = 0;
+  Block();
+  void Append(Statement *statement);
 };
 
 class Program : public AST_node {
 public:
   Block *block;
 
-  Program() : block(new Block()) { }
-};
-
-class Block: public AST_node {
-  vector<Statement *> _statements;
-
-public:
-  Block() : _statements() {}
-
-  void Append(Statement *statement) {
-    this->_statements.push_back(statement);
-  }
+  Program();
 };
 
 // LHS
 
-class LHS: public Unit {
-public:
-  string name;
+class LHS : public Unit {
+};
 
-  LHS(string name) : name(name) {}
+class Name : public LHS {
+  std::string name;
+
+public:
+  Name(std::string name);
 };
 
 class IndexExpression: public LHS {
-public:
   LHS *base;
   Expression *index;
 
-  IndexExpression(LHS *base, Expression *index) : base(base), index(index) {}
+public:
+  IndexExpression(LHS *base, Expression *index);
 };
 
 class FieldDereference: public LHS {
-public:
   LHS *base;
-  string field;
+  Name *field;
 
-  FieldDereference(LHS *base, string field) : base(base), field(field) {}
+public:
+  FieldDereference(LHS *base, Name *field);
 };
 
 // Statement
 
-class Statement: public AST_node {
-
-};
-
 class Assignment: public Statement {
-public:
   LHS *lhs;
   Expression *expr;
 
-  Assignment(LHS *lhs, Expression *expr) : lhs(lhs), expr(expr) {}
+public:
+  Assignment(LHS *lhs, Expression *expr);
 };
 
 class Call: public Unit {
-public:
   LHS *target;
-  vector<Expression> arguments;
+  std::vector<Expression *> arguments;
 
-  Call(LHS *target, vector<Expression> arguments) : target(target), arguments(arguments) {}
+public:
+  Call(LHS *target, std::vector<Expression *> arguments);
 };
 
 class CallStatement: public Statement {
-public:
   Call *call;
 
-  CallStatement(Call *call) : call(call) {}
+public:
+  CallStatement(Call *call);
 };
 
 class Global: public Statement {
-public:
-  string name;
+  std::string name;
 
-  Global(string name) : name(name) {}
+public:
+  Global(std::string name);
 };
 
 class IfStatement: public Statement {
-public:
   Expression *cond;
   Block *thenBlock;
   Block *elseBlock;
 
-  IfStatement(Expression *cond, Block *thenBlock, Block *elseBlock)
-    : cond(cond), thenBlock(thenBlock), elseBlock(elseBlock)
-  {}
+public:
+  IfStatement(Expression *cond, Block *thenBlock, Block *elseBlock);
 };
 
 class WhileLoop: public Statement {
-public:
   Expression *cond;
   Block *body;
 
-  WhileLoop(Expression *cond, Block *body) : cond(cond), body(body) {}
+public:
+  WhileLoop(Expression *cond, Block *body);
 };
 
 class Return: public Statement {
-public:
   Expression *expr;
 
-  Global(Expression *expr) : expr(expr) {}
+public:
+  Return(Expression *expr);
 };
 
 // Expression
-
-class Expression : public AST_node {
-};
-
-
-class Unit : public Expression {
-};
 
 template <class T>
 class Constant : public Unit {
   T value;
 
+public:
   Constant(T value) : value(value) {}
-}
-
-class StringConstant : public Constant<string> {
-  using Constant::Constant;
-};
-
-class IntConstant : public Constant<int> {
-  using Constant::Constant;
-};
-
-class BoolConstant : public Constant<bool> {
-  using Constant::Constant;
 };
 
 // Function
 
 class Function: public Expression {
-public:
-  vector<Expression> arguments;
+  std::vector<Name *> arguments;
   Block *body;
 
-  Function(vector<Expression> arguments, Block *body) : arguments(arguments), body(body) {}
+public:
+  Function(std::vector<Name *> arguments, Block *body);
 };
 
 // Record
 
 class Record: public Expression {
-  map<string, Expression> _map;
+  std::map<std::string, Expression *> record;
 
 public:
-  Record() : map() {}
-  Add(string key, Expression value) {
-    this._map[key] = value;
-  }
+  Record();
+  void Add(std::string key, Expression *value);
 };
 
 // Ops
 
-template <string op>
+template <Op op>
 class BinaryOp : public Expression {
-public:
   Expression *left;
   Expression *right;
 
+public:
   BinaryOp(Expression *left, Expression *right) : left(left), right(right) {}
 };
 
-template <string op>
+template <Op op>
 class UnaryOp : public Expression {
-public:
   Expression *expr;
 
+public:
   UnaryOp(Expression *expr) : expr(expr) {}
 };
 
