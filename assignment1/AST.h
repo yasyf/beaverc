@@ -6,6 +6,20 @@
 #include <map>
 
 
+#define OR '|'
+#define AND '&'
+#define NOT '!'
+#define NEG '-'
+#define LT '<'
+#define LTE '<='
+#define GT '>'
+#define GTE '>='
+#define EQ '=='
+#define PLUS '+'
+#define MINUS '-'
+#define MUL '*'
+#define DIV '/'
+
 
 class SystemException {
 	string msg_;
@@ -80,9 +94,9 @@ class Statement: public AST_node {
 class Assignment: public Statement {
 public:
   LHS *lhs;
-  Expression *expression;
+  Expression *expr;
 
-  Assignment(LHS *lhs, Expression *expression) : lhs(lhs), expression(expression) {}
+  Assignment(LHS *lhs, Expression *expr) : lhs(lhs), expr(expr) {}
 };
 
 class CallStatement: public Statement {
@@ -102,46 +116,74 @@ public:
 
 class IfStatement: public Statement {
 public:
-  Expression *condition;
+  Expression *cond;
   Block *thenBlock;
   Block *elseBlock;
 
-  IfStatement(Expression *condition, Block *thenBlock, Block *elseBlock)
-    : condition(condition), thenBlock(thenBlock), elseBlock(elseBlock)
+  IfStatement(Expression *cond, Block *thenBlock, Block *elseBlock)
+    : cond(cond), thenBlock(thenBlock), elseBlock(elseBlock)
   {}
 };
 
 class WhileLoop: public Statement {
 public:
-  Expression *condition;
+  Expression *cond;
   Block *body;
 
-  WhileLoop(Expression *condition, Block *body) : condition(condition), body(body) {}
+  WhileLoop(Expression *cond, Block *body) : cond(cond), body(body) {}
 };
 
 class Return: public Statement {
 public:
-  Expression *expression;
+  Expression *expr;
 
-  Global(Expression *expression) : expression(expression) {}
+  Global(Expression *expr) : expr(expr) {}
 };
 
 // Expression
 
 class Expression : public AST_node {
-public:
-
 };
+
+// Function
 
 class Function: public Expression {
+public:
+  vector<Expression> arguments;
+  Block *body;
 
+  Function(vector<Expression> arguments, Block *body) : arguments(arguments), body(body) {}
 };
 
-class BooleanExpr: public Expression {
-
-};
+// Record
 
 class Record: public Expression {
+  map<string, Expression> _map;
 
+public:
+  Record() : map() {}
+  Add(string key, Expression value) {
+    this._map[key] = value;
+  }
 };
+
+// Ops
+
+template <string op>
+class BinaryOp : public Expression {
+public:
+  Expression *left;
+  Expression *right;
+
+  BinaryOp(Expression *left, Expression *right) : left(left), right(right) {}
+};
+
+template <string op>
+class UnaryOp : public Expression {
+public:
+  Expression *expr;
+
+  UnaryOp(Expression *expr) : expr(expr) {}
+};
+
 

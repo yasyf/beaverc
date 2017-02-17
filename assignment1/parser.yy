@@ -112,7 +112,7 @@ Program: Program Statement {
 
 // Block
 
-Block: '{' StatementList '}';
+Block: '{' StatementList '}' { $$ = $2 };
 
 StatementList: StatementList Statement {
                     $$ = $1;
@@ -127,20 +127,11 @@ Statement: Assignment | CallStatement | Global | IfStatement | WhileLoop | Retur
 
 // Assignment
 
-Assignment: LHS '=' Expression ';' { $$ = new Assignment($1, $2); };
+Assignment: LHS '=' Expression ';' { $$ = new Assignment($1, $3); };
 
 // CallStatement
 
 CallStatement: Call ';';
-
-Call: LHS '(' ArgList ')' { $$ = new CallStatement($1, $2); };
-
-ArgList: ArgList ',' Expression {
-                $$ = $1;
-                $1.push_back($2);
-            }
-        | %empty { $$ = vector<Expression>(); }
-        ;
 
 // Global
 
@@ -148,7 +139,7 @@ Global: T_global T_name ';' { $$ = new Global($2); };
 
 // IfStatement
 
-IfStatement: T_if '(' Expression ')' Block ElseBlock { $$ = new IfStatement($2, $3, $4); };
+IfStatement: T_if '(' Expression ')' Block ElseBlock { $$ = new IfStatement($3, $5, $6); };
 
 ElseBlock: T_else Block { $$ = $2 }
         | %empty { $$ = new Block(); }
@@ -156,7 +147,7 @@ ElseBlock: T_else Block { $$ = $2 }
 
 // WhileLoop
 
-WhileLoop: T_while '(' Expression ')' Block { $$ = new WhileLoop($2, $3); };
+WhileLoop: T_while '(' Expression ')' Block { $$ = new WhileLoop($3, $5); };
 
 // Return
 
@@ -164,15 +155,82 @@ Return: T_return Expression ';' { $$ = new Return($2); };
 
 // Expression
 
-// TODO
+Expression: Function | Boolean | Record;
+
+// Function
+
+Function: T_fun '(' ArgList ')' Block { $$ = new Function($3, $5); };
+
+// Boolean
+
+Boolean: Boolean OR Conjunction { $$ = new BinaryOp<OR>($1, $3); }
+        | Conjunction
+        ;
+
+Conjunction: Conjunction AND BoolUnit { $$ = new BinaryOp<AND>($1, $3); }
+        | BoolUnit
+        ;
+
+BoolUnit: NOT Predicate { $$ = new UnaryOp<NOT>($2) }
+        | Predicate
+        ;
+
+Predicate: Predicate LT Arithmetic { $$ = new BinaryOp<LT>($1, $3); }
+        | Predicate LTE Arithmetic { $$ = new BinaryOp<LTE>($1, $3); }
+        | Predicate GT Arithmetic { $$ = new BinaryOp<GT>($1, $3); }
+        | Predicate GTE Arithmetic { $$ = new BinaryOp<GTE>($1, $3); }
+        | Predicate EQ Arithmetic { $$ = new BinaryOp<EQ>($1, $3); }
+        | Arithmetic
+        ;
+
+Arithmetic: Arithmetic PLUS Product { $$ = BinaryOp<PLUS>($1, $3); }
+        | Arithmetic MINUS Product { $$ = BinaryOp<MINUS>($1, $3); }
+        | Product
+        ;
+
+Product: Product MUL Unit { $$ = new BinaryOp<MUL>($1, $3); }
+    | Product DIV Unit { $$ = new BinaryOp<DIV>($1, $3); }
+    | Unit
+    ;
+
+// Record
+
+Record: '{' RecordContents '}' { $$ = $2; };
+
+RecordContents: RecordContents T_name ':' Expression ';' {
+                    $$ = $1;
+                    $1.Add($2, $4);
+                }
+            | %empty { $$ = new Record(); }
+            ;
 
 // Units
+
+Unit: NEG PositiveUnit { $$ = new UnaryOp<NEG>($2); }
+    | PositiveUnit
+    ;
+
+PositiveUnit: LHS
+            | Constant
+            | Call
+            | '(' Boolean ')' { $$ = $2 }
+            ;
+
+Constant: T_int | T_str | T_bool;
 
 LHS: LHS '.' T_name { $$ = new FieldDereference($1, $2); }
     | LHS '[' Expression ']' { $$ = new IndexExpression($1, $2); }
     | T_name { $$ = new LHS($1); }
     ;
 
+Call: LHS '(' ArgList ')' { $$ = new CallStatement($1, $3); };
+
+ArgList: ArgList ',' Expression {
+                $$ = $1;
+                $1.push_back($2);
+            }
+        | %empty { $$ = vector<Expression>(); }
+        ;
 
 %%
 
