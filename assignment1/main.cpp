@@ -7,10 +7,13 @@
 
 using namespace std;
 
-
+#define TRACE_PARSE 1
 
 
 int main(int argc, char** argv){
+  #if TRACE_PARSE
+    yydebug = 1;
+  #endif
 
   void* scanner;
   yylex_init(&scanner);

@@ -302,7 +302,7 @@ NameList: NameList ',' T_name {
 // Error reporting function. You should not have to modify this.
 int yyerror(YYLTYPE * yylloc, void* p, Statement*& out, const char*  msg){
 
-  cout<<"Error in line "<<yylloc->last_line<<", col "<<yylloc->last_column<<": "<<msg;
+  cout<<"Error in line "<<yylloc->last_line<<", col "<<yylloc->last_column<<": "<<msg<<endl;
   return 0;
 }
 

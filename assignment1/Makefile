@@ -12,10 +12,10 @@ main: lexer.c parser.cpp main.o parser.o lexer.o AST.o
 	$(CXX) $(LDFLAGS) -o $@ main.o parser.o lexer.o AST.o
 
 lexer.c: lexer.lex
-	$(LEX) --header-file=lexer.h -o lexer.c lexer.lex
+	$(LEX) --debug --header-file=lexer.h -o lexer.c lexer.lex
 
 parser.cpp: parser.yy
-	$(YACC) --defines=parser.h -o parser.cpp parser.yy
+	$(YACC) --debug --defines=parser.h -o parser.cpp parser.yy
 
 %.o: %.cpp %.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
