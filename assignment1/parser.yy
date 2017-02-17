@@ -92,10 +92,6 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 %token T_return
 %token T_fun
 
-%token<strconst> T_comp_op
-%token<strconst> T_arith_op
-%token<strconst> T_prod_op
-
 %left T_or "|"
 %left T_and "&"
 %left T_not "!"

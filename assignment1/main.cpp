@@ -7,7 +7,7 @@
 
 using namespace std;
 
-#define TRACE 1
+#define TRACE 0
 
 
 int main(int argc, char** argv){

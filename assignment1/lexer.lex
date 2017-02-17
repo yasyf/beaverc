@@ -29,10 +29,8 @@ global_keyword global
 return_keyword return
 fun_keyword fun
 
-comparison_operator "<"|">"|"<="|">="|"=="
-arithmetic_operator "+"|"-"
-product_operator "*"|"/"
-
+operator "<"|">"|"+"|"-"|"*"|"/"|"&"|"|"
+punctuation "="|"("|")"|"{"|"}"|";"
 
 %{
 // Initial declarations
@@ -71,26 +69,6 @@ product_operator "*"|"/"
 }
 
 %{
-  // Operators
-%}
-
-{comparison_operator} {
-  yylval->strconst = new string(yytext);
-  return T_comp_op;
-}
-
-{arithmetic_operator} {
-  yylval->strconst = new string(yytext);
-  return T_arith_op;
-}
-
-{product_operator} {
-  yylval->strconst = new string(yytext);
-  return T_prod_op;
-}
-
-
-%{
   // Constants
 %}
 
@@ -122,6 +100,29 @@ product_operator "*"|"/"
   return T_name;
 }
 
+%{
+  // Operators and punctuation
+%}
+
+"<=" {
+  return T_lte;
+}
+
+">=" {
+  return T_gte;
+}
+
+"==" {
+  return T_eq;
+}
+
+{operator} {
+  return yytext[0];
+}
+
+{punctuation} {
+  return yytext[0];
+}
 
 %{
   // Skips
