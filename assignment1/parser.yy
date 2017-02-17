@@ -83,6 +83,18 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 %token<strconst> T_arith_op
 %token<strconst> T_prod_op
 
+%left OR "|"
+%left AND "&"
+%left NOT "!"
+%left LT "<"
+%left LTE "<="
+%left GT ">"
+%left GTE ">="
+%left EQ "=="
+%left PLUS "+"
+%left MINUS "-"
+%left MUL "*"
+%left DIV "/"
 
 //Use the %type directive to specify the types of AST nodes produced by each production.
 //For example, you will have a program non-terimnal in your grammar, and it will
@@ -95,9 +107,6 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* m
 %type<assignment> Assignment
 
 %start Program
-
-//You must also define any associativity directives that are necessary
-//to resolve ambiguities and properly parse the code.
 
 %%
 
@@ -206,7 +215,7 @@ RecordContents: RecordContents T_name ':' Expression ';' {
 
 // Units
 
-Unit: NEG PositiveUnit { $$ = new UnaryOp<NEG>($2); }
+Unit: MINUS PositiveUnit { $$ = new UnaryOp<MINUS>($2); }
     | PositiveUnit
     ;
 

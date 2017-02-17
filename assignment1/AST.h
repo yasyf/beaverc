@@ -5,22 +5,6 @@
 #include <vector>
 #include <map>
 
-
-#define OR '|'
-#define AND '&'
-#define NOT '!'
-#define NEG '-'
-#define LT '<'
-#define LTE '<='
-#define GT '>'
-#define GTE '>='
-#define EQ '=='
-#define PLUS '+'
-#define MINUS '-'
-#define MUL '*'
-#define DIV '/'
-
-
 class SystemException {
 	string msg_;
 public:
