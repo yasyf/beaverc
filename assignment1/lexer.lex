@@ -29,7 +29,7 @@ global_keyword global
 return_keyword return
 fun_keyword fun
 
-punctuation "="|"("|")"|"{"|"}"|";"|","
+punctuation "="|"("|")"|"{"|"}"|";"|","|":"|"."
 
 %{
 // Initial declarations
