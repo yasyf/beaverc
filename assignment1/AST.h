@@ -29,9 +29,9 @@ class Statement: public AST_node {
 };
 
 class Block: public AST_node {
+public:
   std::vector<Statement *> statements;
 
-public:
   Block();
   void accept(Visitor& v) override;
   void Append(Statement *statement);
@@ -51,9 +51,9 @@ class LHS : public Unit {
 };
 
 class Name : public LHS {
+public:
   std::string name;
 
-public:
   Name(std::string name);
   void accept(Visitor& v) override;
 };
@@ -79,10 +79,10 @@ public:
 // Statement
 
 class Assignment: public Statement {
+public:
   LHS *lhs;
   Expression *expr;
 
-public:
   Assignment(LHS *lhs, Expression *expr);
   void accept(Visitor& v) override;
 };
@@ -146,9 +146,9 @@ class Constant : public Unit {
 
 template <typename T>
 class ValueConstant : public Constant {
+public:
   T value;
 
-public:
   ValueConstant(T value) : value(value) {}
   void accept(Visitor& v) override {
     v.visit(*this);
@@ -187,10 +187,10 @@ public:
 
 template <BinOpSym op>
 class BinaryOp : public Expression {
+public:
   Expression *left;
   Expression *right;
 
-public:
   BinaryOp(Expression *left, Expression *right) : left(left), right(right) {}
   void accept(Visitor& v) override {
     v.visit(*this);
@@ -199,9 +199,9 @@ public:
 
 template <UnOpSym op>
 class UnaryOp : public Expression {
+public:
   Expression *expr;
 
-public:
   UnaryOp(Expression *expr) : expr(expr) {}
   void accept(Visitor& v) override {
     v.visit(*this);

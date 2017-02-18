@@ -9,8 +9,8 @@ LDFLAGS =
 
 HEADERS = lexer.h parser.h AST.h
 
-main: lexer.c parser.cpp main.o parser.o lexer.o AST.o
-	$(CXX) $(LDFLAGS) -o $@ main.o parser.o lexer.o AST.o
+main: lexer.c parser.cpp main.o parser.o lexer.o AST.o PrettyPrinter.o
+	$(CXX) $(LDFLAGS) -o $@ main.o parser.o lexer.o AST.o PrettyPrinter.o
 
 lexer.c: lexer.lex
 	$(LEX) --debug --header-file=lexer.h -o lexer.c lexer.lex
