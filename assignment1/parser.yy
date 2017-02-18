@@ -269,9 +269,10 @@ PositiveUnit: LHS             { $$ = $1; }
             | '(' Boolean ')' { $$ = $2; }
             ;
 
-Constant: T_int { $$ = new Constant<int>($1); }
-        | T_str { $$ = new Constant<string>(*$1); }
-        | T_bool { $$ = new Constant<bool>($1); }
+Constant: T_int { $$ = new ValueConstant<int>($1); }
+        | T_str { $$ = new ValueConstant<string>(*$1); }
+        | T_bool { $$ = new ValueConstant<bool>($1); }
+        | T_none { $$ = new NullConstant(); }
         ;
 
 LHS: LHS '.' T_name { $$ = new FieldDereference($1, new Name(*$3)); }

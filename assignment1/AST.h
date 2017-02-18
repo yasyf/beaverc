@@ -141,15 +141,24 @@ public:
 
 // Expression
 
-template <class T>
 class Constant : public Unit {
+};
+
+template <typename T>
+class ValueConstant : public Constant {
   T value;
 
 public:
-  Constant(T value) : value(value) {}
+  ValueConstant(T value) : value(value) {}
   void accept(Visitor& v) override {
     v.visit(*this);
   }
+};
+
+class NullConstant : public Constant {
+public:
+  NullConstant() {}
+  void accept(Visitor& v) override;
 };
 
 // Function

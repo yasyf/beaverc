@@ -15,8 +15,9 @@ class WhileLoop;
 class Return;
 class Function;
 class Record;
+class NullConstant;
 template <class T>
-class Constant;
+class ValueConstant;
 template <BinOpSym op>
 class BinaryOp;
 template <UnOpSym op>

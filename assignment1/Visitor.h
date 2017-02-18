@@ -23,9 +23,10 @@ public:
   virtual void visit(Return& ret) = 0;
   virtual void visit(Function& func) = 0;
   virtual void visit(Record& rec) = 0;
-  virtual void visit(Constant<bool>& boolconst) = 0;
-  virtual void visit(Constant<std::string>& strconst) = 0;
-  virtual void visit(Constant<int>& intconst) = 0;
+  virtual void visit(ValueConstant<bool>& boolconst) = 0;
+  virtual void visit(ValueConstant<std::string>& strconst) = 0;
+  virtual void visit(ValueConstant<int>& intconst) = 0;
+  virtual void visit(NullConstant& nullconst) = 0;
   virtual void visit(BinaryOp<OR>& orop) = 0;
   virtual void visit(BinaryOp<AND>& andop) = 0;
   virtual void visit(BinaryOp<LT>& ltop) = 0;

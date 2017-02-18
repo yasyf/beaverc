@@ -38,11 +38,13 @@ class PrettyPrinter : public Visitor {
 
   void visit(Record& rec) {}
 
-  void visit(Constant<bool>& boolconst) {}
+  void visit(ValueConstant<bool>& boolconst) {}
 
-  void visit(Constant<std::string>& strconst) {}
+  void visit(ValueConstant<std::string>& strconst) {}
 
-  void visit(Constant<int>& intconst) {}
+  void visit(ValueConstant<int>& intconst) {}
+
+  void visit(NullConstant& nullconst) {}
 
   void visit(BinaryOp<OR>& orop) {}
 

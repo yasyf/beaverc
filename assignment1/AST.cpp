@@ -124,3 +124,9 @@ void Record::Add(string key, Expression *value) {
 void Record::accept(Visitor& v) {
   v.visit(*this);
 }
+
+// NullConstant
+
+void NullConstant::accept(Visitor& v) {
+  v.visit(*this);
+}
