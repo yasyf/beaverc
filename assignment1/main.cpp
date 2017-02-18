@@ -1,4 +1,3 @@
-
 #include "parser.h"
 #include "lexer.h"
 #include "AST.h"
@@ -11,7 +10,10 @@ using namespace std;
 
 
 int main(int argc, char** argv){
+  PrettyPrinter printer;
+  Program* program;
   void* scanner;
+
   yylex_init(&scanner);
   yyset_in(stdin, scanner);
 
@@ -20,12 +22,10 @@ int main(int argc, char** argv){
     yyset_debug(1, scanner);
   #endif
 
-  Statement* output;
-  int rvalue = yyparse(scanner, output);
-  if(rvalue == 1){
-	cout<<"Parsing failed"<<endl;
-	return 1;
+  if(yyparse(scanner, program) != 0){
+    cout << "Parsing failed" << endl;
+    return 1;
   }
-  // PrettyPrinter printer;
-  // output->accept(printer);
+
+  program->accept(printer);
 }

@@ -34,14 +34,14 @@ using namespace std;
 
 
 %define api.pure full
-%parse-param {yyscan_t yyscanner} {Statement*& out}
+%parse-param {yyscan_t yyscanner} {Program*& out}
 %lex-param {yyscan_t yyscanner}
 %locations
 %define parse.error verbose
 
 %code provides{
 YY_DECL;
-int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Statement*& out, const char* message);
+int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Program*& out, const char* message);
 }
 
 
@@ -257,7 +257,7 @@ RecordContents: RecordContents T_name ':' Expression ';' {
 
 // Units
 
-Unit: T_minus PositiveUnit { $$ = new UnaryOp<MINUS>($2); }
+Unit: T_minus PositiveUnit { $$ = new UnaryOp<NEG>($2); }
     | PositiveUnit       { $$ = $1; }
     ;
 
@@ -296,7 +296,7 @@ NameList: NameList ',' T_name {
 %%
 
 // Error reporting function. You should not have to modify this.
-int yyerror(YYLTYPE * yylloc, void* p, Statement*& out, const char*  msg){
+int yyerror(YYLTYPE * yylloc, void* p, Program*& out, const char*  msg){
 
   cout<<"Error in line "<<yylloc->last_line<<", col "<<yylloc->last_column<<": "<<msg<<endl;
   return 0;

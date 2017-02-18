@@ -3,6 +3,8 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "op.h"
+#include "Visitor.h"
 
 class SystemException {
 	std::string msg_;
@@ -12,13 +14,9 @@ public:
 
 #define Assert(cond, msg) if(!(cond)){ std::cerr<<msg<<endl; throw SystemException("Bad stuff"); }
 
-#include "Visitor.h"
-
-enum Op {OR, AND, NOT, LT, LTE, GT, GTE, EQ, PLUS, MINUS, MUL, DIV};
-
 class AST_node {
 public:
-	// virtual void accept(Visitor& v) = 0;
+	virtual void accept(Visitor& v) = 0;
 };
 
 class Expression : public AST_node {
@@ -35,6 +33,7 @@ class Block: public AST_node {
 
 public:
   Block();
+  void accept(Visitor& v) override;
   void Append(Statement *statement);
 };
 
@@ -43,6 +42,7 @@ public:
   Block *block;
 
   Program();
+  void accept(Visitor& v) override;
 };
 
 // LHS
@@ -55,6 +55,7 @@ class Name : public LHS {
 
 public:
   Name(std::string name);
+  void accept(Visitor& v) override;
 };
 
 class IndexExpression: public LHS {
@@ -63,6 +64,7 @@ class IndexExpression: public LHS {
 
 public:
   IndexExpression(LHS *base, Expression *index);
+  void accept(Visitor& v) override;
 };
 
 class FieldDereference: public LHS {
@@ -71,6 +73,7 @@ class FieldDereference: public LHS {
 
 public:
   FieldDereference(LHS *base, Name *field);
+  void accept(Visitor& v) override;
 };
 
 // Statement
@@ -81,6 +84,7 @@ class Assignment: public Statement {
 
 public:
   Assignment(LHS *lhs, Expression *expr);
+  void accept(Visitor& v) override;
 };
 
 class Call: public Unit {
@@ -89,6 +93,7 @@ class Call: public Unit {
 
 public:
   Call(LHS *target, std::vector<Expression *> arguments);
+  void accept(Visitor& v) override;
 };
 
 class CallStatement: public Statement {
@@ -96,6 +101,7 @@ class CallStatement: public Statement {
 
 public:
   CallStatement(Call *call);
+  void accept(Visitor& v) override;
 };
 
 class Global: public Statement {
@@ -103,6 +109,7 @@ class Global: public Statement {
 
 public:
   Global(std::string name);
+  void accept(Visitor& v) override;
 };
 
 class IfStatement: public Statement {
@@ -112,6 +119,7 @@ class IfStatement: public Statement {
 
 public:
   IfStatement(Expression *cond, Block *thenBlock, Block *elseBlock);
+  void accept(Visitor& v) override;
 };
 
 class WhileLoop: public Statement {
@@ -120,6 +128,7 @@ class WhileLoop: public Statement {
 
 public:
   WhileLoop(Expression *cond, Block *body);
+  void accept(Visitor& v) override;
 };
 
 class Return: public Statement {
@@ -127,6 +136,7 @@ class Return: public Statement {
 
 public:
   Return(Expression *expr);
+  void accept(Visitor& v) override;
 };
 
 // Expression
@@ -137,6 +147,9 @@ class Constant : public Unit {
 
 public:
   Constant(T value) : value(value) {}
+  void accept(Visitor& v) override {
+    v.visit(*this);
+  }
 };
 
 // Function
@@ -147,6 +160,7 @@ class Function: public Expression {
 
 public:
   Function(std::vector<Name *> arguments, Block *body);
+  void accept(Visitor& v) override;
 };
 
 // Record
@@ -156,26 +170,31 @@ class Record: public Expression {
 
 public:
   Record();
+  void accept(Visitor& v) override;
   void Add(std::string key, Expression *value);
 };
 
 // Ops
 
-template <Op op>
+template <BinOpSym op>
 class BinaryOp : public Expression {
   Expression *left;
   Expression *right;
 
 public:
   BinaryOp(Expression *left, Expression *right) : left(left), right(right) {}
+  void accept(Visitor& v) override {
+    v.visit(*this);
+  }
 };
 
-template <Op op>
+template <UnOpSym op>
 class UnaryOp : public Expression {
   Expression *expr;
 
 public:
   UnaryOp(Expression *expr) : expr(expr) {}
+  void accept(Visitor& v) override {
+    v.visit(*this);
+  }
 };
-
-
