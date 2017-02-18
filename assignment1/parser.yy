@@ -149,7 +149,7 @@ Program: Program Statement {
             $$ = $1;
             $1->block->Append($2);
         }
-    | %empty { $$ = new Program(); }
+    | %empty { $$ = new Program(); out = $$; }
     ;
 
 // Block
