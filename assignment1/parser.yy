@@ -54,11 +54,11 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Program*& out, const char* mes
 %union {
     bool boolconst;
     string* strconst;
-	int intconst;
+    int intconst;
     Block* block;
     Program* program;
     Statement* statement;
-	Assignment* assignment;
+    Assignment* assignment;
     CallStatement* callstmt;
     Global* global;
     IfStatement* ifstmt;
@@ -137,6 +137,8 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Program*& out, const char* mes
 %type<lhs> LHS
 %type<call> Call
 %type<exprvec> ArgList
+%type<exprvec> FullArgList
+%type<exprvec> EmptyArgList
 %type<namevec> NameList
 
 %start Program
@@ -279,16 +281,22 @@ LHS: LHS '.' T_name { $$ = new FieldDereference($1, new Name(*$3)); }
 
 Call: LHS '(' ArgList ')' { $$ = new Call($1, *$3); };
 
-ArgList: ArgList ',' Expression {
+ArgList: EmptyArgList | FullArgList;
+
+EmptyArgList: %empty { $$ = new vector<Expression *>(); };
+
+FullArgList: FullArgList ',' Expression {
                 $$ = $1;
                 $1->push_back($3);
             }
-        | %empty { $$ = new vector<Expression *>(); }
+        | Expression {
+            $$ = new vector<Expression *>{$1};
+        }
         ;
 
-NameList: NameList ',' T_name {
+NameList: NameList T_name {
                 $$ = $1;
-                $1->push_back(new Name(*$3));
+                $1->push_back(new Name(*$2));
             }
         | %empty { $$ = new vector<Name *>(); }
         ;
