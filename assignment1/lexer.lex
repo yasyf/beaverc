@@ -29,8 +29,7 @@ global_keyword global
 return_keyword return
 fun_keyword fun
 
-operator "<"|">"|"+"|"-"|"*"|"/"|"&"|"|"
-punctuation "="|"("|")"|"{"|"}"|";"
+punctuation "="|"("|")"|"{"|"}"|";"|","
 
 %{
 // Initial declarations
@@ -112,12 +111,40 @@ punctuation "="|"("|")"|"{"|"}"|";"
   return T_gte;
 }
 
+"<" {
+  return T_lt;
+}
+
+">" {
+  return T_gt;
+}
+
 "==" {
   return T_eq;
 }
 
-{operator} {
-  return yytext[0];
+"-" {
+  return T_minus;
+}
+
+"+" {
+  return T_plus;
+}
+
+"*" {
+  return T_mul;
+}
+
+"/" {
+  return T_div;
+}
+
+"&" {
+  return T_and;
+}
+
+"|" {
+  return T_or;
 }
 
 {punctuation} {
