@@ -1,0 +1,7 @@
+global foo;
+
+foo = 1;
+bar = false;
+foobar = foo + (!bar);
+baz = None;
+foobaz = -(foobar - foo) * -1 + baz;

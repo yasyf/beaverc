@@ -1,0 +1,23 @@
+x = 1;
+
+x1 = foobar2();
+
+bar_baz = d_2_();
+
+global l2;
+
+if (bar > baz) { echo(1); } else { echo(2); }
+
+while(1) {
+  // noop
+}
+
+return wat;
+
+lol = (1 + 2) - 3 * 4 / 5;
+
+boo = (a > 5) & (b <= 4) | (c >= 2) | (z == 1);
+
+z = coo["as"].bar(baz, bat);
+
+b = a[bar()].zap1(foo(), a["2"].p);

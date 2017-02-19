@@ -29,7 +29,7 @@ global_keyword global
 return_keyword return
 fun_keyword fun
 
-punctuation "="|"("|")"|"{"|"}"|";"|","|":"|"."
+punctuation "="|"("|")"|"{"|"}"|";"|","|":"|"."|"["|"]"
 
 %{
 // Initial declarations
@@ -147,6 +147,10 @@ punctuation "="|"("|")"|"{"|"}"|";"|","|":"|"."
   return T_or;
 }
 
+"!" {
+  return T_not;
+}
+
 {punctuation} {
   return yytext[0];
 }
@@ -159,7 +163,9 @@ punctuation "="|"("|")"|"{"|"}"|";"|","|":"|"."
 
 {comment}      { /* skip */ }
 
-
+. {
+  return yytext[0]; // let Bison error on this
+}
 
 %%
 

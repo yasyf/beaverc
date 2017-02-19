@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <algorithm>
 #include "PrettyPrinter.h"
 
 using namespace std;
@@ -10,9 +11,21 @@ void PrettyPrinter::print(string msg, bool newline = false) {
     for (int i = 0; i < this->indent_level; i++)
       cout << "  ";
   }
+
+  last_printed = msg.back();
+
   cout << msg;
   if (newline)
     this->nextline();
+}
+
+bool PrettyPrinter::maybeExtraIndent() {
+  if (last_printed == '(' || last_printed == '[') {
+    this->nextline();
+    this->indent();
+    return true;
+  }
+  return false;
 }
 
 void PrettyPrinter::println(string msg) {
@@ -20,7 +33,10 @@ void PrettyPrinter::println(string msg) {
 }
 
 void PrettyPrinter::nextline() {
+  if (!line_started)
+    return;
   line_started = false;
+  last_printed = 0;
   cout << endl;
 }
 
@@ -32,24 +48,31 @@ void PrettyPrinter::dedent() {
   this->indent_level--;
 }
 
-void PrettyPrinter::open(string name) {
+bool PrettyPrinter::open(string name) {
+  bool r = this->maybeExtraIndent();
   this->println(name);
   this->indent();
+  return r;
 }
 
-void PrettyPrinter::close() {
+void PrettyPrinter::close(bool extra) {
   this->dedent();
-  if (line_started)
-    this->nextline();
+  if (extra)
+    this->dedent();
+  this->nextline();
 }
 
-void PrettyPrinter::start(string name) {
+bool PrettyPrinter::start(string name) {
+  bool r = this->maybeExtraIndent();
   this->println(name + " {");
   this->indent();
+  return r;
 }
 
-void PrettyPrinter::end() {
+void PrettyPrinter::end(bool extra) {
   this->dedent();
+  if (extra)
+    this->dedent();
   this->println("}");
 }
 
@@ -61,11 +84,11 @@ void PrettyPrinter::visit(Program& prog) {
 }
 
 void PrettyPrinter::visit(Block& block) {
-  this->start("Block");
+  bool r = this->start("Block");
   for (Statement *stmt : block.statements) {
     stmt->accept(*this);
   }
-  this->end();
+  this->end(r);
 }
 
 void PrettyPrinter::visit(Name& name) {
@@ -86,18 +109,19 @@ void PrettyPrinter::visit(FieldDereference& fd) {
 }
 
 void PrettyPrinter::visit(Assignment& assign) {
-  this->open("Assignment");
+  bool r = this->open("Assignment");
   assign.lhs->accept(*this);
   this->print(" = ");
   assign.expr->accept(*this);
   this->print(";");
-  this->close();
+  this->close(r);
 }
 
 void PrettyPrinter::visit(Call& call) {
+  bool r1 = this->maybeExtraIndent();
   this->print("Call[");
   call.target->accept(*this);
-  this->open("]");
+  bool r2 = this->open("]");
 
   bool first = true;
   for (Expression *expr : call.arguments) {
@@ -107,7 +131,9 @@ void PrettyPrinter::visit(Call& call) {
       this->nextline();
     expr->accept(*this);
   }
-  this->close();
+  this->close(r2);
+  if (r1)
+    this->dedent();
 }
 
 void PrettyPrinter::visit(CallStatement& cs) {
@@ -115,40 +141,40 @@ void PrettyPrinter::visit(CallStatement& cs) {
 }
 
 void PrettyPrinter::visit(Global& global) {
-  this->open("Global");
+  bool r = this->open("Global");
   this->print(global.name);
-  this->close();
+  this->close(r);
 }
 
 void PrettyPrinter::visit(IfStatement& is) {
-  this->open("IfStatement");
+  bool r1 = this->open("IfStatement");
   this->print("If[");
   is.cond->accept(*this);
-  this->start("]");
+  bool r2 = this->start("]");
   is.thenBlock->accept(*this);
-  this->end();
+  this->end(r2);
   if (!is.elseBlock->empty()) {
-    this->start("Else");
+    r2 = this->start("Else");
     is.elseBlock->accept(*this);
-    this->end();
+    this->end(r2);
   }
-  this->close();
+  this->close(r1);
 }
 
 void PrettyPrinter::visit(WhileLoop& wl) {
-  this->open("WhileLoop");
+  bool r1 = this->open("WhileLoop");
   this->print("While[");
   wl.cond->accept(*this);
-  this->start("]");
+  bool r2 = this->start("]");
   wl.body->accept(*this);
-  this->end();
-  this->close();
+  this->end(r2);
+  this->close(r1);
 }
 
 void PrettyPrinter::visit(Return& ret) {
-  this->open("Return");
+  bool r = this->open("Return");
   ret.expr->accept(*this);
-  this->close();
+  this->close(r);
 }
 
 void PrettyPrinter::visit(Function& func) {
@@ -161,13 +187,13 @@ void PrettyPrinter::visit(Function& func) {
       this->print(", ");
     name->accept(*this);
   }
-  this->open(")");
+  bool r = this->open(")");
   func.body->accept(*this);
-  this->close();
+  this->close(r);
 }
 
 void PrettyPrinter::visit(Record& rec) {
-  this->open("Record");
+  bool r = this->open("Record");
   bool first = true;
   for (auto& kv : rec.record) {
     if (first)
@@ -178,7 +204,7 @@ void PrettyPrinter::visit(Record& rec) {
     this->print(" : ");
     kv.second->accept(*this);
   }
-  this->close();
+  this->close(r);
 }
 
 void PrettyPrinter::visit(ValueConstant<bool>& boolconst) {

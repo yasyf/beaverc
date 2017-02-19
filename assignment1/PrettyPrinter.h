@@ -9,17 +9,19 @@ using namespace std;
 //a subtype of visitor.
 class PrettyPrinter : public Visitor {
   int indent_level = 0;
+  char last_printed = 0;
   bool line_started = false;
 
   void print(string msg, bool newline);
   void println(string msg);
   void nextline();
+  bool maybeExtraIndent();
   void indent();
   void dedent();
-  void open(string name);
-  void close();
-  void start(string name);
-  void end();
+  bool open(string name);
+  void close(bool extra);
+  bool start(string name);
+  void end(bool extra);
   template <BinOpSym op>
   void visitBinop(BinaryOp<op>& binop, string opstring);
   template <UnOpSym op>

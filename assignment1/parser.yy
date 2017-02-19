@@ -94,7 +94,6 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Program*& out, const char* mes
 
 %left T_or "|"
 %left T_and "&"
-%left T_not "!"
 %left T_lt "<"
 %left T_lte "<="
 %left T_gt ">"
@@ -104,6 +103,8 @@ int yyerror(YYLTYPE * yylloc, yyscan_t yyscanner, Program*& out, const char* mes
 %left T_minus "-"
 %left T_mul "*"
 %left T_div "/"
+
+%token T_not "!"
 
 //Use the %type directive to specify the types of AST nodes produced by each production.
 //For example, you will have a program non-terimnal in your grammar, and it will

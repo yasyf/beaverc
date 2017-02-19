@@ -1,0 +1,5 @@
+x = !true;
+x = !bar;
+x = 1 + (!foo);
+x = -(!foo);
+x = -foo;
