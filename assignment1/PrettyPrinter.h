@@ -16,6 +16,10 @@ class PrettyPrinter : public Visitor {
   void nextline();
   void indent();
   void dedent();
+  void open(string name);
+  void close();
+  void start(string name);
+  void end();
   template <BinOpSym op>
   void visitBinop(BinaryOp<op>& binop, string opstring);
   template <UnOpSym op>

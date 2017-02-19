@@ -35,6 +35,7 @@ public:
   Block();
   void accept(Visitor& v) override;
   void Append(Statement *statement);
+  bool empty();
 };
 
 class Program : public AST_node {
@@ -59,19 +60,19 @@ public:
 };
 
 class IndexExpression: public LHS {
+public:
   LHS *base;
   Expression *index;
 
-public:
   IndexExpression(LHS *base, Expression *index);
   void accept(Visitor& v) override;
 };
 
 class FieldDereference: public LHS {
+public:
   LHS *base;
   Name *field;
 
-public:
   FieldDereference(LHS *base, Name *field);
   void accept(Visitor& v) override;
 };
@@ -88,53 +89,53 @@ public:
 };
 
 class Call: public Unit {
+public:
   LHS *target;
   std::vector<Expression *> arguments;
 
-public:
   Call(LHS *target, std::vector<Expression *> arguments);
   void accept(Visitor& v) override;
 };
 
 class CallStatement: public Statement {
+public:
   Call *call;
 
-public:
   CallStatement(Call *call);
   void accept(Visitor& v) override;
 };
 
 class Global: public Statement {
+public:
   std::string name;
 
-public:
   Global(std::string name);
   void accept(Visitor& v) override;
 };
 
 class IfStatement: public Statement {
+public:
   Expression *cond;
   Block *thenBlock;
   Block *elseBlock;
 
-public:
   IfStatement(Expression *cond, Block *thenBlock, Block *elseBlock);
   void accept(Visitor& v) override;
 };
 
 class WhileLoop: public Statement {
+public:
   Expression *cond;
   Block *body;
 
-public:
   WhileLoop(Expression *cond, Block *body);
   void accept(Visitor& v) override;
 };
 
 class Return: public Statement {
+public:
   Expression *expr;
 
-public:
   Return(Expression *expr);
   void accept(Visitor& v) override;
 };
@@ -164,10 +165,10 @@ public:
 // Function
 
 class Function: public Expression {
+public:
   std::vector<Name *> arguments;
   Block *body;
 
-public:
   Function(std::vector<Name *> arguments, Block *body);
   void accept(Visitor& v) override;
 };
@@ -175,9 +176,9 @@ public:
 // Record
 
 class Record: public Expression {
+public:
   std::map<std::string, Expression *> record;
 
-public:
   Record();
   void accept(Visitor& v) override;
   void Add(std::string key, Expression *value);

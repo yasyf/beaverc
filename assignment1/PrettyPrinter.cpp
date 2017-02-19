@@ -8,7 +8,7 @@ void PrettyPrinter::print(string msg, bool newline = false) {
   if (!line_started) {
     line_started = true;
     for (int i = 0; i < this->indent_level; i++)
-      cout << " ";
+      cout << "  ";
   }
   cout << msg;
   if (newline)
@@ -32,52 +32,154 @@ void PrettyPrinter::dedent() {
   this->indent_level--;
 }
 
+void PrettyPrinter::open(string name) {
+  this->println(name);
+  this->indent();
+}
+
+void PrettyPrinter::close() {
+  this->dedent();
+  if (line_started)
+    this->nextline();
+}
+
+void PrettyPrinter::start(string name) {
+  this->println(name + " {");
+  this->indent();
+}
+
+void PrettyPrinter::end() {
+  this->dedent();
+  this->println("}");
+}
+
 void PrettyPrinter::visit(Program& prog) {
   this->println("Program");
+  this->println("-------");
   this->indent();
   prog.block->accept(*this);
 }
 
 void PrettyPrinter::visit(Block& block) {
-  this->println("{");
-  this->indent();
+  this->start("Block");
   for (Statement *stmt : block.statements) {
     stmt->accept(*this);
   }
-  this->dedent();
-  this->println("}");
+  this->end();
 }
 
 void PrettyPrinter::visit(Name& name) {
   this->print(name.name);
 }
 
-void PrettyPrinter::visit(IndexExpression& ie) {}
+void PrettyPrinter::visit(IndexExpression& ie) {
+  ie.base->accept(*this);
+  this->print("[");
+  ie.index->accept(*this);
+  this->print("]");
+}
 
-void PrettyPrinter::visit(FieldDereference& fd) {}
+void PrettyPrinter::visit(FieldDereference& fd) {
+  fd.base->accept(*this);
+  this->print(".");
+  fd.field->accept(*this);
+}
 
 void PrettyPrinter::visit(Assignment& assign) {
+  this->open("Assignment");
   assign.lhs->accept(*this);
   this->print(" = ");
   assign.expr->accept(*this);
-  this->nextline();
+  this->print(";");
+  this->close();
 }
 
-void PrettyPrinter::visit(Call& call) {}
+void PrettyPrinter::visit(Call& call) {
+  this->print("Call[");
+  call.target->accept(*this);
+  this->open("]");
 
-void PrettyPrinter::visit(CallStatement& cs) {}
+  bool first = true;
+  for (Expression *expr : call.arguments) {
+    if (first)
+      first = false;
+    else
+      this->nextline();
+    expr->accept(*this);
+  }
+  this->close();
+}
 
-void PrettyPrinter::visit(Global& global) {}
+void PrettyPrinter::visit(CallStatement& cs) {
+  cs.call->accept(*this);
+}
 
-void PrettyPrinter::visit(IfStatement& is) {}
+void PrettyPrinter::visit(Global& global) {
+  this->open("Global");
+  this->print(global.name);
+  this->close();
+}
 
-void PrettyPrinter::visit(WhileLoop& wl) {}
+void PrettyPrinter::visit(IfStatement& is) {
+  this->open("IfStatement");
+  this->print("If[");
+  is.cond->accept(*this);
+  this->start("]");
+  is.thenBlock->accept(*this);
+  this->end();
+  if (!is.elseBlock->empty()) {
+    this->start("Else");
+    is.elseBlock->accept(*this);
+    this->end();
+  }
+  this->close();
+}
 
-void PrettyPrinter::visit(Return& ret) {}
+void PrettyPrinter::visit(WhileLoop& wl) {
+  this->open("WhileLoop");
+  this->print("While[");
+  wl.cond->accept(*this);
+  this->start("]");
+  wl.body->accept(*this);
+  this->end();
+  this->close();
+}
 
-void PrettyPrinter::visit(Function& func) {}
+void PrettyPrinter::visit(Return& ret) {
+  this->open("Return");
+  ret.expr->accept(*this);
+  this->close();
+}
 
-void PrettyPrinter::visit(Record& rec) {}
+void PrettyPrinter::visit(Function& func) {
+  this->print("Function(");
+  bool first = true;
+  for (Name *name : func.arguments) {
+    if (first)
+      first = false;
+    else
+      this->print(", ");
+    name->accept(*this);
+  }
+  this->open(")");
+  func.body->accept(*this);
+  this->close();
+}
+
+void PrettyPrinter::visit(Record& rec) {
+  this->open("Record");
+  bool first = true;
+  for (auto& kv : rec.record) {
+    if (first)
+      first = false;
+    else
+      this->nextline();
+    this->print(kv.first);
+    this->print(" : ");
+    kv.second->accept(*this);
+  }
+  this->close();
+}
 
 void PrettyPrinter::visit(ValueConstant<bool>& boolconst) {
   this->print(boolconst.value ? "true" : "false");

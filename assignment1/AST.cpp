@@ -23,6 +23,10 @@ void Block::accept(Visitor& v) {
   v.visit(*this);
 }
 
+bool Block::empty() {
+  return this->statements.empty();
+}
+
 // Name
 
 Name::Name(string name) : name(name) {}
