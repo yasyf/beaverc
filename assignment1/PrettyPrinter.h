@@ -8,6 +8,7 @@ using namespace std;
 //This is where you get to define your pretty printer class, which should be
 //a subtype of visitor.
 class PrettyPrinter : public Visitor {
+protected:
   int indent_level = 0;
   char last_printed = 0;
   bool line_started = false;
@@ -15,13 +16,8 @@ class PrettyPrinter : public Visitor {
   void print(string msg, bool newline);
   void println(string msg);
   void nextline();
-  bool maybeExtraIndent();
   void indent();
   void dedent();
-  bool open(string name);
-  void close(bool extra);
-  bool start(string name);
-  void end(bool extra);
   template <BinOpSym op>
   void visitBinop(BinaryOp<op>& binop, string opstring);
   template <UnOpSym op>
