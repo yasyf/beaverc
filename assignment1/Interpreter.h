@@ -5,12 +5,13 @@
 using namespace std;
 
 class Interpreter : public Visitor {
-  Value *asval;
+  stack<Value*> asvals;
   Value *retval;
   Heap heap;
 
   void print(string msg, bool newline);
   void println(string msg);
+  void exec(AST_node *node);
   Value* eval(Expression *exp);
 
 public:

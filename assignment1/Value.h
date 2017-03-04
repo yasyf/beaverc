@@ -1,16 +1,23 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 #include <map>
 #include <set>
 #include "AST.h"
-#include "Exception.h"
 
 using namespace std;
 
-class Value {};
+class Value {
+  virtual string toString() = 0;
+};
 
-class NoneValue : public Value {};
+class NoneValue : public Value {
+  string toString() override {
+    return "None";
+  }
+};
+const NoneSingleton = NoneValue();
 
 template <typename T>
 class ConstantValue : public Value {
@@ -20,34 +27,21 @@ public:
   ConstantValue(T value) : value(value) {}
 };
 
-using BooleanValue = ConstantValue<bool>;
-using IntegerValue = ConstantValue<int>;
-using StringValue = ConstantValue<string>;
-
-class StackFrame : public Value {
-  StackFrame *parent;
-  map<string, Value> vars;
-  set<string> globals;
-
-public:
-  StackFrame() : parent(nullptr), vars(), globals() {
-    // TODO: add print, input, and intcast globals
+class BooleanValue : public ConstantValue<bool> {
+  string toString() override {
+    return value ? "true" : "false";
   }
+};
 
-  void Update(string var, Value val) {
-    vars[var] = val;
+class IntegerValue : public ConstantValue<int> {
+  string toString() override {
+    return to_string(value);
   }
+};
 
-  Value Read(string var) {
-    if (vars.count(var)) {
-      return vars[var];
-    } else {
-      if (parent) {
-        return parent.Read(var);
-      } else {
-        throw UninitializedVariableException(var);
-      }
-    }
+class StringValue : public ConstantValue<string> {
+  string toString() override {
+    return value;
   }
 };
 
@@ -57,6 +51,10 @@ public:
   Block *code;
 
   FunctionValue(StackFrame *frame, Block *code) : frame(frame), code(code) {}
+
+  string toString() override {
+    return "FUNCTION";
+  }
 }
 
 class RecordValue : public Value {
@@ -64,5 +62,23 @@ public:
   map<string, Value*> record;
 
   RecordValue() : record(record) {}
+
+  string toString() override {
+    ostringstream oss;
+    oss << "{";
+    for (auto& kv : record) {
+      oss << kv.first << ":" << kv.second.toString() << " ";
+    }
+    oss << "}";
+    return oss.str();
+  }
+
+  void Update(string key, Value *val) {
+    record[key] = val;
+  }
+
+  Value* Read(string key) {
+    return record.count() ? record[key] : &NoneSingleton;
+  }
 }
 
