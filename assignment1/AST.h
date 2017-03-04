@@ -3,16 +3,8 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "op.h"
+#include "Op.h"
 #include "Visitor.h"
-
-class SystemException {
-	std::string msg_;
-public:
-	SystemException(const std::string& msg) :msg_(msg) {}
-};
-
-#define Assert(cond, msg) if(!(cond)){ std::cerr<<msg<<endl; throw SystemException("Bad stuff"); }
 
 class AST_node {
 public:
