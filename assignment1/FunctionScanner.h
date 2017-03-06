@@ -1,27 +1,13 @@
 #pragma once
 
 #include "Visitor.h"
-#include "Heap.h"
 
 using namespace std;
 
-Value* NativePrint(vector<Value *> args);
-Value* NativeInput(vector<Value *> args);
-Value* NativeIntcast(vector<Value *> args);
-
-class Interpreter : public Visitor {
-  stack<Value*> asvals;
-  Value *retval;
-  Heap heap;
-
-  void print(string msg, bool newline);
-  void println(string msg);
-  void exec(AST_node *node);
-  Value* eval(Expression *exp);
-  void Return(Value *retval);
-
+class FunctionScanner : public Visitor {
+  StackFrame *stack;
 public:
-  Interpreter();
+  FunctionScanner(StackFrame *stack);
 
   void visit(Program& prog) override;
   void visit(Block& block) override;

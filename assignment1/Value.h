@@ -4,17 +4,23 @@
 #include <sstream>
 #include <map>
 #include <set>
+#include <vector>
 #include "AST.h"
 
 using namespace std;
 
 class Value {
   virtual string toString() = 0;
+  virtual bool equals(Value *other) = 0;
 };
 
 class NoneValue : public Value {
   string toString() override {
     return "None";
+  }
+
+  bool equals(Value *other) override {
+    return dynamic_cast<NoneValue>(other) != nullptr;
   }
 };
 const NoneSingleton = NoneValue();
@@ -25,6 +31,11 @@ public:
   T value;
 
   ConstantValue(T value) : value(value) {}
+
+  bool equals(Value *other) override {
+    T *otherT = dynamic_cast<T*>(other);
+    return otherT != nullptr && otherT->value == value;
+  }
 };
 
 class BooleanValue : public ConstantValue<bool> {
@@ -49,11 +60,17 @@ class FunctionValue : public Value {
 public:
   StackFrame *frame;
   Block *code;
+  vector<string> arguments;
 
-  FunctionValue(StackFrame *frame, Block *code) : frame(frame), code(code) {}
+  FunctionValue(StackFrame *frame, Block *code, vector<string> arguments) : frame(frame), code(code), arguments(arguments) {}
 
   string toString() override {
     return "FUNCTION";
+  }
+
+  bool equals(Value *other) override {
+    FunctionValue *func = dynamic_cast<FunctionValue*>(other);
+    return func != nullptr && func->frame == frame && func->code == code;
   }
 }
 
@@ -71,6 +88,10 @@ public:
     }
     oss << "}";
     return oss.str();
+  }
+
+  bool equals(Value *other) override {
+    return this == dynamic_cast<RecordValue*>(other);
   }
 
   void Update(string key, Value *val) {

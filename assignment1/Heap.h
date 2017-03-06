@@ -6,29 +6,45 @@
 #include "Exception.h"
 
 class StackFrame {
-  StackFrame *parent;
-  map<string, Value> vars;
-  set<string> globals;
+  Value *ret;
+  map<string, Value*> vars;
 
 public:
-  StackFrame() : parent(nullptr), vars(), globals() {
-    // TODO: add print, input, and intcast globals
-  }
+  StackFrame *parent;
+  set<string> globals;
 
-  void Update(string var, Value val) {
+  StackFrame(StackFrame *parent) : parent(parent), vars(), globals() {}
+
+  void Update(string var, Value *val) {
     vars[var] = val;
   }
 
-  Value Read(string var) {
-    if (vars.count(var)) {
+  void Initialize(string var) {
+    vars[var] = &NoneSingleton;
+  }
+
+  bool Contains(string var) {
+    return vars.count(var) > 0;
+  }
+
+  Value* Read(string var) {
+    if (Contains(var)) {
       return vars[var];
     } else {
-      if (parent) {
-        return parent.Read(var);
-      } else {
-        throw UninitializedVariableException(var);
-      }
+      return nullptr;
     }
+  }
+
+  void SetReturn(Value *ret) {
+    this->ret = ret;
+  }
+
+  Value* GetReturn() {
+    return this->ret;
+  }
+
+  StackFrame* CreateChild() {
+    return new StackFrame(this);
   }
 };
 
@@ -38,7 +54,7 @@ class Heap {
 public:
   StackFrame *global;
 
-  Heap() : global(), frames() {
+  Heap() : global(nullptr), frames() {
     this->frames.push(this->global);
   }
 
@@ -46,19 +62,34 @@ public:
     return this->frames.top();
   }
 
+  void push(StackFrame* frame) {
+    frames.push(frame);
+  }
+
+  StackFrame* pop() {
+    return frames.pop();
+  }
+
   void UpdateVar(string var, Value val) {
-    if (current().globals.count(var)) {
+    if (current()->globals.count(var)) {
       global.Update(var, val);
     } else {
-      current().Update(var, val);
+      current()->Update(var, val);
     }
   }
 
   Value ReadVar(string var) {
-    if (current().globals.count(var)) {
-      return global.Read(var);
-    } else {
-      return current().Read(var);
+    Value *val;
+    StackFrame *curr = current();
+    while (curr) {
+      if (curr->globals.count(var)) {
+        return global.Read(var);
+      } else if (curr->Contains(var)) {
+        return curr->Read(var);
+      } else {
+        curr = curr->parent;
+      }
     }
+    throw UninitializedVariableException(var);
   }
 };
