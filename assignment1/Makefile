@@ -13,6 +13,9 @@ interpret: lexer.c parser.cpp interpret.o parser.o lexer.o AST.o FunctionScanner
 print: lexer.c parser.cpp print.o parser.o lexer.o AST.o PrettyPrinter.o
 	$(CXX) $(LDFLAGS) -o $@ print.o parser.o lexer.o AST.o PrettyPrinter.o
 
+astprint: lexer.c parser.cpp astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
+	$(CXX) $(LDFLAGS) -o $@ astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
+
 lexer.c: lexer.lex
 	$(LEX) --debug --header-file=lexer.h -o lexer.c lexer.lex
 
@@ -23,7 +26,7 @@ parser.cpp: parser.yy
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f print interpret *.o
+	rm -f astprint print interpret *.o
 
 extraclean: clean
 	rm -f lexer.c lexer.h parser.cpp parser.h

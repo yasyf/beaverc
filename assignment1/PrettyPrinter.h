@@ -13,7 +13,7 @@ protected:
   char last_printed = 0;
   bool line_started = false;
 
-  void print(string msg, bool newline);
+  void print(string msg, bool newline = false);
   void println(string msg);
   void nextline();
   void indent();

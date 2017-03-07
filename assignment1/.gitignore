@@ -5,5 +5,6 @@ lexer.h
 parser.cpp
 parser.h
 print
+astprint
 interpret
 .gdb_history

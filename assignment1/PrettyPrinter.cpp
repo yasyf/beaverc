@@ -5,7 +5,7 @@
 
 using namespace std;
 
-void PrettyPrinter::print(string msg, bool newline = false) {
+void PrettyPrinter::print(string msg, bool newline) {
   if (!line_started) {
     line_started = true;
     for (int i = 0; i < this->indent_level; i++)
@@ -164,7 +164,7 @@ void PrettyPrinter::visit(ValueConstant<bool>& boolconst) {
 }
 
 void PrettyPrinter::visit(ValueConstant<std::string>& strconst) {
-  this->print(strconst.value);
+  this->print("\"" + strconst.value + "\"");
 }
 
 void PrettyPrinter::visit(ValueConstant<int>& intconst) {
