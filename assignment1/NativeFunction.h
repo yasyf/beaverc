@@ -8,13 +8,16 @@
 
 using namespace std;
 
+static StackFrame nfSharedFrame;
+static Block nfSharedBlock;
+
 class NativeFunction : public FunctionValue {
   function<Value*(vector<Value*>)> func;
 
 public:
 
   NativeFunction(vector<string> arguments, function<Value*(vector<Value*>)> func)
-    : FunctionValue(new StackFrame(), new Block(), arguments), func(func) {}
+    : FunctionValue(&nfSharedFrame, &nfSharedBlock, arguments), func(func) {}
 
   Value* call(vector<Value *> args) {
     return func(args);
