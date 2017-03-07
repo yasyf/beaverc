@@ -67,6 +67,8 @@ void Interpreter::assign(LHS *lhs, Value *asval) {
 void Interpreter::visit(Block& block) {
   for (Statement *stmt : block.statements) {
     exec(stmt);
+    if (heap.current().returned())
+      break;
   }
 }
 
@@ -118,7 +120,7 @@ void Interpreter::visit(WhileLoop& wl) {
   BooleanValue *boolean;
 
   boolean = interp_cast<BooleanValue>(eval(wl.cond));
-  while (boolean->value) {
+  while (boolean->value && !heap.current().returned()) {
     exec(wl.body);
     boolean = interp_cast<BooleanValue>(eval(wl.cond));
   }
@@ -175,10 +177,10 @@ void Interpreter::visit(Call& call) {
     frame.Update(func.arguments[i], eval(call.arguments[i]));
   }
 
-  frame.SetReturn(&NoneSingleton);
-
   heap.push(frame);
   exec(func.code);
+  if (!frame.returned())
+    frame.SetReturn(&NoneSingleton);
   Return(heap.pop().GetReturn());
 }
 

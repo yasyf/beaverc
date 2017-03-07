@@ -43,6 +43,10 @@ public:
     return this->ret;
   }
 
+  bool returned() {
+    return this->ret != nullptr;
+  }
+
   StackFrame* CreateChild() {
     return new StackFrame(this);
   }
