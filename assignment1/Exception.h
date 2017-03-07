@@ -4,32 +4,52 @@
 #include <exception>
 #include "Value.h"
 
-class InterpreterException : public std::exception {
+using namespace std;
+
+class InterpreterException : public exception {
 private:
-  std::string _msg;
+  string _msg;
 
 public:
-  InterpreterException(const std::string& msg) : _msg(msg) {}
+  InterpreterException(const string& msg) : _msg(msg) {}
+
+  virtual string description() const = 0;
 
   virtual const char* what() const throw() {
-    return _msg.c_str();
+    return (new string(description() + ": " + _msg))->c_str();
   }
 };
 
 class UninitializedVariableException : public InterpreterException {
   using InterpreterException::InterpreterException;
+
+  string description() const override {
+    return "uninitialized variable";
+  }
 };
 
 class IllegalCastException : public InterpreterException {
 public:
   IllegalCastException(Value *val) : InterpreterException(val->toString()) {}
+
+  string description() const override {
+    return "illegal cast";
+  }
 };
 
 class IllegalArithmeticException : public InterpreterException {
 public:
   IllegalArithmeticException() : InterpreterException("divide by zero") {}
+
+  string description() const override {
+    return "illegal arithmetic";
+  }
 };
 
 class RuntimeException : public InterpreterException {
   using InterpreterException::InterpreterException;
+
+  string description() const override {
+    return "runtime exception";
+  }
 };
