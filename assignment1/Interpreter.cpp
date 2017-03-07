@@ -31,7 +31,11 @@ Value* NativeInput(vector<Value *> args) {
 
 Value* NativeIntcast(vector<Value *> args) {
   StringValue *str = interp_cast<StringValue>(args[0]);
-  return new IntegerValue(stoi(str->value));
+  try {
+    return new IntegerValue(stoi(str->value));
+  } catch(std::invalid_argument &ex) {
+    throw IllegalCastException(str);
+  }
 }
 
 Interpreter::Interpreter() : heap() {

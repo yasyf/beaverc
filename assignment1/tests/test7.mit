@@ -1,0 +1,6 @@
+print("Hello"); //this should print 'Hello' to the console.
+oldprint = print;
+print = fun(s){
+    oldprint("OUTPUT: " + s);
+};
+print("Hello"); //this should print 'OUTPUT: Hello' to the console.
