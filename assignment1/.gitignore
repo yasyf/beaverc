@@ -6,3 +6,4 @@ parser.cpp
 parser.h
 print
 interpret
+.gdb_history
