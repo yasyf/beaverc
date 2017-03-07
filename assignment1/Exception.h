@@ -39,7 +39,7 @@ public:
 
 class IllegalArithmeticException : public InterpreterException {
 public:
-  IllegalArithmeticException() : InterpreterException("divide by zero") {}
+  using InterpreterException::InterpreterException;
 
   string description() const override {
     return "illegal arithmetic";

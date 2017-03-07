@@ -266,7 +266,7 @@ void Interpreter::visit(BinaryOp<MUL>& mulop) {
 void Interpreter::visit(BinaryOp<DIV>& divop) {
   visitIntOp(divop, [] (int a, int b) {
     if (b == 0) {
-      throw IllegalArithmeticException();
+      throw IllegalArithmeticException("divide by zero");
     }
     return a / b;
   });
