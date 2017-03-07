@@ -9,11 +9,11 @@
 using namespace std;
 
 class NativeFunction : public FunctionValue {
-  const function<Value*(vector<Value *>)> &func;
+  function<Value*(vector<Value*>)> func;
 
 public:
 
-  NativeFunction(vector<string> arguments, const function<Value*(vector<Value *>)> &func)
+  NativeFunction(vector<string> arguments, function<Value*(vector<Value*>)> func)
     : FunctionValue(new StackFrame(), new Block(), arguments), func(func) {}
 
   Value* call(vector<Value *> args) {

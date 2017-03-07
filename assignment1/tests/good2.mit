@@ -1,11 +1,14 @@
 
 
-x = 7; 
+x = 7;
 foo = fun(x val){
+  print("in fun");
    if(x>0){
-      foo(x-1, val + "x"); 
+      print("calling with x=" + x);
+      foo(x-1, val + "x");
    }else{
+      print(x + "< 0");
       return val;
-   } 
+   }
 };
 print(foo(5, ""));

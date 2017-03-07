@@ -278,6 +278,8 @@ void Interpreter::visit(UnaryOp<NEG>& negop) {
   ReturnVal(new IntegerValue(-val->value));
 }
 
-void Interpreter::visit(Program& prog) {}
+void Interpreter::visit(Program& prog) {
+  exec(prog.block);
+}
 
 void Interpreter::visit(Global& global) {}

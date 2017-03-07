@@ -77,7 +77,9 @@ punctuation "="|"("|")"|"{"|"}"|";"|","|":"|"."|"["|"]"
 }
 
 {str_const} {
-  yylval->strconst = new string(yytext);
+  string s(yytext);
+  s = s.substr(1, s.size() - 2);
+  yylval->strconst = new string(s);
   return T_str;
 }
 

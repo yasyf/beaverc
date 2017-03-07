@@ -3,8 +3,8 @@ CXX = g++
 LEX = flex
 YACC = bison
 
-CFLAGS = -std=c++11
-CXXFLAGS = -std=c++11
+CFLAGS = -std=c++11 -g
+CXXFLAGS = -std=c++11 -g
 LDFLAGS =
 
 interpret: lexer.c parser.cpp interpret.o parser.o lexer.o AST.o FunctionScanner.o Interpreter.o

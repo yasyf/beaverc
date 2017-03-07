@@ -12,7 +12,7 @@ class Heap {
 public:
   StackFrame *global;
 
-  Heap() : global(), frames() {
+  Heap() : global(new StackFrame()), frames() {
     this->frames.push(this->global);
   }
 
