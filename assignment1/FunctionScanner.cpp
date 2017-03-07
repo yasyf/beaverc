@@ -2,7 +2,7 @@
 
 using namespace std;
 
-FunctionScanner(StackFrame *stack) : stack(stack) {}
+FunctionScanner::FunctionScanner(StackFrame *stack) : stack(stack) {}
 
 void FunctionScanner::visit(Program& prog) {}
 

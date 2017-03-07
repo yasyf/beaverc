@@ -6,24 +6,32 @@
 #include <set>
 #include <vector>
 #include "AST.h"
+#include "Stack.fwd.h"
 
 using namespace std;
 
 class Value {
+public:
   virtual string toString() = 0;
   virtual bool equals(Value *other) = 0;
 };
 
 class NoneValue : public Value {
+public:
   string toString() override {
     return "None";
   }
 
   bool equals(Value *other) override {
-    return dynamic_cast<NoneValue>(other) != nullptr;
+    return dynamic_cast<NoneValue*>(other) != nullptr;
+  }
+
+  static NoneValue* Singleton() {
+    static NoneValue instance;
+
+    return &instance;
   }
 };
-const NoneSingleton = NoneValue();
 
 template <typename T>
 class ConstantValue : public Value {
@@ -33,24 +41,30 @@ public:
   ConstantValue(T value) : value(value) {}
 
   bool equals(Value *other) override {
-    T *otherT = dynamic_cast<T*>(other);
+    ConstantValue<T> *otherT = dynamic_cast<ConstantValue<T>*>(other);
     return otherT != nullptr && otherT->value == value;
   }
 };
 
 class BooleanValue : public ConstantValue<bool> {
+  using ConstantValue<bool>::ConstantValue;
+
   string toString() override {
     return value ? "true" : "false";
   }
 };
 
 class IntegerValue : public ConstantValue<int> {
+  using ConstantValue<int>::ConstantValue;
+
   string toString() override {
     return to_string(value);
   }
 };
 
 class StringValue : public ConstantValue<string> {
+  using ConstantValue<string>::ConstantValue;
+
   string toString() override {
     return value;
   }
@@ -72,7 +86,7 @@ public:
     FunctionValue *func = dynamic_cast<FunctionValue*>(other);
     return func != nullptr && func->frame == frame && func->code == code;
   }
-}
+};
 
 class RecordValue : public Value {
 public:
@@ -84,7 +98,7 @@ public:
     ostringstream oss;
     oss << "{";
     for (auto& kv : record) {
-      oss << kv.first << ":" << kv.second.toString() << " ";
+      oss << kv.first << ":" << kv.second->toString() << " ";
     }
     oss << "}";
     return oss.str();
@@ -99,7 +113,6 @@ public:
   }
 
   Value* Read(string key) {
-    return record.count() ? record[key] : &NoneSingleton;
+    return record.count(key) ? record[key] : NoneValue::Singleton();
   }
-}
-
+};

@@ -2,6 +2,7 @@
 
 #include "Visitor.h"
 #include "Heap.h"
+#include "Op.h"
 
 using namespace std;
 
@@ -16,9 +17,9 @@ class Interpreter : public Visitor {
 
   void print(string msg, bool newline);
   void println(string msg);
-  void exec(AST_node *node);
+  void exec(AST_node *node, Value *asval);
   Value* eval(Expression *exp);
-  void Return(Value *retval);
+  void ReturnVal(Value *retval);
 
 public:
   Interpreter();
@@ -41,6 +42,8 @@ public:
   void visit(ValueConstant<std::string>& strconst) override;
   void visit(ValueConstant<int>& intconst) override;
   void visit(NullConstant& nullconst) override;
+  template<BinOpSym op, typename F>
+  void visitIntOp(BinaryOp<op>& binop, F func);
   void visit(BinaryOp<OR>& orop) override;
   void visit(BinaryOp<AND>& andop) override;
   void visit(BinaryOp<LT>& ltop) override;

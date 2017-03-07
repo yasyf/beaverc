@@ -3,54 +3,8 @@
 #include <map>
 #include <stack>
 #include "Value.h"
+#include "Stack.h"
 #include "Exception.h"
-
-class StackFrame {
-  Value *ret;
-  map<string, Value*> vars;
-
-public:
-  StackFrame *parent;
-  set<string> globals;
-
-  StackFrame(StackFrame *parent) : parent(parent), vars(), globals() {}
-
-  void Update(string var, Value *val) {
-    vars[var] = val;
-  }
-
-  void Initialize(string var) {
-    vars[var] = &NoneSingleton;
-  }
-
-  bool Contains(string var) {
-    return vars.count(var) > 0;
-  }
-
-  Value* Read(string var) {
-    if (Contains(var)) {
-      return vars[var];
-    } else {
-      return nullptr;
-    }
-  }
-
-  void SetReturn(Value *ret) {
-    this->ret = ret;
-  }
-
-  Value* GetReturn() {
-    return this->ret;
-  }
-
-  bool returned() {
-    return this->ret != nullptr;
-  }
-
-  StackFrame* CreateChild() {
-    return new StackFrame(this);
-  }
-};
 
 class Heap {
   std::stack<StackFrame *> frames;
@@ -58,7 +12,7 @@ class Heap {
 public:
   StackFrame *global;
 
-  Heap() : global(nullptr), frames() {
+  Heap() : global(), frames() {
     this->frames.push(this->global);
   }
 
@@ -71,23 +25,24 @@ public:
   }
 
   StackFrame* pop() {
-    return frames.pop();
+    StackFrame *frame = frames.top();
+    frames.pop();
+    return frame;
   }
 
-  void UpdateVar(string var, Value val) {
+  void UpdateVar(string var, Value *val) {
     if (current()->globals.count(var)) {
-      global.Update(var, val);
+      global->Update(var, val);
     } else {
       current()->Update(var, val);
     }
   }
 
-  Value ReadVar(string var) {
-    Value *val;
+  Value* ReadVar(string var) {
     StackFrame *curr = current();
     while (curr) {
       if (curr->globals.count(var)) {
-        return global.Read(var);
+        return global->Read(var);
       } else if (curr->Contains(var)) {
         return curr->Read(var);
       } else {

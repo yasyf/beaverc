@@ -1,8 +1,8 @@
+#include <iostream>
 #include "parser.h"
 #include "lexer.h"
 #include "AST.h"
 #include "PrettyPrinter.h"
-#include <iostream>
 
 using namespace std;
 

@@ -4,4 +4,5 @@ lexer.c
 lexer.h
 parser.cpp
 parser.h
-main
+print
+interpret

@@ -7,10 +7,11 @@ CFLAGS = -std=c++11
 CXXFLAGS = -std=c++11
 LDFLAGS =
 
-HEADERS = lexer.h parser.h AST.h
+interpret: lexer.c parser.cpp interpret.o parser.o lexer.o AST.o FunctionScanner.o Interpreter.o
+	$(CXX) $(LDFLAGS) -o $@ interpret.o parser.o lexer.o AST.o FunctionScanner.o Interpreter.o
 
-main: lexer.c parser.cpp main.o parser.o lexer.o AST.o PrettyPrinter.o
-	$(CXX) $(LDFLAGS) -o $@ main.o parser.o lexer.o AST.o PrettyPrinter.o
+print: lexer.c parser.cpp print.o parser.o lexer.o AST.o PrettyPrinter.o
+	$(CXX) $(LDFLAGS) -o $@ print.o parser.o lexer.o AST.o PrettyPrinter.o
 
 lexer.c: lexer.lex
 	$(LEX) --debug --header-file=lexer.h -o lexer.c lexer.lex
@@ -22,7 +23,7 @@ parser.cpp: parser.yy
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f main *.o
+	rm -f print interpret *.o
 
 extraclean: clean
 	rm -f lexer.c lexer.h parser.cpp parser.h

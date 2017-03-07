@@ -4,17 +4,17 @@
 #include <functional>
 #include <iostream>
 #include "Value.h"
+#include "Stack.h"
 
 using namespace std;
 
 class NativeFunction : public FunctionValue {
-  static StackFrame *sharedFrame = new StackFrame();
-  static Block *sharedBlock = new Block();
-  function<Value*(vector<Value *>)> &func;
+  const function<Value*(vector<Value *>)> &func;
 
 public:
 
-  NativeFunction(vector<string> arguments, F &func) : FunctionValue(sharedFrame, sharedBlock, arguments), func(func) {}
+  NativeFunction(vector<string> arguments, const function<Value*(vector<Value *>)> &func)
+    : FunctionValue(new StackFrame(), new Block(), arguments), func(func) {}
 
   Value* call(vector<Value *> args) {
     return func(args);
