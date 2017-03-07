@@ -206,26 +206,26 @@ void Interpreter::visit(BinaryOp<AND>& andop) {
 }
 
 void Interpreter::visit(BinaryOp<LT>& ltop) {
-  BooleanValue *left = interp_cast<BooleanValue>(eval(ltop.left));
-  BooleanValue *right = interp_cast<BooleanValue>(eval(ltop.right));
+  IntegerValue *left = interp_cast<IntegerValue>(eval(ltop.left));
+  IntegerValue *right = interp_cast<IntegerValue>(eval(ltop.right));
   ReturnVal(new BooleanValue(left->value < right->value));
 }
 
 void Interpreter::visit(BinaryOp<LTE>& lteop) {
-  BooleanValue *left = interp_cast<BooleanValue>(eval(lteop.left));
-  BooleanValue *right = interp_cast<BooleanValue>(eval(lteop.right));
+  IntegerValue *left = interp_cast<IntegerValue>(eval(lteop.left));
+  IntegerValue *right = interp_cast<IntegerValue>(eval(lteop.right));
   ReturnVal(new BooleanValue(left->value <= right->value));
 }
 
 void Interpreter::visit(BinaryOp<GT>& gtop) {
-  BooleanValue *left = interp_cast<BooleanValue>(eval(gtop.left));
-  BooleanValue *right = interp_cast<BooleanValue>(eval(gtop.right));
+  IntegerValue *left = interp_cast<IntegerValue>(eval(gtop.left));
+  IntegerValue *right = interp_cast<IntegerValue>(eval(gtop.right));
   ReturnVal(new BooleanValue(left->value > right->value));
 }
 
 void Interpreter::visit(BinaryOp<GTE>& gteop) {
-  BooleanValue *left = interp_cast<BooleanValue>(eval(gteop.left));
-  BooleanValue *right = interp_cast<BooleanValue>(eval(gteop.right));
+  IntegerValue *left = interp_cast<IntegerValue>(eval(gteop.left));
+  IntegerValue *right = interp_cast<IntegerValue>(eval(gteop.right));
   ReturnVal(new BooleanValue(left->value >= right->value));
 }
 
