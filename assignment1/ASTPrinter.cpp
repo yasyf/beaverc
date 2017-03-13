@@ -140,14 +140,14 @@ void ASTPrinter::visit(Function& func) {
 void ASTPrinter::visit(Record& rec) {
   bool r = this->open("Record");
   bool first = true;
-  for (auto& kv : rec.record) {
+  rec.record.iterate([this, &first] (string key, Expression *value) {
     if (first)
       first = false;
     else
       this->nextline();
-    this->print(kv.first);
+    this->print(key);
     this->print(" : ");
-    kv.second->accept(*this);
-  }
+    value->accept(*this);
+  });
   this->close(r);
 }

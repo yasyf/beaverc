@@ -153,9 +153,7 @@ void Interpreter::visit(NullConstant& nullconst) {
 
 void Interpreter::visit(Record& rec) {
   RecordValue *record = new RecordValue();
-  for (auto& kv : rec.record) {
-    record->Update(kv.first, eval(kv.second));
-  }
+  rec.record.iterate([record, this] (string key, Expression *value) { record->Update(key, eval(value)); });
   ReturnVal(record);
 }
 

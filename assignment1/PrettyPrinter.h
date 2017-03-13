@@ -9,6 +9,7 @@ using namespace std;
 //a subtype of visitor.
 class PrettyPrinter : public Visitor {
 protected:
+  int first_block = true;
   int indent_level = 0;
   char last_printed = 0;
   bool line_started = false;

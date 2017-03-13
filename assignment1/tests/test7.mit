@@ -1,7 +1,8 @@
-print("Hello"); //this should print 'Hello' to the console.
-oldprint = print;
-print = fun(s){
-    oldprint("OUTPUT: " + s);
+z = 1;
+f2 = fun() {
+  global z;
+
+  z = z + 1;
+  print(z);
 };
-print("Hello"); //this should print 'OUTPUT: Hello' to the console.
-print(7/0);
+f2();

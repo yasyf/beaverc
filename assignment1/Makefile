@@ -7,13 +7,13 @@ CFLAGS = -std=c++11 -g
 CXXFLAGS = -std=c++11 -g
 LDFLAGS =
 
-interpret: lexer.c parser.cpp interpret.o parser.o lexer.o AST.o FunctionScanner.o Interpreter.o
+interpreter: lexer.c parser.cpp interpret.o parser.o lexer.o AST.o FunctionScanner.o Interpreter.o
 	$(CXX) $(LDFLAGS) -o $@ interpret.o parser.o lexer.o AST.o FunctionScanner.o Interpreter.o
 
-print: lexer.c parser.cpp print.o parser.o lexer.o AST.o PrettyPrinter.o
+printer: lexer.c parser.cpp print.o parser.o lexer.o AST.o PrettyPrinter.o
 	$(CXX) $(LDFLAGS) -o $@ print.o parser.o lexer.o AST.o PrettyPrinter.o
 
-astprint: lexer.c parser.cpp astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
+astprinter: lexer.c parser.cpp astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
 	$(CXX) $(LDFLAGS) -o $@ astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
 
 lexer.c: lexer.lex
@@ -26,7 +26,7 @@ parser.cpp: parser.yy
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f astprint print interpret *.o
+	rm -f astprinter printer interpreter *.o
 
 extraclean: clean
 	rm -f lexer.c lexer.h parser.cpp parser.h

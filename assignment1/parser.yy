@@ -253,7 +253,7 @@ Record: '{' RecordContents '}' { $$ = $2; };
 
 RecordContents: RecordContents T_name ':' Expression ';' {
                     $$ = $1;
-                    $1->Add(*$2, $4);
+                    $1->record.insert(*$2, $4);
                 }
             | %empty { $$ = new Record(); }
             ;

@@ -5,6 +5,7 @@
 #include <string>
 #include "Op.h"
 #include "Visitor.h"
+#include "OrderedMap.h"
 
 class AST_node {
 public:
@@ -169,11 +170,10 @@ public:
 
 class Record: public Expression {
 public:
-  std::map<std::string, Expression *> record;
+  OrderedMap<std::string, Expression*> record;
 
   Record();
   void accept(Visitor& v) override;
-  void Add(std::string key, Expression *value);
 };
 
 // Ops

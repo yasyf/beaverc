@@ -4,7 +4,7 @@ lexer.c
 lexer.h
 parser.cpp
 parser.h
-print
-astprint
-interpret
+printer
+astprinter
+interpreter
 .gdb_history

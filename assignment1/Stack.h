@@ -7,7 +7,7 @@
 using namespace std;
 
 class StackFrame {
-  Value *ret;
+  Value *ret = nullptr;
   map<string, Value*> vars;
 
 public:

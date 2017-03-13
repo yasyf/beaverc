@@ -121,10 +121,6 @@ void Function::accept(Visitor& v) {
 
 Record::Record() : record() {}
 
-void Record::Add(string key, Expression *value) {
-  this->record[key] = value;
-}
-
 void Record::accept(Visitor& v) {
   v.visit(*this);
 }

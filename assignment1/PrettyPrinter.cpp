@@ -44,13 +44,20 @@ void PrettyPrinter::visit(Program& prog) {
 }
 
 void PrettyPrinter::visit(Block& block) {
-  this->println("{");
-  this->indent();
-  for (Statement *stmt : block.statements) {
-    stmt->accept(*this);
+  if (first_block) {
+    first_block = false;
+    for (Statement *stmt : block.statements) {
+      stmt->accept(*this);
+    }
+  } else {
+    this->println("{");
+    this->indent();
+    for (Statement *stmt : block.statements) {
+      stmt->accept(*this);
+    }
+    this->dedent();
+    this->print("}");
   }
-  this->dedent();
-  this->println("}");
 }
 
 void PrettyPrinter::visit(Name& name) {
@@ -109,9 +116,10 @@ void PrettyPrinter::visit(IfStatement& is) {
   this->print(") ");
   is.thenBlock->accept(*this);
   if (!is.elseBlock->empty()) {
-    this->print("else ");
+    this->print(" else ");
     is.elseBlock->accept(*this);
   }
+  this->nextline();
 }
 
 void PrettyPrinter::visit(WhileLoop& wl) {
@@ -119,6 +127,7 @@ void PrettyPrinter::visit(WhileLoop& wl) {
   wl.cond->accept(*this);
   this->print(") ");
   wl.body->accept(*this);
+  this->nextline();
 }
 
 void PrettyPrinter::visit(Return& ret) {
@@ -137,25 +146,22 @@ void PrettyPrinter::visit(Function& func) {
       this->print(" ");
     name->accept(*this);
   }
-  this->println(") {");
-  this->indent();
+  this->print(") ");
   func.body->accept(*this);
-  this->dedent();
-  this->println("}");
 }
 
 void PrettyPrinter::visit(Record& rec) {
   this->print("{");
   bool first = true;
-  for (auto& kv : rec.record) {
+  rec.record.iterate([this, &first] (string key, Expression *value) {
     if (first)
       first = false;
     else
       this->print("; ");
-    this->print(kv.first);
+    this->print(key);
     this->print(" : ");
-    kv.second->accept(*this);
-  }
+    value->accept(*this);
+  });
   this->println("}");
 }
 

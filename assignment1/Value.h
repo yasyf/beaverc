@@ -7,6 +7,7 @@
 #include <vector>
 #include "AST.h"
 #include "Stack.fwd.h"
+#include "OrderedMap.h"
 
 using namespace std;
 
@@ -50,7 +51,7 @@ class BooleanValue : public ConstantValue<bool> {
   using ConstantValue<bool>::ConstantValue;
 
   string toString() override {
-    return value ? "true" : "false";
+    return value ? "True" : "False";
   }
 };
 
@@ -90,16 +91,14 @@ public:
 
 class RecordValue : public Value {
 public:
-  map<string, Value*> record;
+  OrderedMap<string, Value*> record;
 
   RecordValue() : record(record) {}
 
   string toString() override {
     ostringstream oss;
     oss << "{";
-    for (auto& kv : record) {
-      oss << kv.first << ":" << kv.second->toString() << " ";
-    }
+    record.iterate([&oss] (string key, Value *value) { oss << key << ":" << value->toString() << " "; });
     oss << "}";
     return oss.str();
   }
@@ -109,7 +108,7 @@ public:
   }
 
   void Update(string key, Value *val) {
-    record[key] = val;
+    record.insert(key, val);
   }
 
   Value* Read(string key) {
