@@ -19,7 +19,7 @@ check_interpret() {
     echo -e "$GREEN ✓ $1 $DEFAULT"
   else
     echo -e "$RED ✘ $1 $DEFAULT"
-    echo $output
+    echo "$output"
   fi
 }
 
