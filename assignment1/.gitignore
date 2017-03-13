@@ -1,4 +1,3 @@
-*.out
 *.o
 lexer.c
 lexer.h
