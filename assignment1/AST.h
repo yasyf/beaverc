@@ -149,6 +149,14 @@ public:
   }
 };
 
+class StringConstant : public Constant {
+public:
+  std::string value;
+
+  StringConstant(string value);
+  void accept(Visitor& v) override;
+};
+
 class NullConstant : public Constant {
 public:
   NullConstant() {}

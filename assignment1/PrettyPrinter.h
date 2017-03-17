@@ -40,7 +40,7 @@ public:
   void visit(Function& func) override;
   void visit(Record& rec) override;
   void visit(ValueConstant<bool>& boolconst) override;
-  void visit(ValueConstant<std::string>& strconst) override;
+  void visit(StringConstant& strconst) override;
   void visit(ValueConstant<int>& intconst) override;
   void visit(NullConstant& nullconst) override;
   void visit(BinaryOp<OR>& orop) override;

@@ -271,7 +271,7 @@ PositiveUnit: LHS             { $$ = $1; }
             ;
 
 Constant: T_int { $$ = new ValueConstant<int>($1); }
-        | T_str { $$ = new ValueConstant<string>(*$1); }
+        | T_str { $$ = new StringConstant(*$1); }
         | T_bool { $$ = new ValueConstant<bool>($1); }
         | T_none { $$ = new NullConstant(); }
         ;

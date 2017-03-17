@@ -169,7 +169,7 @@ void PrettyPrinter::visit(ValueConstant<bool>& boolconst) {
   this->print(boolconst.value ? "true" : "false");
 }
 
-void PrettyPrinter::visit(ValueConstant<std::string>& strconst) {
+void PrettyPrinter::visit(StringConstant& strconst) {
   this->print("\"" + strconst.value + "\"");
 }
 

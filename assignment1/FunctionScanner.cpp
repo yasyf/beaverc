@@ -49,7 +49,7 @@ void FunctionScanner::visit(Record& rec) {}
 
 void FunctionScanner::visit(ValueConstant<bool>& boolconst) {}
 
-void FunctionScanner::visit(ValueConstant<std::string>& strconst) {}
+void FunctionScanner::visit(StringConstant& strconst) {}
 
 void FunctionScanner::visit(ValueConstant<int>& intconst) {}
 

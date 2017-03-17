@@ -18,6 +18,7 @@ class Record;
 class NullConstant;
 template <class T>
 class ValueConstant;
+class StringConstant;
 template <BinOpSym op>
 class BinaryOp;
 template <UnOpSym op>

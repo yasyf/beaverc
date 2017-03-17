@@ -1,3 +1,4 @@
+#include <sstream>
 #include "AST.h"
 #include "Visitor.h"
 
@@ -122,6 +123,43 @@ void Function::accept(Visitor& v) {
 Record::Record() : record() {}
 
 void Record::accept(Visitor& v) {
+  v.visit(*this);
+}
+
+// StringConstant
+
+StringConstant::StringConstant(string value) {
+  if (value.find("\\") == string::npos) {
+    this->value = value;
+    return;
+  }
+
+  stringstream ss;
+  for (size_t i = 0; i < value.size(); i++) {
+    if (value[i] == '\\' && i + 1 < value.size()) {
+      switch(value[i+1]) {
+        case '\\':
+          ss << "\\";
+          break;
+        case 'n':
+          ss << "\n";
+          break;
+        case 't':
+          ss << "\t";
+          break;
+        default:
+          ss << "\\" << value[i+1];
+          break;
+      }
+      i++;
+    } else {
+      ss << value[i];
+    }
+  }
+  this->value = ss.str();
+}
+
+void StringConstant::accept(Visitor& v) {
   v.visit(*this);
 }
 

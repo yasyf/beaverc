@@ -139,7 +139,7 @@ void Interpreter::visit(ValueConstant<bool>& boolconst) {
   ReturnVal(new BooleanValue(boolconst.value));
 }
 
-void Interpreter::visit(ValueConstant<string>& strconst) {
+void Interpreter::visit(StringConstant& strconst) {
   ReturnVal(new StringValue(strconst.value));
 }
 

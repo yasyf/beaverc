@@ -16,7 +16,7 @@ whitespace   ([ \t\n]*)
 comment (\/\/.*\n)
 
 int_const [0-9][0-9]*
-str_const \"((\\\")|[^"])*\"
+str_const \"((\\t)|(\\n)|(\\\\)|(\\\")|[^"\\])*\"
 bool_const true|false
 none_const None
 
