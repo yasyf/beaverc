@@ -1,0 +1,24 @@
+{
+  "a1" : {
+    "schema" : "v1",
+    "lang" : "cpp",
+    "root_dir" : "assignment1",
+    "makefile_dir" : ".",
+    "bin_dir" : ".",
+    "bin" : "main",
+    "tests" : "tests",
+    "stdin_or_arg" : "stdin",
+    "feedback_dir" : "assignment1-feedback"
+  },
+  "a2" : {
+    "schema" : "v1",
+    "lang" : "cpp",
+    "root_dir" : "assignment1",
+    "makefile_dir" : ".",
+    "bin_dir" : ".",
+    "bin" : "interpreter",
+    "tests" : "tests",
+    "stdin_or_arg" : "arg",
+    "feedback_dir" : "assignment2-feedback"
+  }
+}
