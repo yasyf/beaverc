@@ -9,7 +9,6 @@
 
 struct Constant
 {
-
   virtual ~Constant() { }
 };
 

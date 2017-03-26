@@ -87,19 +87,19 @@ enum class Operation
     // Stack:    S :: operand 2 :: operand 1 => S
     FieldStore,
 
-    // Description: store value into field of record 
+    // Description: load value from index of record 
     // Operand 0: N/A
     // Operand 1: the index to read from (can be arbitrary value. indexing adheres to semantics of Assignment #2)
     // Operand 2: the record to read from
     // Stack:     S :: operand 2 :: operand 1 => S
     IndexLoad,
 
-    // Description: store value into field of record 
+    // Description: store value into index of record
     // Operand 0: N/A
     // Operand 1: the value to store
-    // Operand 2: the index to read from (can be arbitrary value. indexing adheres to semantics of Assignment #2)
-    // Operand 3: the record to read from
-    // Stack:     S :: operand 2 :: operand 1 => S
+    // Operand 2: the index to store to (can be arbitrary value. indexing adheres to semantics of Assignment #2)
+    // Operand 3: the record to store into
+    // Stack:     S :: operand 3 :: operand 2 :: operand 1 => S
     IndexStore,
     
     // Description: allocate a closure
