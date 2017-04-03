@@ -136,7 +136,7 @@ As in Assignment #2,  the MITScript VM includes the following values:
 
   - None
   - Boolean
-  - Integer
+  - Integer (namely, 32-bit integers)
   - String
   - Record
 
@@ -261,7 +261,9 @@ The files VirtualMachine/types.h and VirtualMachine/instructions.h give a more p
 
 **Frames**: A stack frame in MITScript includes 1) dedicated storage for the value of local variables,  2) dedicated storage for local variable references that are accessed/passed in/passed by reference,  and 3) an operand stack.
 
-**Heap**:  Some of your runtime structures will be allocated in a heap. It is up to your discretion as to how you store an MITScript's data and runtime structures for this assignment. However,  your submission for the written portion of this project should match the implementation strategy your group has chosen.
+**Heap**:  Some of your runtime structures will be allocated in a heap. 
+
+It is up to your discretion as to how you store an MITScript's data and runtime structures for this assignment. However,  your submission for the written portion of this project should match the implementation strategy your group has chosen.
 
 ### Errors
 

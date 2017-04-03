@@ -50,17 +50,17 @@ int yyerror(BCLTYPE * yylloc, yyscan_t yyscanner, Function*& out, const char* me
 
 
 %union {
-	int64_t intconst;
-	std::string* strconst;
+    int64_t intconst;
+    std::string* strconst;
 
-	Function*   func;
-	vector<shared_ptr<Function>>*   funclist;
+    Function*   func;
+    vector<shared_ptr<Function>>*   funclist;
 
     vector<string>* identlist;
-	
-	Instruction* inst;
-	vector<Instruction>* instlist;
-	
+
+    Instruction* inst;
+    vector<Instruction>* instlist;
+
 
     Constant* constant;
     vector<shared_ptr<Constant>>* constantlist;
@@ -236,7 +236,7 @@ Constant :
 }
 | T_int 
 {
-	$$ = new Integer{$1};
+	$$ = new Integer{safe_cast($1)};
 }
 
 ConstantListStar:

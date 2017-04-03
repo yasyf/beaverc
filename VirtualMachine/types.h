@@ -26,7 +26,7 @@ struct Integer : public Constant
 
   }
 
-   int64_t value;
+   int32_t value;
 
    virtual ~Integer() { }
 };
