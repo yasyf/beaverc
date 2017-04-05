@@ -80,4 +80,27 @@ namespace BC {
 
     InstructionList instructions;
   };
+
+  class FunctionLinkedList : public enable_shared_from_this<FunctionLinkedList> {
+  public:
+    shared_ptr<Function> function;
+    shared_ptr<FunctionLinkedList> last;
+    vector<string> local_reference_vars_;
+    vector<string> free_reference_vars_;
+
+    FunctionLinkedList(shared_ptr<Function> function) : function(function), last(nullptr),
+      local_reference_vars_(), free_reference_vars_()
+    {}
+
+    shared_ptr<FunctionLinkedList> extend(shared_ptr<Function> function) {
+      shared_ptr<FunctionLinkedList> fll(new FunctionLinkedList(function));
+      fll->last = shared_from_this();
+      return fll;
+    }
+
+    void reset_reference_vars() {
+      local_reference_vars_.clear();
+      free_reference_vars_.clear();
+    }
+  };
 }

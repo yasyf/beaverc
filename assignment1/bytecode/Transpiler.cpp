@@ -3,32 +3,22 @@
 #include <algorithm>
 #include <cassert>
 #include <experimental/optional>
+#include "Util.h"
 #include "Transpiler.h"
 #include "Exception.h"
+#include "TranspilerFunctionScanner.h"
 
 #define DEBUG 1
 
 using namespace std;
 using namespace std::experimental;
 
-template<typename T>
-optional<size_t> index(vector<T> &v, T &x, bool insert = false) {
-  auto pos = find(v.begin(), v.end(), x);
-  if (pos != v.end()) {
-    return distance(v.begin(), pos);
-  } else if (insert) {
-    v.push_back(x);
-    return v.size() - 1;
-  } else {
-    return nullopt;
-  }
-}
-
 namespace BC {
   Transpiler::Transpiler() {
-    result = new Function();
+    result = shared_ptr<Function>(new Function());
     result->parameter_count_ = 0;
-    current = result;
+
+    parents = shared_ptr<FunctionLinkedList>(new FunctionLinkedList(result));
   }
 
   void Transpiler::transpile(AST_node *node, bool storing) {
@@ -46,14 +36,14 @@ namespace BC {
     #if DEBUG
       cout << static_cast<int>(operation) << endl;
     #endif
-    current->instructions.push_back(Instruction(operation, nullopt));
+    current().instructions.push_back(Instruction(operation, nullopt));
   }
 
   void Transpiler::output(const Operation operation, int32_t operand0) {
     #if DEBUG
       cout << static_cast<int>(operation) << " " <<  operand0 << endl;
     #endif
-    current->instructions.push_back(Instruction(operation, operand0));
+    current().instructions.push_back(Instruction(operation, operand0));
   }
 
   void Transpiler::visit(Program& prog) {
@@ -67,20 +57,20 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::Name& name) {
-    if (auto i = index(current->names_, name.name)) {
+    if (auto i = index(current().names_, name.name)) {
       if (storing)
         output(Operation::StoreGlobal, *i);
       else
         output(Operation::LoadGlobal, *i);
-    } else if (auto i = index(current->free_vars_, name.name)) {
-      output(Operation::PushReference, current->local_reference_vars_.size() + *i);
+    } else if (auto i = index(current().free_vars_, name.name)) {
+      output(Operation::PushReference, current().local_reference_vars_.size() + *i);
       if (storing) {
         output(Operation::Swap);
         output(Operation::StoreReference);
       } else {
         output(Operation::LoadReference);
       }
-    } else if (auto i = index(current->local_reference_vars_, name.name)) {
+    } else if (auto i = index(current().local_reference_vars_, name.name)) {
       output(Operation::PushReference, *i);
       if (storing) {
         output(Operation::Swap);
@@ -88,15 +78,15 @@ namespace BC {
       } else {
         output(Operation::LoadReference);
       }
-    } else if (auto i = index(current->local_vars_, name.name)) {
+    } else if (auto i = index(current().local_vars_, name.name)) {
       if (storing)
         output(Operation::StoreLocal, *i);
       else
         output(Operation::LoadLocal, *i);
     } else {
-      if (storing) {
-        auto i = index(current->local_vars_, name.name, true);
-        output(Operation::StoreLocal, *i);
+      if (storing && isGlobal()) {
+        size_t i = insert(current().names_, name.name);
+        output(Operation::StoreGlobal, i);
       } else {
         throw UninitializedVariableException(name.name);
       }
@@ -110,13 +100,10 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::Assignment& assign) {
-    cout << "here" << endl;
     // Leaves value at top of stack
     transpile(assign.expr);
-    cout << "here2" << endl;
     // Handlers will know to store value instead of loading
     store(assign.lhs);
-    cout << "here3" << endl;
   }
 
   void Transpiler::visit(AST::Call& call) {
@@ -138,6 +125,52 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::Function& func) {
+    shared_ptr<Function> function(new Function());
+    function->parameter_count_ = func.arguments.size();
+    for (AST::Name* name : func.arguments)
+      insert(function->local_vars_, name->name);
+
+    // Set current context to new function
+    current().functions_.push_back(function);
+    parents->reset_reference_vars();
+    parents = parents->extend(function);
+
+    // Fill new function metadata
+    TranspilerFunctionScanner scanner(parents);
+    func.body->accept(scanner);
+
+    // Transpile new function
+    transpile(func.body);
+
+    // Restore parent function's context
+    parents = parents->last;
+
+    // Push Refs
+    for (string& var : parents->local_reference_vars_) {
+      size_t i = insert(current().local_reference_vars_, var);
+      output(Operation::PushReference, i);
+    }
+    size_t num_local_refs = current().local_reference_vars_.size();
+    for (string& var : parents->free_reference_vars_) {
+      size_t i = index(current().free_vars_, var).value();
+      output(Operation::PushReference, num_local_refs + i);
+    }
+
+    // Push num_refs
+    size_t num_refs = parents->local_reference_vars_.size() + parents->free_reference_vars_.size();
+    if (num_refs > 0) {
+      shared_ptr<Constant> num_refs_const(new Integer(num_refs));
+      size_t i = insert(current().constants_, num_refs_const);
+      output(Operation::LoadConst, i);
+    }
+
+    // Push function
+    output(Operation::LoadFunc, current().functions_.size() - 1);
+
+    // Alloc closure if needed
+    if (num_refs > 0) {
+      output(Operation::AllocClosure);
+    }
   }
 
   void Transpiler::visit(AST::Record& rec) {
@@ -145,26 +178,26 @@ namespace BC {
 
   void Transpiler::visit(AST::ValueConstant<bool>& boolconst) {
     shared_ptr<Constant> constant(new Boolean(boolconst.value));
-    auto i = index(current->constants_, constant, true);
-    output(Operation::LoadConst, *i);
+    size_t i = insert(current().constants_, constant);
+    output(Operation::LoadConst, i);
   }
 
   void Transpiler::visit(AST::StringConstant& strconst) {
     shared_ptr<Constant> constant(new String(strconst.value));
-    auto i = index(current->constants_, constant, true);
-    output(Operation::LoadConst, *i);
+    size_t i = insert(current().constants_, constant);
+    output(Operation::LoadConst, i);
   }
 
   void Transpiler::visit(AST::ValueConstant<int>& intconst) {
     shared_ptr<Constant> constant(new Integer(intconst.value));
-    auto i = index(current->constants_, constant, true);
-    output(Operation::LoadConst, *i);
+    size_t i = insert(current().constants_, constant);
+    output(Operation::LoadConst, i);
   }
 
   void Transpiler::visit(AST::NullConstant& nullconst) {
     shared_ptr<Constant> constant(new None());
-    auto i = index(current->constants_, constant, true);
-    output(Operation::LoadConst, *i);
+    size_t i = insert(current().constants_, constant);
+    output(Operation::LoadConst, i);
   }
 
   template <BinOpSym op>

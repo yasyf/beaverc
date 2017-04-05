@@ -1,8 +1,8 @@
 x = 1;
 f = fun(y)
 {
-  g = fun(z)
-  {
-     return x + y + z;
-  };
+  // g = fun(z)
+  // {
+  //    return x + y + z;
+  // };
 };

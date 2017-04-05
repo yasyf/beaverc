@@ -7,31 +7,16 @@
 using namespace std;
 
 namespace BC {
-  class Transpiler : public AST::Visitor {
+  class TranspilerFunctionScanner : public AST::Visitor {
   protected:
-    shared_ptr<FunctionLinkedList> parents;
-    bool storing;
-
+    shared_ptr<FunctionLinkedList> functions;
     Function& current() {
-      return *(parents->function);
+      return *(functions->function);
     }
-    bool isGlobal() {
-      return parents->function == result;
-    }
-    void transpile(AST::AST_node *node, bool storing = false);
-    void store(AST::AST_node *node);
-    void output(const Operation operation);
-    void output(const Operation operation, int32_t operand0);
-
-    template <BinOpSym op>
-    void visitBinop(AST::BinaryOp<op>& binop, string opstring);
-    template <UnOpSym op>
-    void visitUnop(AST::UnaryOp<op>& unop, string opstring);
+    void scan(AST::AST_node *node);
 
   public:
-    shared_ptr<Function> result;
-
-    Transpiler();
+    TranspilerFunctionScanner(shared_ptr<FunctionLinkedList> functions) : functions(functions) {};
     void visit(AST::Program& prog) override;
     void visit(AST::Block& block) override;
     void visit(AST::Name& name) override;

@@ -23,6 +23,5 @@ int main(int argc, char** argv){
   }
 
   program->accept(transpiler);
-  shared_ptr<BC::Function> func(transpiler.result);
-  printer.print(*func, cout);
+  printer.print(*transpiler.result, cout);
 }
