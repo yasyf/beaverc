@@ -9,7 +9,13 @@ using namespace std;
 namespace BC {
   class Transpiler : public AST::Visitor {
   protected:
-    bool first_block;
+    Function *current;
+    bool storing;
+
+    void transpile(AST::AST_node *node, bool storing = false);
+    void store(AST::AST_node *node);
+    void output(const Operation operation);
+    void output(const Operation operation, int32_t operand0);
 
     template <BinOpSym op>
     void visitBinop(AST::BinaryOp<op>& binop, string opstring);
@@ -19,6 +25,7 @@ namespace BC {
   public:
     Function *result;
 
+    Transpiler();
     void visit(AST::Program& prog) override;
     void visit(AST::Block& block) override;
     void visit(AST::Name& name) override;

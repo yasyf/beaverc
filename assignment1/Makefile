@@ -29,7 +29,7 @@ parser.cpp: parser.yy
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f astprinter printer interpreter *.o
+	rm -f bcprinter astprinter printer interpreter *.o
 
 extraclean: clean
 	rm -f lexer.c lexer.h parser.cpp parser.h

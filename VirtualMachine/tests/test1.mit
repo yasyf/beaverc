@@ -1,5 +1,5 @@
 x = 1;
-f = fun(y) 
+f = fun(y)
 {
   g = fun(z)
   {

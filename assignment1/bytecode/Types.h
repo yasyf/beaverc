@@ -8,54 +8,49 @@
 #include <cstdint>
 
 namespace BC {
-  struct Constant
-  {
+  struct Constant {
     virtual ~Constant() { }
   };
 
-  struct None : public Constant
-  {
-
+  struct None : public Constant {
     virtual ~None() { }
-  };
 
-  struct Integer : public Constant
-  {
-    Integer(int64_t value)
-    : value(value)
-    {
-
+    bool operator==(const None& other) {
+      return true;
     }
-
-     int32_t value;
-
-     virtual ~Integer() { }
   };
 
-  struct String : public Constant
-  {
-      String(std::string value)
-      : value(value)
-      {
+  struct Integer : public Constant {
+    int32_t value;
 
-      }
+    Integer(int64_t value) : value(value) { }
+    virtual ~Integer() { }
 
-      std::string value;
-
-      virtual ~String() { }
+    bool operator==(const Integer& other) {
+      return value == other.value;
+    }
   };
 
-  struct Boolean : public Constant
-  {
-      Boolean(bool value)
-      : value(value)
-      {
+  struct String : public Constant {
+    std::string value;
 
-      }
+    String(std::string value) : value(value) { }
+    virtual ~String() { }
 
-      bool value;
+    bool operator==(const String& other) {
+      return value == other.value;
+    }
+  };
 
-      virtual ~Boolean() { }
+  struct Boolean : public Constant {
+    bool value;
+
+    Boolean(bool value) : value(value) { }
+    virtual ~Boolean() { }
+
+    bool operator==(const Boolean& other) {
+      return value == other.value;
+    }
   };
 
   struct Function
@@ -74,7 +69,7 @@ namespace BC {
     // in their order as given in the paraemter list
     std::vector<std::string> local_vars_;
 
-      // List of local variables accessed by reference (LocalReference)
+    // List of local variables accessed by reference (LocalReference)
     std::vector<std::string> local_reference_vars_;
 
     // List of the names of non-global and non-local variables accessed by the function
