@@ -10,6 +10,7 @@
 #include "OrderedMap.h"
 
 using namespace std;
+using namespace AST;
 
 class Value {
 public:

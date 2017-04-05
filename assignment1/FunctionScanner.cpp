@@ -1,6 +1,7 @@
 #include "FunctionScanner.h"
 
 using namespace std;
+using namespace AST;
 
 FunctionScanner::FunctionScanner(StackFrame *stack) : stack(stack) {}
 

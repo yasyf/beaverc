@@ -4,6 +4,7 @@
 #include "Stack.h"
 
 using namespace std;
+using namespace AST;
 
 class FunctionScanner : public Visitor {
   StackFrame *stack;

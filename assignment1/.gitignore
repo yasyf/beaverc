@@ -6,4 +6,5 @@ parser.h
 printer
 astprinter
 interpreter
+bcprinter
 .gdb_history

@@ -4,6 +4,7 @@
 #include <string>
 #include "parser.h"
 using std::string;
+using namespace AST;
 // You can put additional header files here.
 
 %}

@@ -4,6 +4,7 @@
 #include "AST.h"
 
 using namespace std;
+using namespace AST;
 
 //This is where you get to define your pretty printer class, which should be
 //a subtype of visitor.

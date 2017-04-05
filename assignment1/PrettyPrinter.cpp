@@ -4,6 +4,7 @@
 #include "PrettyPrinter.h"
 
 using namespace std;
+using namespace AST;
 
 void PrettyPrinter::print(string msg, bool newline) {
   if (!line_started) {

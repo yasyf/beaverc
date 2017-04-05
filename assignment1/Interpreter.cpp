@@ -8,6 +8,7 @@
 #include "FunctionScanner.h"
 
 using namespace std;
+using namespace AST;
 
 template <typename T>
 T* interp_cast(Value *value) {

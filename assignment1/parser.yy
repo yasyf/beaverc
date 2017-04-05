@@ -27,6 +27,7 @@ using namespace std;
 
 
 #include "AST.h"
+using namespace AST;
 //If you need additional header files, put them here.
 
 

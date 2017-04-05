@@ -5,6 +5,7 @@
 #include "Op.h"
 
 using namespace std;
+using namespace AST;
 
 Value* NativePrint(vector<Value *> args);
 Value* NativeInput(vector<Value *> args);
