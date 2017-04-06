@@ -104,9 +104,29 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::IndexExpression& ie) {
+    if (storing) {
+      transpile(ie.base);  // S :: value :: record
+      output(Operation::Swap); // S :: record :: value
+      transpile(ie.index); // S :: record :: value :: index
+      output(Operation::Swap); // S :: record :: index :: value
+      output(Operation::IndexStore);
+    } else {
+      transpile(ie.base);
+      transpile(ie.index);
+      output(Operation::IndexLoad);
+    }
   }
 
   void Transpiler::visit(AST::FieldDereference& fd) {
+    size_t i = insert(current().names_, fd.field->name);
+    if (storing) {
+      transpile(fd.base);  // S :: value :: record
+      output(Operation::Swap); // S :: record :: value
+      output(Operation::FieldStore, i);
+    } else {
+      transpile(fd.base);
+      output(Operation::FieldLoad, i);
+    }
   }
 
   void Transpiler::visit(AST::Assignment& assign) {
