@@ -47,7 +47,7 @@ namespace BC {
   }
 
   void Transpiler::loadConst(shared_ptr<Constant> constant) {
-    size_t i = insert(current().constants_, constant);
+    size_t i = insert_by_val(current().constants_, constant);
     output(Operation::LoadConst, i);
   }
 

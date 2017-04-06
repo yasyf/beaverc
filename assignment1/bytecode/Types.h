@@ -9,7 +9,8 @@
 
 namespace BC {
   struct Constant {
-    virtual ~Constant() { }
+    virtual ~Constant() {}
+    virtual bool operator==(const Constant& other) {}
   };
 
   struct None : public Constant {
