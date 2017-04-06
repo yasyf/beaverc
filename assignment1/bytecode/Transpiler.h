@@ -35,9 +35,9 @@ namespace BC {
     void outputReturn();
 
     template <BinOpSym op>
-    void visitBinop(AST::BinaryOp<op>& binop, string opstring);
+    void visitBinop(AST::BinaryOp<op>& binop, Operation operation, bool reverse = false);
     template <UnOpSym op>
-    void visitUnop(AST::UnaryOp<op>& unop, string opstring);
+    void visitUnop(AST::UnaryOp<op>& unop, Operation operation);
 
   public:
     shared_ptr<Function> result;

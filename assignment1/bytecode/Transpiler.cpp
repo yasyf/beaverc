@@ -309,62 +309,72 @@ namespace BC {
   }
 
   template <BinOpSym op>
-  void Transpiler::visitBinop(AST::BinaryOp<op>& binop, string opstring) {
+  void Transpiler::visitBinop(AST::BinaryOp<op>& binop, Operation operation, bool reverse) {
+    if (reverse) {
+      transpile(binop.right);
+      transpile(binop.left);
+    } else {
+      transpile(binop.left);
+      transpile(binop.right);
+    }
+    output(operation);
   }
 
   template <UnOpSym op>
-  void Transpiler::visitUnop(AST::UnaryOp<op>& unop, string opstring) {
+  void Transpiler::visitUnop(AST::UnaryOp<op>& unop, Operation operation) {
+    transpile(unop.expr);
+    output(operation);
   }
 
   void Transpiler::visit(AST::BinaryOp<OR>& orop) {
-    this->visitBinop(orop, "|");
+    this->visitBinop(orop, Operation::Or);
   }
 
   void Transpiler::visit(AST::BinaryOp<AND>& andop) {
-    this->visitBinop(andop, "&");
+    this->visitBinop(andop, Operation::And);
   }
 
   void Transpiler::visit(AST::BinaryOp<LT>& ltop) {
-    this->visitBinop(ltop, "<");
+    this->visitBinop(ltop, Operation::Gt, true);
   }
 
   void Transpiler::visit(AST::BinaryOp<LTE>& lteop) {
-    this->visitBinop(lteop, "<=");
+    this->visitBinop(lteop, Operation::Geq, true);
   }
 
   void Transpiler::visit(AST::BinaryOp<GT>& gtop) {
-    this->visitBinop(gtop, ">");
+    this->visitBinop(gtop, Operation::Gt);
   }
 
   void Transpiler::visit(AST::BinaryOp<GTE>& gteop) {
-    this->visitBinop(gteop, ">=");
+    this->visitBinop(gteop, Operation::Geq);
   }
 
   void Transpiler::visit(AST::BinaryOp<EQ>& eqop) {
-    this->visitBinop(eqop, "==");
+    this->visitBinop(eqop, Operation::Eq);
   }
 
   void Transpiler::visit(AST::BinaryOp<PLUS>& plusop) {
-    this->visitBinop(plusop, "+");
+    this->visitBinop(plusop, Operation::Add);
   }
 
   void Transpiler::visit(AST::BinaryOp<MINUS>& minusop) {
-    this->visitBinop(minusop, "-");
+    this->visitBinop(minusop, Operation::Sub);
   }
 
   void Transpiler::visit(AST::BinaryOp<MUL>& mulop) {
-    this->visitBinop(mulop, "*");
+    this->visitBinop(mulop, Operation::Mul);
   }
 
   void Transpiler::visit(AST::BinaryOp<DIV>& divop) {
-    this->visitBinop(divop, "/");
+    this->visitBinop(divop, Operation::Div);
   }
 
   void Transpiler::visit(AST::UnaryOp<NOT>& notop) {
-    this->visitUnop(notop, "!");
+    this->visitUnop(notop, Operation::Not);
   }
 
   void Transpiler::visit(AST::UnaryOp<NEG>& negop) {
-    this->visitUnop(negop, "-");
+    this->visitUnop(negop, Operation::Neg);
   }
 }
