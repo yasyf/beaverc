@@ -10,7 +10,8 @@ namespace BC {
   class Transpiler : public AST::Visitor {
   protected:
     shared_ptr<FunctionLinkedList> parents;
-    bool storing;
+    InstructionList* out = nullptr;
+    bool storing = false;
 
     Function& current() {
       return *(parents->function);
@@ -18,12 +19,19 @@ namespace BC {
     bool isGlobal() {
       return parents->function == result;
     }
-    void transpile(AST::AST_node *node, bool storing = false);
+    void transpile(AST::AST_node *node, bool storing = false, InstructionList* out = nullptr);
+    void transpileTo(AST::AST_node *node, InstructionList* out);
     void store(AST::AST_node *node);
+    size_t count();
+    void output(Instruction inst);
     void output(const Operation operation);
     void output(const Operation operation, int32_t operand0);
+    void drain(InstructionList il);
     void loadConst(shared_ptr<Constant> constant);
     void loadConst(int i);
+    void loadConst(string s);
+    void loadBool(bool b);
+    void loadNone();
     void outputReturn();
 
     template <BinOpSym op>

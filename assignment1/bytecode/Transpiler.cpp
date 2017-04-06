@@ -21,29 +21,52 @@ namespace BC {
     parents = shared_ptr<FunctionLinkedList>(new FunctionLinkedList(result));
   }
 
-  void Transpiler::transpile(AST_node *node, bool storing) {
+  void Transpiler::transpile(AST_node *node, bool storing, InstructionList* out) {
     bool old_storing = this->storing;
     this->storing = storing;
+    if (out)
+      this->out = out;
+
     node->accept(*this);
+
+    if (out)
+      this->out = nullptr;
     this->storing = old_storing;
+  }
+
+  void Transpiler::transpileTo(AST::AST_node *node, InstructionList* out) {
+    transpile(node, false, out);
   }
 
   void Transpiler::store(AST_node *node) {
     transpile(node, true);
   }
 
+  size_t Transpiler::count() {
+    return (out ? *out : current().instructions).size();
+  }
+
+  void Transpiler::output(Instruction inst) {
+    (out ? *out : current().instructions).push_back(inst);
+  }
+
   void Transpiler::output(const Operation operation) {
     #if DEBUG
       cout << static_cast<int>(operation) << endl;
     #endif
-    current().instructions.push_back(Instruction(operation, nullopt));
+    output(Instruction(operation, nullopt));
   }
 
   void Transpiler::output(const Operation operation, int32_t operand0) {
     #if DEBUG
       cout << static_cast<int>(operation) << " " <<  operand0 << endl;
     #endif
-    current().instructions.push_back(Instruction(operation, operand0));
+    output(Instruction(operation, operand0));
+  }
+
+  void Transpiler::drain(InstructionList il) {
+    for (auto inst : il)
+      output(inst);
   }
 
   void Transpiler::loadConst(shared_ptr<Constant> constant) {
@@ -55,6 +78,18 @@ namespace BC {
     loadConst(shared_ptr<Constant>(new Integer(i)));
   }
 
+  void Transpiler::loadConst(string s) {
+    loadConst(shared_ptr<Constant>(new String(s)));
+  }
+
+  void Transpiler::loadBool(bool b) {
+    loadConst(shared_ptr<Constant>(new Boolean(b)));
+  }
+
+  void Transpiler::loadNone() {
+    loadConst(shared_ptr<Constant>(new None()));
+  }
+
   void Transpiler::outputReturn() {
     output(Operation::Return);
     parents->returned = true;
@@ -62,6 +97,10 @@ namespace BC {
 
   void Transpiler::visit(Program& prog) {
     transpile(prog.block);
+    if (!parents->returned) {
+      loadConst(0);
+      outputReturn();
+    }
   }
 
   void Transpiler::visit(AST::Block& block) {
@@ -158,9 +197,32 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::IfStatement& is) {
+    // Set up blocks
+    InstructionList thenInst, elseInst;
+    transpileTo(is.thenBlock, &thenInst);
+    transpileTo(is.elseBlock, &elseInst);
+
+    // Execute if
+    transpile(is.cond);
+    output(Operation::If, 2); // skip past else-goto
+    output(Operation::Goto, thenInst.size() + 2); // else-goto: skip past then-block and if-goto
+    drain(thenInst); // then-block
+    output(Operation::Goto, elseInst.size() + 1); // if-goto: skip past else-block
+    drain(elseInst); // else-block
   }
 
   void Transpiler::visit(AST::WhileLoop& wl) {
+    InstructionList bodyInst, condInst;
+    transpileTo(wl.body, &bodyInst);
+    transpileTo(wl.cond, &condInst);
+
+    size_t loop_start = count();
+
+    drain(condInst); // cond-block
+    output(Operation::If, 2); // skip past end-goto
+    output(Operation::Goto, bodyInst.size() + 2); // end-goto: skip past body-block and loop-goto
+    drain(bodyInst); // body-block
+    output(Operation::Goto, loop_start - count()); // loop-goto: back up to cond-block
   }
 
   void Transpiler::visit(AST::Return& ret) {
@@ -188,7 +250,7 @@ namespace BC {
 
     // Default return
     if (!parents->returned) {
-      loadConst(shared_ptr<Constant>(new None()));
+      loadNone();
       outputReturn();
     }
 
@@ -231,13 +293,11 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::ValueConstant<bool>& boolconst) {
-    shared_ptr<Constant> constant(new Boolean(boolconst.value));
-    loadConst(constant);
+    loadBool(boolconst.value);
   }
 
   void Transpiler::visit(AST::StringConstant& strconst) {
-    shared_ptr<Constant> constant(new String(strconst.value));
-    loadConst(constant);
+    loadConst(strconst.value);
   }
 
   void Transpiler::visit(AST::ValueConstant<int>& intconst) {
@@ -245,8 +305,7 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::NullConstant& nullconst) {
-    shared_ptr<Constant> constant(new None());
-    loadConst(constant);
+    loadNone();
   }
 
   template <BinOpSym op>

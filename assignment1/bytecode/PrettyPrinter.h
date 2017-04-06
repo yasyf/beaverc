@@ -144,7 +144,7 @@ namespace BC {
             }
             else if (const auto *value = dynamic_cast<const Boolean *>(&constant))
             {
-                os << value->value;
+                os << (value->value ? "True" : "False");
             }
             else if (const auto *value = dynamic_cast<const Integer *>(&constant))
             {
