@@ -46,6 +46,16 @@ namespace BC {
     current().instructions.push_back(Instruction(operation, operand0));
   }
 
+  void Transpiler::loadConst(shared_ptr<Constant> constant) {
+    size_t i = insert(current().constants_, constant);
+    output(Operation::LoadConst, i);
+  }
+
+  void Transpiler::outputReturn() {
+    output(Operation::Return);
+    parents->returned = true;
+  }
+
   void Transpiler::visit(Program& prog) {
     transpile(prog.block);
   }
@@ -113,6 +123,7 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::Global& global) {
+    // noop
   }
 
   void Transpiler::visit(AST::IfStatement& is) {
@@ -122,6 +133,8 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::Return& ret) {
+    transpile(ret.expr);
+    outputReturn();
   }
 
   void Transpiler::visit(AST::Function& func) {
@@ -142,6 +155,13 @@ namespace BC {
     // Transpile new function
     transpile(func.body);
 
+    // Default return
+    if (!parents->returned) {
+      loadConst(shared_ptr<Constant>(new None()));
+      outputReturn();
+    }
+
+    assert(parents->returned);
     // Restore parent function's context
     parents = parents->last;
 
@@ -160,8 +180,7 @@ namespace BC {
     size_t num_refs = parents->local_reference_vars_.size() + parents->free_reference_vars_.size();
     if (num_refs > 0) {
       shared_ptr<Constant> num_refs_const(new Integer(num_refs));
-      size_t i = insert(current().constants_, num_refs_const);
-      output(Operation::LoadConst, i);
+      loadConst(num_refs_const);
     }
 
     // Push function
@@ -178,26 +197,22 @@ namespace BC {
 
   void Transpiler::visit(AST::ValueConstant<bool>& boolconst) {
     shared_ptr<Constant> constant(new Boolean(boolconst.value));
-    size_t i = insert(current().constants_, constant);
-    output(Operation::LoadConst, i);
+    loadConst(constant);
   }
 
   void Transpiler::visit(AST::StringConstant& strconst) {
     shared_ptr<Constant> constant(new String(strconst.value));
-    size_t i = insert(current().constants_, constant);
-    output(Operation::LoadConst, i);
+    loadConst(constant);
   }
 
   void Transpiler::visit(AST::ValueConstant<int>& intconst) {
     shared_ptr<Constant> constant(new Integer(intconst.value));
-    size_t i = insert(current().constants_, constant);
-    output(Operation::LoadConst, i);
+    loadConst(constant);
   }
 
   void Transpiler::visit(AST::NullConstant& nullconst) {
     shared_ptr<Constant> constant(new None());
-    size_t i = insert(current().constants_, constant);
-    output(Operation::LoadConst, i);
+    loadConst(constant);
   }
 
   template <BinOpSym op>

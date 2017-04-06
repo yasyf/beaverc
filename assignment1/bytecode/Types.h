@@ -87,6 +87,7 @@ namespace BC {
     shared_ptr<FunctionLinkedList> last;
     vector<string> local_reference_vars_;
     vector<string> free_reference_vars_;
+    bool returned = false;
 
     FunctionLinkedList(shared_ptr<Function> function) : function(function), last(nullptr),
       local_reference_vars_(), free_reference_vars_()

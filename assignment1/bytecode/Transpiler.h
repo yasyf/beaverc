@@ -22,6 +22,8 @@ namespace BC {
     void store(AST::AST_node *node);
     void output(const Operation operation);
     void output(const Operation operation, int32_t operand0);
+    void loadConst(shared_ptr<Constant> constant);
+    void outputReturn();
 
     template <BinOpSym op>
     void visitBinop(AST::BinaryOp<op>& binop, string opstring);
