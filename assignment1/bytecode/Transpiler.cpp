@@ -51,6 +51,10 @@ namespace BC {
     output(Operation::LoadConst, i);
   }
 
+  void Transpiler::loadConst(int32_t i) {
+    loadConst(shared_ptr<Constant>(new Integer(i)));
+  }
+
   void Transpiler::outputReturn() {
     output(Operation::Return);
     parents->returned = true;
@@ -137,6 +141,11 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::Call& call) {
+    for (auto it = call.arguments.rbegin(); it != call.arguments.rend(); ++it)
+      transpile(*it);
+    loadConst(call.arguments.size());
+    transpile(call.target);
+    output(Operation::Call);
   }
 
   void Transpiler::visit(AST::CallStatement& cs) {
@@ -200,10 +209,8 @@ namespace BC {
 
     // Push num_refs
     size_t num_refs = parents->local_reference_vars_.size() + parents->free_reference_vars_.size();
-    if (num_refs > 0) {
-      shared_ptr<Constant> num_refs_const(new Integer(num_refs));
-      loadConst(num_refs_const);
-    }
+    if (num_refs > 0)
+      loadConst(num_refs);
 
     // Push function
     output(Operation::LoadFunc, current().functions_.size() - 1);
@@ -234,8 +241,7 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::ValueConstant<int>& intconst) {
-    shared_ptr<Constant> constant(new Integer(intconst.value));
-    loadConst(constant);
+    loadConst(intconst.value);
   }
 
   void Transpiler::visit(AST::NullConstant& nullconst) {

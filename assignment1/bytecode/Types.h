@@ -10,13 +10,17 @@
 namespace BC {
   struct Constant {
     virtual ~Constant() {}
-    virtual bool operator==(const Constant& other) {}
+    virtual bool operator==(const Constant& other) {
+      return typeid(*this) == typeid(other) && equals(other);
+    }
+  private:
+    virtual bool equals(const Constant& other) = 0;
   };
 
   struct None : public Constant {
     virtual ~None() { }
 
-    bool operator==(const None& other) {
+    bool equals(const Constant& other) {
       return true;
     }
   };
@@ -27,8 +31,8 @@ namespace BC {
     Integer(int64_t value) : value(value) { }
     virtual ~Integer() { }
 
-    bool operator==(const Integer& other) {
-      return value == other.value;
+    bool equals(const Constant& other) {
+      return value == dynamic_cast<const Integer&>(other).value;
     }
   };
 
@@ -38,8 +42,8 @@ namespace BC {
     String(std::string value) : value(value) { }
     virtual ~String() { }
 
-    bool operator==(const String& other) {
-      return value == other.value;
+    bool equals(const Constant& other) {
+      return value == dynamic_cast<const String&>(other).value;
     }
   };
 
@@ -49,8 +53,8 @@ namespace BC {
     Boolean(bool value) : value(value) { }
     virtual ~Boolean() { }
 
-    bool operator==(const Boolean& other) {
-      return value == other.value;
+    bool equals(const Constant& other) {
+      return value == dynamic_cast<const Boolean&>(other).value;
     }
   };
 

@@ -23,6 +23,7 @@ namespace BC {
     void output(const Operation operation);
     void output(const Operation operation, int32_t operand0);
     void loadConst(shared_ptr<Constant> constant);
+    void loadConst(int i);
     void outputReturn();
 
     template <BinOpSym op>
