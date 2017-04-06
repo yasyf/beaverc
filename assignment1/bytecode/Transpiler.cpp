@@ -8,7 +8,7 @@
 #include "Exception.h"
 #include "TranspilerFunctionScanner.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 using namespace std;
 using namespace std::experimental;
@@ -140,6 +140,8 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::CallStatement& cs) {
+    transpile(cs.call);
+    output(Operation::Pop);
   }
 
   void Transpiler::visit(AST::Global& global) {
@@ -213,6 +215,12 @@ namespace BC {
   }
 
   void Transpiler::visit(AST::Record& rec) {
+    output(Operation::AllocRecord);
+    rec.record.iterate([this] (string key, Expression *value) {
+      output(Operation::Dup);
+      transpile(value);
+      output(Operation::FieldStore, insert(current().names_, key));
+    });
   }
 
   void Transpiler::visit(AST::ValueConstant<bool>& boolconst) {
