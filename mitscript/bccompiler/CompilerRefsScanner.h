@@ -11,14 +11,15 @@ using namespace std;
 using namespace AST;
 
 namespace BC {
-  class CompilerLocalRefScanner : public CompilerScanner {
+  class CompilerRefsScanner : public CompilerScanner {
   protected:
-    set<string> local_vars;
-    stack<set<string>> nonlocals;
-
+    set<string> needles;
+    stack<set<string>> ignores;
   public:
-    set<string> local_var_refs;
-    CompilerLocalRefScanner(vector<string> vars);
+    set<string> refs;
+    CompilerRefsScanner(vector<string> locals);
+    CompilerRefsScanner(vector<string> ref0s, vector<string> locals, vector<string> globals);
+    vector<string> getRefs();
     void visit(Name& name) override;
     void visit(Global& global) override;
     void visit(AST::Function& func) override;

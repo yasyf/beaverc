@@ -11,7 +11,7 @@ namespace BC {
     using CompilerException::CompilerException;
 
     string description() const override {
-      return "uninitialized variable";
+      return "UninitializedVariableException";
     }
   };
 }

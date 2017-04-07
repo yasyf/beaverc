@@ -90,24 +90,16 @@ namespace BC {
   public:
     std::shared_ptr<Function> function;
     std::shared_ptr<FunctionLinkedList> last;
-    std::vector<std::string> local_reference_vars_;
     std::vector<std::string> free_reference_vars_;
     std::string storing;
     bool returned = false;
 
-    FunctionLinkedList(std::shared_ptr<Function> function) : function(function), last(nullptr),
-      local_reference_vars_(), free_reference_vars_()
-    {}
+    FunctionLinkedList(std::shared_ptr<Function> function) : function(function), last(nullptr) {}
 
     std::shared_ptr<FunctionLinkedList> extend(std::shared_ptr<Function> function) {
       std::shared_ptr<FunctionLinkedList> fll(new FunctionLinkedList(function));
       fll->last = shared_from_this();
       return fll;
-    }
-
-    void reset_reference_vars() {
-      local_reference_vars_.clear();
-      free_reference_vars_.clear();
     }
   };
 }

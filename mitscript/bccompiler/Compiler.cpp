@@ -6,8 +6,10 @@
 #include "Util.h"
 #include "Compiler.h"
 #include "Exception.h"
-#include "CompilerFunctionScanner.h"
-#include "CompilerLocalRefScanner.h"
+#include "CompilerGlobalsScanner.h"
+#include "CompilerLocalsScanner.h"
+#include "CompilerRefsScanner.h"
+#include "CompilerDependenciesScanner.h"
 #include "../debug.h"
 
 using namespace std;
@@ -21,7 +23,8 @@ namespace BC {
     result = shared_ptr<Function>(new Function());
     result->parameter_count_ = 0;
 
-    parents = shared_ptr<FunctionLinkedList>(new FunctionLinkedList(result));
+    root = shared_ptr<FunctionLinkedList>(new FunctionLinkedList(result));
+    parents = root;
 
     for (auto const& b : Builtins) {
       addNativeFunction(b.first, b.second);
@@ -35,7 +38,7 @@ namespace BC {
     this->parents = parents->extend(function);
     loadNone();
     outputReturn();
-    this->parents = parents->last;
+    this->parents = parent();
 
     output(Operation::LoadFunc, current().functions_.size() - 1);
     output(Operation::StoreGlobal, insert(current().names_, name));
@@ -262,17 +265,56 @@ namespace BC {
 
     // Set current context to new function
     current().functions_.push_back(function);
-    parents->reset_reference_vars();
     parents = parents->extend(function);
 
     // Fill new function metadata
-    CompilerFunctionScanner fnScanner(parents);
-    fnScanner.scan(func.body);
+    CompilerGlobalsScanner globalsScanner;
+    globalsScanner.scan(func.body);
+    vector<string> globals = globalsScanner.getGlobals();
+    for (string& global : globals)
+      insert(function->names_, global);
 
-    CompilerLocalRefScanner refScanner(current().local_vars_);
-    refScanner.scan(func.body);
-    for (string v : refScanner.local_var_refs)
-      insert(current().local_reference_vars_, v);
+    CompilerLocalsScanner localsScanner(globalsScanner.globals);
+    localsScanner.scan(func.body);
+    vector<string> locals = localsScanner.getLocals();
+    for (string& local : locals)
+      insert(function->local_vars_, local);
+
+    CompilerRefsScanner localRefsScanner(function->local_vars_);
+    localRefsScanner.scan(func.body);
+    for (string& localRef : localRefsScanner.getRefs())
+      insert(function->local_reference_vars_, localRef);
+
+    // -- OUTPUT: Parent Function --
+    out = &(last().instructions);
+
+    CompilerRefsScanner localRef0sScanner(last().local_reference_vars_, locals, globals);
+    localRef0sScanner.scan(func.body);
+    for (string& var : localRef0sScanner.getRefs()) {
+      insert(function->free_vars_, var);
+      size_t i = index(last().local_reference_vars_, var).value();
+      output(Operation::PushReference, i);
+    }
+
+    CompilerRefsScanner freeRef0sScanner(parent()->free_reference_vars_, locals, globals);
+    freeRef0sScanner.scan(func.body);
+    size_t num_local_ref_vars = last().local_reference_vars_.size();
+    for (string& var : freeRef0sScanner.getRefs()) {
+      insert(function->free_vars_, var);
+      size_t i = index(last().free_vars_, var).value();
+      output(Operation::PushReference, num_local_ref_vars + i);
+    }
+
+    // -- OUTPUT: New Function --
+    out = nullptr;
+
+    CompilerRefsScanner freeRefsScanner(function->free_vars_);
+    freeRefsScanner.scan(func.body);
+    for (string& freeRef : freeRefsScanner.getRefs())
+      insert(parents->free_reference_vars_, freeRef);
+
+    CompilerDependenciesScanner dependenciesScanner(function, root);
+    dependenciesScanner.scan(func.body);
 
     // Transpile new function
     transpile(func.body);
@@ -284,22 +326,12 @@ namespace BC {
     }
 
     assert(parents->returned);
-    // Restore parent function's context
-    parents = parents->last;
 
-    // Push Refs
-    for (string& var : parents->local_reference_vars_) {
-      size_t i = insert(current().local_reference_vars_, var);
-      output(Operation::PushReference, i);
-    }
-    size_t num_local_refs = current().local_reference_vars_.size();
-    for (string& var : parents->free_reference_vars_) {
-      size_t i = insert(current().free_vars_, var);
-      output(Operation::PushReference, num_local_refs + i);
-    }
+    // Restore parent function's context
+    parents = parent();
 
     // Push num_refs
-    size_t num_refs = parents->local_reference_vars_.size() + parents->free_reference_vars_.size();
+    size_t num_refs = localRef0sScanner.refs.size() + freeRef0sScanner.refs.size();
     if (num_refs > 0)
       loadConst(num_refs);
 

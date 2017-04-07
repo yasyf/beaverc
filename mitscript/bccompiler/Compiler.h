@@ -10,12 +10,19 @@ using namespace AST;
 namespace BC {
   class Compiler : public Visitor {
   protected:
+    shared_ptr<FunctionLinkedList> root;
     shared_ptr<FunctionLinkedList> parents;
     InstructionList* out = nullptr;
     bool storing = false;
 
+    shared_ptr<FunctionLinkedList> parent() {
+      return parents->last;
+    }
     Function& current() {
       return *(parents->function);
+    }
+    Function& last() {
+      return *(parent()->function);
     }
     bool isGlobal() {
       return parents->function == result;
