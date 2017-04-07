@@ -1,0 +1,194 @@
+function
+{
+	functions =
+	[
+		function
+		{
+			functions = [],
+			constants = [None],
+			parameter_count = 1,
+			local_vars = [],
+			local_ref_vars = [],
+			free_vars = [],
+			names = [],
+			instructions = 
+			[
+				load_const	0
+				return
+			]
+		},
+		function
+		{
+			functions = [],
+			constants = [None],
+			parameter_count = 0,
+			local_vars = [],
+			local_ref_vars = [],
+			free_vars = [],
+			names = [],
+			instructions = 
+			[
+				load_const	0
+				return
+			]
+		},
+		function
+		{
+			functions = [],
+			constants = [None],
+			parameter_count = 1,
+			local_vars = [],
+			local_ref_vars = [],
+			free_vars = [],
+			names = [],
+			instructions = 
+			[
+				load_const	0
+				return
+			]
+		},
+		function
+		{
+			functions =
+			[
+				function
+				{
+					functions =
+					[
+						function
+						{
+							functions = [],
+							constants = ["x should be ", " is ", 1, None],
+							parameter_count = 1,
+							local_vars = [v],
+							local_ref_vars = [],
+							free_vars = [x],
+							names = [print],
+							instructions = 
+							[
+							]
+						}
+					],
+					constants = [3, 1, 2],
+					parameter_count = 1,
+					local_vars = [u, x, boo],
+					local_ref_vars = [x],
+					free_vars = [],
+					names = [],
+					instructions = 
+					[
+					]
+				}
+			],
+			constants = [2, 1, "this x should be ", " is ", 4, 0, None],
+			parameter_count = 1,
+			local_vars = [t, x, moo, f, bad],
+			local_ref_vars = [],
+			free_vars = [],
+			names = [x, print],
+			instructions = 
+			[
+				load_local	0
+				load_const	4
+				gt
+				if	2
+				goto	64
+				load_local	0
+				store_global	0
+				load_const	0
+				store_local	1
+				load_const	0
+				load_local	0
+				add
+				load_const	1
+				add
+				push_ref	0
+				load_ref
+				add
+				load_const	2
+				load_global	0
+				call
+				pop
+				load_const	3
+				return
+				push_ref	0
+				load_const	1
+				load_func	0
+				alloc_closure
+				store_local	2
+				load_const	0
+				load_const	1
+				load_local	2
+				call
+				pop
+				load_const	2
+				push_ref	0
+				swap
+				store_ref
+				load_const	2
+				load_const	1
+				load_local	2
+				call
+				pop
+				load_local	2
+				return
+				load_func	0
+				store_local	2
+				load_const	0
+				load_const	1
+				load_local	2
+				call
+				store_local	3
+				load_const	0
+				load_const	1
+				load_local	3
+				call
+				pop
+				load_const	2
+				load_local	0
+				add
+				load_const	3
+				add
+				load_global	0
+				add
+				load_const	1
+				load_global	1
+				call
+				pop
+				goto	5
+				load_const	4
+				load_const	5
+				div
+				store_local	4
+				load_const	6
+				return
+			]
+		}
+	],
+	constants = [5, 15, 1, 0],
+	parameter_count = 0,
+	local_vars = [],
+	local_ref_vars = [],
+	free_vars = [],
+	names = [print, input, intcast, x, foo],
+	instructions = 
+	[
+		load_func	0
+		store_global	0
+		load_func	1
+		store_global	1
+		load_func	2
+		store_global	2
+		load_const	0
+		store_global	3
+		load_func	3
+		store_global	4
+		load_const	1
+		load_const	2
+		load_global	4
+		call
+		pop
+		load_const	3
+		return
+	]
+}

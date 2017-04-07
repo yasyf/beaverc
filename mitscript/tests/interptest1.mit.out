@@ -1,3 +1,3 @@
 Hello
 OUTPUT: Hello
-illegal arithmetic: divide by zero
+IllegalArithmeticException: divide by zero

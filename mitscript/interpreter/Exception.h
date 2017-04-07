@@ -15,7 +15,7 @@ namespace BasicInterpreter {
     using InterpreterException::InterpreterException;
 
     string description() const override {
-      return "uninitialized variable";
+      return "UninitializedVariableException";
     }
   };
 
@@ -24,7 +24,7 @@ namespace BasicInterpreter {
     IllegalCastException(Value *val) : InterpreterException(val->toString()) {}
 
     string description() const override {
-      return "illegal cast";
+      return "IllegalCastException";
     }
   };
 
@@ -33,7 +33,7 @@ namespace BasicInterpreter {
     using InterpreterException::InterpreterException;
 
     string description() const override {
-      return "illegal arithmetic";
+      return "IllegalArithmeticException";
     }
   };
 
@@ -41,7 +41,7 @@ namespace BasicInterpreter {
     using InterpreterException::InterpreterException;
 
     string description() const override {
-      return "runtime exception";
+      return "RuntimeException";
     }
   };
 }

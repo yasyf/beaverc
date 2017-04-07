@@ -482,7 +482,7 @@ namespace VM {
                   std::shared_ptr<Value> operand_2 = safe_pop(stack);
                   stack.push(binary_op<IntegerValue, IntegerValue>(operand_2, operand_1, [] (int a, int b) {
                       if (b == 0) {
-                          throw IllegalArithmeticException("divide by zero :(");
+                          throw IllegalArithmeticException("divide by zero");
                       }
                       return a / b;
                   }));
