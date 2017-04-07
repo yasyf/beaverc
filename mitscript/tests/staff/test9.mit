@@ -1,8 +1,8 @@
 debugprint = print;
 oldprint = print;
-print = fun(x){ 
-         debugprint("Inside S1"); 
-         oldprint("--> " + x); 
+print = fun(x){
+         debugprint("Inside S1");
+         oldprint("--> " + x);
 };
 
 f = fun(x){
@@ -13,9 +13,9 @@ f = fun(x){
   getprint= fun(){ return print; } ;
   f = fun(x){
 	oldprint = getprint();
-	print = fun(x){ 
+	print = fun(x){
 		debugprint("Inside S2");
-		oldprint("--> " + x); 
+		oldprint("--> " + x);
 	};
         debugprint("Here we go!");
      	print(x);
@@ -27,7 +27,7 @@ f = fun(x){
   z = "And now?";
   f("is this for real?");
   global print;
-  
+
   oldprint = print;
 print = fun(x){ oldprint("--> " + x); };
 

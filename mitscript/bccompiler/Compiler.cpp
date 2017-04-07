@@ -165,7 +165,7 @@ namespace BC {
         size_t i = insert(current().names_, name.name);
         output(Operation::StoreGlobal, i);
       } else {
-        throw UninitializedVariableException(name.name);
+        // throw UninitializedVariableException(name.name);
       }
     }
   }
@@ -302,7 +302,7 @@ namespace BC {
       insert(parents->free_reference_vars_, freeRef);
 
     // Fix tiny edge cases
-    CompilerDependenciesScanner dependenciesScanner(function, root);
+    CompilerDependenciesScanner dependenciesScanner(parents);
     dependenciesScanner.scan(func.body);
 
     // Transpile new function

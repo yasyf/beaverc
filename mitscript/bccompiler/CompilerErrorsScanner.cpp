@@ -16,7 +16,6 @@ namespace BC {
     ) {
       return;
     }
-
     throw UninitializedVariableException(name.name);
   }
 
