@@ -3,39 +3,56 @@ CXX = g++
 LEX = flex
 YACC = bison
 
-CFLAGS = -std=c++1y -g
-CXXFLAGS = -std=c++1y -g
+CFLAGS = -std=c++1y
+CXXFLAGS = -std=c++1y
 LDFLAGS =
 
-CPPSOURCES = $(wildcard *.cpp) $(wildcard parser/*.cpp)
-CSOURCES = $(wildcard *.c) $(wildcard parser/*.c)
+CPPSOURCES = $(wildcard *.cpp)
+CSOURCES = $(wildcard *.c)
 OBJECTS = $(patsubst %.cpp, %.o, $(CPPSOURCES)) $(patsubst %.c, %.o, $(CSOURCES))
 
-.PHONY: parser clean extraclean
+PARSE_OBJECTS = parser/parser.o parser/lexer.o
+BCPARSE_OBJECTS = bcparser/parser.o bcparser/lexer.o
+
+.PHONY: parser bcparser clean extraclean
 
 BIOBJECTS = $(patsubst %.cpp, %.o, $(wildcard interpreter/*.cpp))
-interpreter: parser $(OBJECTS) $(BIOBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ $(OBJECTS) $(BIOBJECTS)
+interpreter: parser $(PARSE_OBJECTS) $(OBJECTS) $(BIOBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(OBJECTS) $(BIOBJECTS)
 
 COOBJECTS = $(patsubst %.cpp, %.o, $(wildcard bccompiler/*.cpp))
-bccompiler: parser $(OBJECTS) $(COOBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ $(OBJECTS) $(COOBJECTS)
+bccompiler: parser $(PARSE_OBJECTS) $(OBJECTS) $(COOBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(OBJECTS) $(COOBJECTS)
 
 PPOBJECTS = $(patsubst %.cpp, %.o, $(wildcard pprinter/*.cpp))
-pprinter: parser $(OBJECTS) $(PPOBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ $(OBJECTS) $(PPOBJECTS)
+pprinter: parser $(PARSE_OBJECTS) $(OBJECTS) $(PPOBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(OBJECTS) $(PPOBJECTS)
 
 ASOBJECTS = $(patsubst %.cpp, %.o, $(wildcard astprinter/*.cpp))
-astprinter: parser $(OBJECTS) pprinter/PrettyPrinter.o $(ASOBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ $(OBJECTS) pprinter/PrettyPrinter.o $(ASOBJECTS)
+PPASOBJECTS = pprinter/PrettyPrinter.o
+astprinter: parser $(PARSE_OBJECTS) $(OBJECTS) pprinter/PrettyPrinter.o $(ASOBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(OBJECTS) $(PPASOBJECTS) $(ASOBJECTS)
+
+VMOBJECTS = $(patsubst %.cpp, %.o, $(wildcard vm/*.cpp))
+COVMOBJECTS = bccompiler/Compiler.o bccompiler/CompilerFunctionScanner.o
+vm: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(COVMOBJECTS) $(VMOBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(COVMOBJECTS) $(VMOBJECTS)
 
 parser: parser/lexer.c parser/parser.cpp
 
 parser/lexer.c:
-	$(LEX) --debug --header-file=parser/lexer.h -o parser/lexer.c parser/lexer.lex
+	$(LEX) --header-file=parser/lexer.h -o parser/lexer.c parser/lexer.lex
 
 parser/parser.cpp:
-	$(YACC) --debug --defines=parser/parser.h -o parser/parser.cpp parser/parser.yy
+	$(YACC) --defines=parser/parser.h -o parser/parser.cpp parser/parser.yy
+
+bcparser: bcparser/lexer.c bcparser/parser.cpp
+
+bcparser/lexer.c:
+	$(LEX) --header-file=bcparser/lexer.h -o bcparser/lexer.c bcparser/lexer.lex
+
+bcparser/parser.cpp:
+	$(YACC) --defines=bcparser/parser.h -o bcparser/parser.cpp bcparser/parser.yy
 
 %.o: %.cpp %.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
@@ -44,4 +61,4 @@ clean:
 	rm -f bin/* *.o */*.o bytecode/*.o
 
 extraclean: clean
-	rm -f parser/lexer.c parser/lexer.h parser/parser.cpp parser/parser.h
+	rm -f parser/*.c parser/*.cpp parser/*.h bcparser/*.c bcparser/*.cpp bcparser/*.h

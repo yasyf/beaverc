@@ -86,20 +86,20 @@ namespace BC {
     InstructionList instructions;
   };
 
-  class FunctionLinkedList : public enable_shared_from_this<FunctionLinkedList> {
+  class FunctionLinkedList : public std::enable_shared_from_this<FunctionLinkedList> {
   public:
-    shared_ptr<Function> function;
-    shared_ptr<FunctionLinkedList> last;
-    vector<string> local_reference_vars_;
-    vector<string> free_reference_vars_;
+    std::shared_ptr<Function> function;
+    std::shared_ptr<FunctionLinkedList> last;
+    std::vector<std::string> local_reference_vars_;
+    std::vector<std::string> free_reference_vars_;
     bool returned = false;
 
-    FunctionLinkedList(shared_ptr<Function> function) : function(function), last(nullptr),
+    FunctionLinkedList(std::shared_ptr<Function> function) : function(function), last(nullptr),
       local_reference_vars_(), free_reference_vars_()
     {}
 
-    shared_ptr<FunctionLinkedList> extend(shared_ptr<Function> function) {
-      shared_ptr<FunctionLinkedList> fll(new FunctionLinkedList(function));
+    std::shared_ptr<FunctionLinkedList> extend(std::shared_ptr<Function> function) {
+      std::shared_ptr<FunctionLinkedList> fll(new FunctionLinkedList(function));
       fll->last = shared_from_this();
       return fll;
     }

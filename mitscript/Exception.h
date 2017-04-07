@@ -1,6 +1,8 @@
 #include <string>
 #include <exception>
 
+using namespace std;
+
 class SystemException : public exception {
 private:
   string _msg;

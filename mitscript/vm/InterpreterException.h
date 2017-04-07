@@ -1,66 +1,53 @@
 #pragma once
 
-#include <string>
-#include <exception>
+#include "../Exception.h"
 
 using namespace std;
 
-class SystemException : public exception {
-private:
-  string _msg;
+namespace VM {
+  class InterpreterException : public SystemException {
+    using SystemException::SystemException;
+  };
 
-public:
-  SystemException(const string& msg) : _msg(msg) {}
+  class UninitializedVariableException : public InterpreterException {
+    using InterpreterException::InterpreterException;
 
-  virtual string description() const = 0;
+    string description() const override {
+      return "UninitializedVariableException";
+    }
+  };
 
-  virtual const char* what() const throw() {
-    return (new string(description() + ": " + _msg))->c_str();
-  }
-};
+  class IllegalCastException : public InterpreterException {
+  public:
+    using InterpreterException::InterpreterException;
 
-class InterpreterException : public SystemException {
-  using SystemException::SystemException;
-};
+    string description() const override {
+      return "IllegalCastException";
+    }
+  };
 
-class UninitializedVariableException : public InterpreterException {
-  using InterpreterException::InterpreterException;
+  class IllegalArithmeticException : public InterpreterException {
+  public:
+    using InterpreterException::InterpreterException;
 
-  string description() const override {
-    return "UninitializedVariableException";
-  }
-};
+    string description() const override {
+      return "IllegalArithmeticException";
+    }
+  };
 
-class IllegalCastException : public InterpreterException {
-public:
-  using InterpreterException::InterpreterException;
+  class RuntimeException : public InterpreterException {
+    using InterpreterException::InterpreterException;
 
-  string description() const override {
-    return "IllegalCastException";
-  }
-};
+    string description() const override {
+      return "RuntimeException";
+    }
+  };
 
-class IllegalArithmeticException : public InterpreterException {
-public:
-  using InterpreterException::InterpreterException;
+  class InsufficentStackException : public InterpreterException {
+    using InterpreterException::InterpreterException;
 
-  string description() const override {
-    return "IllegalArithmeticException";
-  }
-};
-
-class RuntimeException : public InterpreterException {
-  using InterpreterException::InterpreterException;
-
-  string description() const override {
-    return "RuntimeException";
-  }
-};
-
-class InsufficentStackException : public InterpreterException {
-  using InterpreterException::InterpreterException;
-
-  string description() const override {
-    return "InsufficentStackException";
-  }
-};
+    string description() const override {
+      return "InsufficentStackException";
+    }
+  };
+}
