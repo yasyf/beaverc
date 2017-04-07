@@ -1,9 +1,13 @@
+// x = 5;
 foo = fun(t) {
+  // global x;
   if (t > 4) {
     x = t;
     moo = fun() {
       x = 3;
     };
+    // moo();
+    // print(((("this x should be ") + (t)) + (" is ")) + (x));
   }
 };
 foo(15);

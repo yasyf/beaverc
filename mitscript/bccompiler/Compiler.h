@@ -12,7 +12,6 @@ namespace BC {
   protected:
     shared_ptr<FunctionLinkedList> root;
     shared_ptr<FunctionLinkedList> parents;
-    InstructionList* out = nullptr;
     bool storing = false;
 
     shared_ptr<FunctionLinkedList> parent() {

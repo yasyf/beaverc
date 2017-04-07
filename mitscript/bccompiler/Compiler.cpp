@@ -48,12 +48,12 @@ namespace BC {
     bool old_storing = this->storing;
     this->storing = storing;
     if (out)
-      this->out = out;
+      parents->out = out;
 
     node->accept(*this);
 
     if (out)
-      this->out = nullptr;
+      parents->out = nullptr;
     this->storing = old_storing;
   }
 
@@ -66,11 +66,11 @@ namespace BC {
   }
 
   size_t Compiler::count() {
-    return (out ? *out : current().instructions).size();
+    return parents->getOut()->size();
   }
 
   void Compiler::output(Instruction inst) {
-    (out ? *out : current().instructions).push_back(inst);
+    parents->getOut()->push_back(inst);
   }
 
   void Compiler::output(const Operation operation) {
@@ -285,28 +285,15 @@ namespace BC {
     for (string& localRef : localRefsScanner.getRefs())
       insert(function->local_reference_vars_, localRef);
 
-    // -- OUTPUT: Parent Function --
-    out = &(last().instructions);
-
     CompilerRefsScanner localRef0sScanner(last().local_reference_vars_, locals, globals);
     localRef0sScanner.scan(func.body);
-    for (string& var : localRef0sScanner.getRefs()) {
+    for (string& var : localRef0sScanner.getRefs())
       insert(function->free_vars_, var);
-      size_t i = index(last().local_reference_vars_, var).value();
-      output(Operation::PushReference, i);
-    }
 
     CompilerRefsScanner freeRef0sScanner(parent()->free_reference_vars_, locals, globals);
     freeRef0sScanner.scan(func.body);
-    size_t num_local_ref_vars = last().local_reference_vars_.size();
-    for (string& var : freeRef0sScanner.getRefs()) {
+    for (string& var : freeRef0sScanner.getRefs())
       insert(function->free_vars_, var);
-      size_t i = index(last().free_vars_, var).value();
-      output(Operation::PushReference, num_local_ref_vars + i);
-    }
-
-    // -- OUTPUT: New Function --
-    out = nullptr;
 
     CompilerRefsScanner freeRefsScanner(function->free_vars_);
     freeRefsScanner.scan(func.body);
@@ -329,6 +316,17 @@ namespace BC {
 
     // Restore parent function's context
     parents = parent();
+
+    for (string& var : localRef0sScanner.getRefs()) {
+      size_t i = index(current().local_reference_vars_, var).value();
+      output(Operation::PushReference, i);
+    }
+
+    size_t num_local_ref_vars = current().local_reference_vars_.size();
+    for (string& var : freeRef0sScanner.getRefs()) {
+      size_t i = index(current().free_vars_, var).value();
+      output(Operation::PushReference, num_local_ref_vars + i);
+    }
 
     // Push num_refs
     size_t num_refs = localRef0sScanner.refs.size() + freeRef0sScanner.refs.size();
