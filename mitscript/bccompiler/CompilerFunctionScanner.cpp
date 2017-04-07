@@ -46,7 +46,8 @@ namespace BC {
       node = node->last;
     }
 
-    throw UninitializedVariableException(name.name);
+    if (!index(functions->storing, name.name))
+      throw UninitializedVariableException(name.name);
   }
 
   void CompilerFunctionScanner::visit(IndexExpression& ie) {
