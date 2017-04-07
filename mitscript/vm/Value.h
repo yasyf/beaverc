@@ -173,7 +173,7 @@ namespace VM {
                   if (arguments.size() != 1) {
                       throw RuntimeException("Wrong number of arguments to print");
                   }
-                  #ifdef DEBUG
+                  #if DEBUG
                   std::cout << "===== ";
                   #endif
                   std::cout << arguments[0]->toString() << std::endl;

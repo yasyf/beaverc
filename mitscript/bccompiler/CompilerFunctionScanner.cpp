@@ -45,19 +45,14 @@ namespace BC {
     }
 
     // Special case for recursive define at top level
-    if (last_node->storing == name.name)
+    if (last_node->storing == name.name) {
       insert(current().names_, name.name);
-    else
-      throw UninitializedVariableException(name.name);
-  }
-
-  void CompilerFunctionScanner::visit(Assignment& assign) {
-    if (Name *name = dynamic_cast<Name*>(assign.lhs)) {
-      insert(current().local_vars_, name->name);
-    } else {
-      scan(assign.lhs);
     }
-    scan(assign.expr);
+    else if (assigning) {
+      insert(current().local_vars_, name.name);
+    } else {
+      throw UninitializedVariableException(name.name);
+    }
   }
 
   void CompilerFunctionScanner::visit(Global& global) {

@@ -8,8 +8,11 @@ using namespace std;
 using namespace AST;
 
 namespace BC {
-  void CompilerScanner::scan(AST_node *node) {
+  void CompilerScanner::scan(AST_node *node, bool assigning) {
+    bool old_assigning = this->assigning;
+    this->assigning = assigning;
     node->accept(*this);
+    this->assigning = old_assigning;
   }
 
   void CompilerScanner::visit(Program& prog) {}
@@ -33,7 +36,7 @@ namespace BC {
   }
 
   void CompilerScanner::visit(Assignment& assign) {
-    scan(assign.lhs);
+    scan(assign.lhs, true);
     scan(assign.expr);
   }
 

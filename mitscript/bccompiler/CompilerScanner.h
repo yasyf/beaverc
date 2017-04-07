@@ -9,8 +9,10 @@ using namespace AST;
 
 namespace BC {
   class CompilerScanner : public Visitor {
+  protected:
+    bool assigning = false;
   public:
-    void scan(AST_node *node);
+    void scan(AST_node *node, bool assigning = false);
     void visit(Program& prog) override;
     void visit(Block& block) override;
     void visit(Name& name) override;

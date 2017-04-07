@@ -18,7 +18,6 @@ namespace BC {
   public:
     CompilerFunctionScanner(shared_ptr<FunctionLinkedList> functions) : functions(functions) {};
     void visit(Name& name) override;
-    void visit(Assignment& assign) override;
     void visit(Global& global) override;
     void visit(AST::Function& func) override;
   };

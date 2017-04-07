@@ -80,7 +80,6 @@ namespace VM {
           stack_holder.insert(stack_holder.begin(), v);
           stack.pop();
       }
-      std::cout << "Stack size: " << stack_holder.size() << std::endl;
       for (auto v : stack_holder) {
           stack.push(v);
       }
@@ -130,7 +129,6 @@ namespace VM {
           int ip_increment = 1;
           #if DEBUG
           std::cout << "instruction: " << ip << std::endl;
-          std::cout << "operation: " << static_cast<int>(instruction.operation) << std::endl;
           #endif
           switch (instruction.operation) {
               // Description: push a constant onto the operand stack
@@ -605,6 +603,7 @@ namespace VM {
               break;
           };
           #if DEBUG
+          std::cout << "Stack:" << std::endl;
           print_stack(stack);
           std::cout << "----------" << std::endl;
           #endif
