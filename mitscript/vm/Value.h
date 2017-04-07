@@ -7,7 +7,6 @@
 #include <map>
 #include "../bccompiler/Types.h"
 #include "InterpreterException.h"
-
 #include "Interpreter.h"
 
 namespace VM {
@@ -117,10 +116,16 @@ namespace VM {
       std::string name;
       std::shared_ptr<ValueMap> location;
       ReferenceValue(std::string n, std::shared_ptr<ValueMap> l) { name = n; location = l; };
-      std::string toString() { throw RuntimeException("You have uncovered a bug :("); };
+      std::string toString() {
+        #if DEBUG
+          return "ref: " + name;
+        #else
+          throw RuntimeException("You have uncovered a bug :(");
+        #endif
+      };
 
       bool equals(const Value& other) {
-          throw RuntimeException("Can't check equality with a ReferenceValue");
+        throw RuntimeException("Can't check equality with a ReferenceValue");
       }
   };
 

@@ -7,8 +7,8 @@
 #include "Compiler.h"
 #include "Exception.h"
 #include "CompilerFunctionScanner.h"
-
-#define DEBUG 0
+#include "CompilerLocalRefScanner.h"
+#include "../debug.h"
 
 using namespace std;
 using namespace std::experimental;
@@ -266,8 +266,13 @@ namespace BC {
     parents = parents->extend(function);
 
     // Fill new function metadata
-    CompilerFunctionScanner scanner(parents);
-    func.body->accept(scanner);
+    CompilerFunctionScanner fnScanner(parents);
+    fnScanner.scan(func.body);
+
+    CompilerLocalRefScanner refScanner(current().local_vars_);
+    refScanner.scan(func.body);
+    for (string v : refScanner.local_var_refs)
+      insert(current().local_reference_vars_, v);
 
     // Transpile new function
     transpile(func.body);

@@ -1,7 +1,5 @@
 #include "Interpreter.h"
 
-#define DEBUG 0
-
 using namespace BC;
 
 namespace VM {
