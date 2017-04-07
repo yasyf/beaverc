@@ -1,8 +1,8 @@
 #!/bin/bash
 
-DEFAULT="\e[39m"
-GREEN="\e[32m"
-RED="\e[31m"
+DEFAULT="\033[39m"
+GREEN="\033[32m"
+RED="\033[31m"
 
 good() {
   echo -e "$GREEN ✓ $1 $DEFAULT [$2]"

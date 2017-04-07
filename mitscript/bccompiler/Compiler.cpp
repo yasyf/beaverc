@@ -2,6 +2,7 @@
 #include <string>
 #include <algorithm>
 #include <cassert>
+#include <vector>
 #include <experimental/optional>
 #include "Util.h"
 #include "Compiler.h"

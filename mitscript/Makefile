@@ -1,5 +1,12 @@
 CC = g++
 CXX = g++
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    CC = g++-6
+    CXX = g++-6
+endif
+
 LEX = flex
 YACC = bison
 
