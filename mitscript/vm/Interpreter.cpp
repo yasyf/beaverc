@@ -376,9 +376,10 @@ namespace VM {
               // Mnemonic:      call
               // Stack:         S::operand n :: .. :: operand 3 :: operand 2 :: operand 1 => S :: value
               case Operation::Call: {
-                  std::shared_ptr<AbstractFunctionValue> function = std::dynamic_pointer_cast<AbstractFunctionValue>(safe_pop(stack));
+                  auto value = safe_pop(stack);
+                  std::shared_ptr<AbstractFunctionValue> function = std::dynamic_pointer_cast<AbstractFunctionValue>(value);
                   if (!function) {
-                      throw RuntimeException("Top of stack wasn't a function");
+                      throw IllegalCastException(value->toString());
                   }
                   std::shared_ptr<IntegerValue> num_args = std::dynamic_pointer_cast<IntegerValue>(safe_pop(stack));
                   if (!num_args) {

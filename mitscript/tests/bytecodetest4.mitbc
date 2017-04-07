@@ -66,23 +66,62 @@ function
 							names = [print],
 							instructions = 
 							[
+								load_const	0
+								load_local	0
+								add
+								load_const	1
+								add
+								push_ref	0
+								load_ref
+								add
+								load_const	2
+								load_global	0
+								call
+								pop
+								load_const	3
+								return
 							]
 						}
 					],
 					constants = [3, 1, 2],
 					parameter_count = 1,
-					local_vars = [u, x, boo],
+					local_vars = [u, boo, x],
 					local_ref_vars = [x],
 					free_vars = [],
 					names = [],
 					instructions = 
 					[
+						load_const	0
+						push_ref	0
+						swap
+						store_ref
+						push_ref	0
+						load_const	1
+						load_func	0
+						alloc_closure
+						store_local	1
+						load_const	0
+						load_const	1
+						load_local	1
+						call
+						pop
+						load_const	2
+						push_ref	0
+						swap
+						store_ref
+						load_const	2
+						load_const	1
+						load_local	1
+						call
+						pop
+						load_local	1
+						return
 					]
 				}
 			],
 			constants = [2, 1, "this x should be ", " is ", 4, 0, None],
 			parameter_count = 1,
-			local_vars = [t, x, moo, f, bad],
+			local_vars = [t, bad, f, moo],
 			local_ref_vars = [],
 			free_vars = [],
 			names = [x, print],
@@ -92,56 +131,19 @@ function
 				load_const	4
 				gt
 				if	2
-				goto	64
+				goto	27
 				load_local	0
 				store_global	0
-				load_const	0
-				store_local	1
-				load_const	0
-				load_local	0
-				add
-				load_const	1
-				add
-				push_ref	0
-				load_ref
-				add
-				load_const	2
-				load_global	0
-				call
-				pop
-				load_const	3
-				return
-				push_ref	0
-				load_const	1
 				load_func	0
-				alloc_closure
-				store_local	2
-				load_const	0
-				load_const	1
-				load_local	2
-				call
-				pop
-				load_const	2
-				push_ref	0
-				swap
-				store_ref
-				load_const	2
-				load_const	1
-				load_local	2
-				call
-				pop
-				load_local	2
-				return
-				load_func	0
-				store_local	2
-				load_const	0
-				load_const	1
-				load_local	2
-				call
 				store_local	3
 				load_const	0
 				load_const	1
 				load_local	3
+				call
+				store_local	2
+				load_const	0
+				load_const	1
+				load_local	2
 				call
 				pop
 				load_const	2
@@ -159,7 +161,7 @@ function
 				load_const	4
 				load_const	5
 				div
-				store_local	4
+				store_local	1
 				load_const	6
 				return
 			]

@@ -62,11 +62,11 @@ function
 							parameter_count = 0,
 							local_vars = [z1],
 							local_ref_vars = [],
-							free_vars = [x, q],
+							free_vars = [q, x],
 							names = [print],
 							instructions = 
 							[
-								push_ref	0
+								push_ref	1
 								load_ref
 								load_const	0
 								load_global	0
@@ -74,7 +74,7 @@ function
 								pop
 								load_const	1
 								store_local	0
-								push_ref	1
+								push_ref	0
 								load_ref
 								load_const	0
 								load_global	0
@@ -116,22 +116,24 @@ function
 			],
 			constants = [1, "foo", None],
 			parameter_count = 0,
-			local_vars = [x, b],
+			local_vars = [b, x],
 			local_ref_vars = [x],
 			free_vars = [],
 			names = [],
 			instructions = 
 			[
 				load_const	0
-				store_local	0
+				push_ref	0
+				swap
+				store_ref
 				push_ref	0
 				load_const	0
 				load_func	0
 				alloc_closure
-				store_local	1
+				store_local	0
 				load_const	1
 				load_const	0
-				load_local	1
+				load_local	0
 				call
 				pop
 				load_const	2

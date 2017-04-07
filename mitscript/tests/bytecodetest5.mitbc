@@ -94,10 +94,12 @@ function
 			[
 				alloc_record
 				dup
-				load_local	0
+				push_ref	1
+				load_ref
 				field_store	0
 				dup
-				load_local	1
+				push_ref	2
+				load_ref
 				field_store	1
 				dup
 				load_local	2
