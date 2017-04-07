@@ -16,5 +16,6 @@ namespace BC {
     set<string> globals;
     vector<string> getGlobals();
     void visit(Global& global) override;
+    void visit(AST::Function& func) override;
   };
 }

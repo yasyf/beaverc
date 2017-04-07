@@ -11,4 +11,6 @@ namespace BC {
   void CompilerGlobalsScanner::visit(Global& global) {
     globals.insert(global.name);
   }
+
+  void CompilerGlobalsScanner::visit(AST::Function& func) { }
 }
