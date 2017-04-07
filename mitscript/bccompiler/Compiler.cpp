@@ -289,7 +289,7 @@ namespace BC {
     }
     size_t num_local_refs = current().local_reference_vars_.size();
     for (string& var : parents->free_reference_vars_) {
-      size_t i = index(current().free_vars_, var).value();
+      size_t i = insert(current().free_vars_, var);
       output(Operation::PushReference, num_local_refs + i);
     }
 

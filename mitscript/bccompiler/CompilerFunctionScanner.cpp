@@ -30,19 +30,27 @@ namespace BC {
     }
 
     shared_ptr<FunctionLinkedList> node = functions->last;
+    vector<shared_ptr<FunctionLinkedList>> ancestors;
+
     while (node) {
       if (index(node->function->local_vars_, name.name)) {
         insert(current().free_vars_, name.name);
         insert(node->local_reference_vars_, name.name);
+        for (auto an : ancestors)
+          insert(an->free_reference_vars_, name.name);
         return;
       } else if (index(node->function->free_vars_, name.name)) {
         insert(current().free_vars_, name.name);
         insert(node->free_reference_vars_, name.name);
+        for (auto an : ancestors)
+          insert(an->free_reference_vars_, name.name);
         return;
       } else if (index(node->function->names_, name.name)) {
         insert(current().names_, name.name);
         return;
       }
+
+      ancestors.push_back(node);
       node = node->last;
     }
 
