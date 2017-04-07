@@ -72,12 +72,12 @@ function
 				load_global	0
 				call
 				pop
-				load_local	1
-				load_const	3
-				add
 				load_local	0
 				load_const	2
 				sub
+				load_local	1
+				load_const	3
+				add
 				load_const	4
 				load_global	1
 				call
@@ -106,8 +106,8 @@ function
 		store_global	3
 		load_func	3
 		store_global	4
-		load_const	2
 		load_const	1
+		load_const	2
 		load_const	3
 		load_global	4
 		call
