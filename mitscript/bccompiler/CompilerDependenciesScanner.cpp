@@ -2,7 +2,6 @@
 #include <string>
 #include "CompilerDependenciesScanner.h"
 #include "Util.h"
-#include "Exception.h"
 
 using namespace std;
 using namespace AST;
@@ -23,8 +22,6 @@ namespace BC {
     } else if (index(root->function->names_, name.name)) {
       // Since root vars are globals, they don't get passed as refs
       insert(function->names_, name.name);
-    } else {
-      throw UninitializedVariableException(name.name);
     }
   }
 

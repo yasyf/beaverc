@@ -10,6 +10,7 @@
 #include "CompilerLocalsScanner.h"
 #include "CompilerRefsScanner.h"
 #include "CompilerDependenciesScanner.h"
+#include "CompilerErrorsScanner.h"
 #include "../debug.h"
 
 using namespace std;
@@ -300,6 +301,7 @@ namespace BC {
     for (string& freeRef : freeRefsScanner.getRefs())
       insert(parents->free_reference_vars_, freeRef);
 
+    // Fix tiny edge cases
     CompilerDependenciesScanner dependenciesScanner(function, root);
     dependenciesScanner.scan(func.body);
 
@@ -311,6 +313,10 @@ namespace BC {
       loadNone();
       outputReturn();
     }
+
+    // Check for errors
+    CompilerErrorsScanner errorsScanner(function);
+    errorsScanner.scan(func.body);
 
     assert(parents->returned);
 
