@@ -7,16 +7,42 @@
 using namespace std;
 
 namespace BC {
-  class TranspilerFunctionScanner : public AST::Visitor {
+  class Compiler : public AST::Visitor {
   protected:
-    shared_ptr<FunctionLinkedList> functions;
+    shared_ptr<FunctionLinkedList> parents;
+    InstructionList* out = nullptr;
+    bool storing = false;
+
     Function& current() {
-      return *(functions->function);
+      return *(parents->function);
     }
-    void scan(AST::AST_node *node);
+    bool isGlobal() {
+      return parents->function == result;
+    }
+    void transpile(AST::AST_node *node, bool storing = false, InstructionList* out = nullptr);
+    void transpileTo(AST::AST_node *node, InstructionList* out);
+    void store(AST::AST_node *node);
+    size_t count();
+    void output(Instruction inst);
+    void output(const Operation operation);
+    void output(const Operation operation, int32_t operand0);
+    void drain(InstructionList il);
+    void loadConst(shared_ptr<Constant> constant);
+    void loadConst(int i);
+    void loadConst(string s);
+    void loadBool(bool b);
+    void loadNone();
+    void outputReturn();
+
+    template <BinOpSym op>
+    void visitBinop(AST::BinaryOp<op>& binop, Operation operation, bool reverse = false);
+    template <UnOpSym op>
+    void visitUnop(AST::UnaryOp<op>& unop, Operation operation);
 
   public:
-    TranspilerFunctionScanner(shared_ptr<FunctionLinkedList> functions) : functions(functions) {};
+    shared_ptr<Function> result;
+
+    Compiler();
     void visit(AST::Program& prog) override;
     void visit(AST::Block& block) override;
     void visit(AST::Name& name) override;

@@ -4,9 +4,9 @@
 #include <cassert>
 #include <experimental/optional>
 #include "Util.h"
-#include "Transpiler.h"
+#include "Compiler.h"
 #include "Exception.h"
-#include "TranspilerFunctionScanner.h"
+#include "CompilerFunctionScanner.h"
 
 #define DEBUG 0
 
@@ -14,14 +14,14 @@ using namespace std;
 using namespace std::experimental;
 
 namespace BC {
-  Transpiler::Transpiler() {
+  Compiler::Compiler() {
     result = shared_ptr<Function>(new Function());
     result->parameter_count_ = 0;
 
     parents = shared_ptr<FunctionLinkedList>(new FunctionLinkedList(result));
   }
 
-  void Transpiler::transpile(AST_node *node, bool storing, InstructionList* out) {
+  void Compiler::transpile(AST_node *node, bool storing, InstructionList* out) {
     bool old_storing = this->storing;
     this->storing = storing;
     if (out)
@@ -34,68 +34,68 @@ namespace BC {
     this->storing = old_storing;
   }
 
-  void Transpiler::transpileTo(AST::AST_node *node, InstructionList* out) {
+  void Compiler::transpileTo(AST::AST_node *node, InstructionList* out) {
     transpile(node, false, out);
   }
 
-  void Transpiler::store(AST_node *node) {
+  void Compiler::store(AST_node *node) {
     transpile(node, true);
   }
 
-  size_t Transpiler::count() {
+  size_t Compiler::count() {
     return (out ? *out : current().instructions).size();
   }
 
-  void Transpiler::output(Instruction inst) {
+  void Compiler::output(Instruction inst) {
     (out ? *out : current().instructions).push_back(inst);
   }
 
-  void Transpiler::output(const Operation operation) {
+  void Compiler::output(const Operation operation) {
     #if DEBUG
       cout << static_cast<int>(operation) << endl;
     #endif
     output(Instruction(operation, nullopt));
   }
 
-  void Transpiler::output(const Operation operation, int32_t operand0) {
+  void Compiler::output(const Operation operation, int32_t operand0) {
     #if DEBUG
       cout << static_cast<int>(operation) << " " <<  operand0 << endl;
     #endif
     output(Instruction(operation, operand0));
   }
 
-  void Transpiler::drain(InstructionList il) {
+  void Compiler::drain(InstructionList il) {
     for (auto inst : il)
       output(inst);
   }
 
-  void Transpiler::loadConst(shared_ptr<Constant> constant) {
+  void Compiler::loadConst(shared_ptr<Constant> constant) {
     size_t i = insert_by_val(current().constants_, constant);
     output(Operation::LoadConst, i);
   }
 
-  void Transpiler::loadConst(int32_t i) {
+  void Compiler::loadConst(int32_t i) {
     loadConst(shared_ptr<Constant>(new Integer(i)));
   }
 
-  void Transpiler::loadConst(string s) {
+  void Compiler::loadConst(string s) {
     loadConst(shared_ptr<Constant>(new String(s)));
   }
 
-  void Transpiler::loadBool(bool b) {
+  void Compiler::loadBool(bool b) {
     loadConst(shared_ptr<Constant>(new Boolean(b)));
   }
 
-  void Transpiler::loadNone() {
+  void Compiler::loadNone() {
     loadConst(shared_ptr<Constant>(new None()));
   }
 
-  void Transpiler::outputReturn() {
+  void Compiler::outputReturn() {
     output(Operation::Return);
     parents->returned = true;
   }
 
-  void Transpiler::visit(Program& prog) {
+  void Compiler::visit(Program& prog) {
     transpile(prog.block);
     if (!parents->returned) {
       loadConst(0);
@@ -103,13 +103,13 @@ namespace BC {
     }
   }
 
-  void Transpiler::visit(AST::Block& block) {
+  void Compiler::visit(AST::Block& block) {
     for (Statement *stmt : block.statements) {
       transpile(stmt);
     }
   }
 
-  void Transpiler::visit(AST::Name& name) {
+  void Compiler::visit(AST::Name& name) {
     if (auto i = index(current().names_, name.name)) {
       if (storing)
         output(Operation::StoreGlobal, *i);
@@ -146,7 +146,7 @@ namespace BC {
     }
   }
 
-  void Transpiler::visit(AST::IndexExpression& ie) {
+  void Compiler::visit(AST::IndexExpression& ie) {
     if (storing) {
       transpile(ie.base);  // S :: value :: record
       output(Operation::Swap); // S :: record :: value
@@ -160,7 +160,7 @@ namespace BC {
     }
   }
 
-  void Transpiler::visit(AST::FieldDereference& fd) {
+  void Compiler::visit(AST::FieldDereference& fd) {
     size_t i = insert(current().names_, fd.field->name);
     if (storing) {
       transpile(fd.base);  // S :: value :: record
@@ -172,14 +172,14 @@ namespace BC {
     }
   }
 
-  void Transpiler::visit(AST::Assignment& assign) {
+  void Compiler::visit(AST::Assignment& assign) {
     // Leaves value at top of stack
     transpile(assign.expr);
     // Handlers will know to store value instead of loading
     store(assign.lhs);
   }
 
-  void Transpiler::visit(AST::Call& call) {
+  void Compiler::visit(AST::Call& call) {
     for (auto it = call.arguments.rbegin(); it != call.arguments.rend(); ++it)
       transpile(*it);
     loadConst(call.arguments.size());
@@ -187,16 +187,16 @@ namespace BC {
     output(Operation::Call);
   }
 
-  void Transpiler::visit(AST::CallStatement& cs) {
+  void Compiler::visit(AST::CallStatement& cs) {
     transpile(cs.call);
     output(Operation::Pop);
   }
 
-  void Transpiler::visit(AST::Global& global) {
+  void Compiler::visit(AST::Global& global) {
     // noop
   }
 
-  void Transpiler::visit(AST::IfStatement& is) {
+  void Compiler::visit(AST::IfStatement& is) {
     // Set up blocks
     InstructionList thenInst, elseInst;
     transpileTo(is.thenBlock, &thenInst);
@@ -211,7 +211,7 @@ namespace BC {
     drain(elseInst); // else-block
   }
 
-  void Transpiler::visit(AST::WhileLoop& wl) {
+  void Compiler::visit(AST::WhileLoop& wl) {
     InstructionList bodyInst, condInst;
     transpileTo(wl.body, &bodyInst);
     transpileTo(wl.cond, &condInst);
@@ -225,12 +225,12 @@ namespace BC {
     output(Operation::Goto, loop_start - count()); // loop-goto: back up to cond-block
   }
 
-  void Transpiler::visit(AST::Return& ret) {
+  void Compiler::visit(AST::Return& ret) {
     transpile(ret.expr);
     outputReturn();
   }
 
-  void Transpiler::visit(AST::Function& func) {
+  void Compiler::visit(AST::Function& func) {
     shared_ptr<Function> function(new Function());
     function->parameter_count_ = func.arguments.size();
     for (AST::Name* name : func.arguments)
@@ -242,7 +242,7 @@ namespace BC {
     parents = parents->extend(function);
 
     // Fill new function metadata
-    TranspilerFunctionScanner scanner(parents);
+    CompilerFunctionScanner scanner(parents);
     func.body->accept(scanner);
 
     // Transpile new function
@@ -283,7 +283,7 @@ namespace BC {
     }
   }
 
-  void Transpiler::visit(AST::Record& rec) {
+  void Compiler::visit(AST::Record& rec) {
     output(Operation::AllocRecord);
     rec.record.iterate([this] (string key, Expression *value) {
       output(Operation::Dup);
@@ -292,24 +292,24 @@ namespace BC {
     });
   }
 
-  void Transpiler::visit(AST::ValueConstant<bool>& boolconst) {
+  void Compiler::visit(AST::ValueConstant<bool>& boolconst) {
     loadBool(boolconst.value);
   }
 
-  void Transpiler::visit(AST::StringConstant& strconst) {
+  void Compiler::visit(AST::StringConstant& strconst) {
     loadConst(strconst.value);
   }
 
-  void Transpiler::visit(AST::ValueConstant<int>& intconst) {
+  void Compiler::visit(AST::ValueConstant<int>& intconst) {
     loadConst(intconst.value);
   }
 
-  void Transpiler::visit(AST::NullConstant& nullconst) {
+  void Compiler::visit(AST::NullConstant& nullconst) {
     loadNone();
   }
 
   template <BinOpSym op>
-  void Transpiler::visitBinop(AST::BinaryOp<op>& binop, Operation operation, bool reverse) {
+  void Compiler::visitBinop(AST::BinaryOp<op>& binop, Operation operation, bool reverse) {
     if (reverse) {
       transpile(binop.right);
       transpile(binop.left);
@@ -321,60 +321,60 @@ namespace BC {
   }
 
   template <UnOpSym op>
-  void Transpiler::visitUnop(AST::UnaryOp<op>& unop, Operation operation) {
+  void Compiler::visitUnop(AST::UnaryOp<op>& unop, Operation operation) {
     transpile(unop.expr);
     output(operation);
   }
 
-  void Transpiler::visit(AST::BinaryOp<OR>& orop) {
+  void Compiler::visit(AST::BinaryOp<OR>& orop) {
     this->visitBinop(orop, Operation::Or);
   }
 
-  void Transpiler::visit(AST::BinaryOp<AND>& andop) {
+  void Compiler::visit(AST::BinaryOp<AND>& andop) {
     this->visitBinop(andop, Operation::And);
   }
 
-  void Transpiler::visit(AST::BinaryOp<LT>& ltop) {
+  void Compiler::visit(AST::BinaryOp<LT>& ltop) {
     this->visitBinop(ltop, Operation::Gt, true);
   }
 
-  void Transpiler::visit(AST::BinaryOp<LTE>& lteop) {
+  void Compiler::visit(AST::BinaryOp<LTE>& lteop) {
     this->visitBinop(lteop, Operation::Geq, true);
   }
 
-  void Transpiler::visit(AST::BinaryOp<GT>& gtop) {
+  void Compiler::visit(AST::BinaryOp<GT>& gtop) {
     this->visitBinop(gtop, Operation::Gt);
   }
 
-  void Transpiler::visit(AST::BinaryOp<GTE>& gteop) {
+  void Compiler::visit(AST::BinaryOp<GTE>& gteop) {
     this->visitBinop(gteop, Operation::Geq);
   }
 
-  void Transpiler::visit(AST::BinaryOp<EQ>& eqop) {
+  void Compiler::visit(AST::BinaryOp<EQ>& eqop) {
     this->visitBinop(eqop, Operation::Eq);
   }
 
-  void Transpiler::visit(AST::BinaryOp<PLUS>& plusop) {
+  void Compiler::visit(AST::BinaryOp<PLUS>& plusop) {
     this->visitBinop(plusop, Operation::Add);
   }
 
-  void Transpiler::visit(AST::BinaryOp<MINUS>& minusop) {
+  void Compiler::visit(AST::BinaryOp<MINUS>& minusop) {
     this->visitBinop(minusop, Operation::Sub);
   }
 
-  void Transpiler::visit(AST::BinaryOp<MUL>& mulop) {
+  void Compiler::visit(AST::BinaryOp<MUL>& mulop) {
     this->visitBinop(mulop, Operation::Mul);
   }
 
-  void Transpiler::visit(AST::BinaryOp<DIV>& divop) {
+  void Compiler::visit(AST::BinaryOp<DIV>& divop) {
     this->visitBinop(divop, Operation::Div);
   }
 
-  void Transpiler::visit(AST::UnaryOp<NOT>& notop) {
+  void Compiler::visit(AST::UnaryOp<NOT>& notop) {
     this->visitUnop(notop, Operation::Not);
   }
 
-  void Transpiler::visit(AST::UnaryOp<NEG>& negop) {
+  void Compiler::visit(AST::UnaryOp<NEG>& negop) {
     this->visitUnop(negop, Operation::Neg);
   }
 }

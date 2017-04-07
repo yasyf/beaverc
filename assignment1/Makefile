@@ -16,8 +16,8 @@ printer: lexer.c parser.cpp print.o parser.o lexer.o AST.o PrettyPrinter.o
 astprinter: lexer.c parser.cpp astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
 	$(CXX) $(LDFLAGS) -o $@ astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
 
-bcprinter: lexer.c parser.cpp bytecode/bcprint.o parser.o lexer.o AST.o bytecode/TranspilerFunctionScanner.o bytecode/Transpiler.o
-	$(CXX) $(LDFLAGS) -o $@ bytecode/bcprint.o parser.o lexer.o AST.o bytecode/TranspilerFunctionScanner.o bytecode/Transpiler.o
+bcprinter: lexer.c parser.cpp bytecode/bcprint.o parser.o lexer.o AST.o bytecode/CompilerFunctionScanner.o bytecode/Compiler.o
+	$(CXX) $(LDFLAGS) -o $@ bytecode/bcprint.o parser.o lexer.o AST.o bytecode/CompilerFunctionScanner.o bytecode/Compiler.o
 
 lexer.c: lexer.lex
 	$(LEX) --debug --header-file=lexer.h -o lexer.c lexer.lex

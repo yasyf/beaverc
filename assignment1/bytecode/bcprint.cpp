@@ -3,14 +3,14 @@
 #include "../lexer.h"
 #include "../AST.h"
 #include "Types.h"
-#include "Transpiler.h"
+#include "Compiler.h"
 #include "PrettyPrinter.h"
 
 using namespace std;
 
 int main(int argc, char** argv){
   BC::PrettyPrinter printer;
-  BC::Transpiler transpiler;
+  BC::Compiler transpiler;
   Program* program;
   void* scanner;
 
