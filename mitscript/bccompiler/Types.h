@@ -3,6 +3,7 @@
 #include "Instructions.h"
 
 #include <string>
+#include <stack>
 #include <vector>
 #include <memory>
 #include <cstdint>
@@ -92,13 +93,13 @@ namespace BC {
     std::shared_ptr<FunctionLinkedList> last;
     std::vector<std::string> free_reference_vars_;
     std::string storing;
-    InstructionList* out = nullptr;
+    std::stack<InstructionList*> outs;
     bool returned = false;
 
     FunctionLinkedList(std::shared_ptr<Function> function) : function(function), last(nullptr) {}
 
     InstructionList* getOut() {
-      return out ? out : &(function->instructions);
+      return outs.size() ? outs.top() : &(function->instructions);
     }
 
     std::shared_ptr<FunctionLinkedList> extend(std::shared_ptr<Function> function) {

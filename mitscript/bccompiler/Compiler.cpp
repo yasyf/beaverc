@@ -49,12 +49,12 @@ namespace BC {
     bool old_storing = this->storing;
     this->storing = storing;
     if (out)
-      parents->out = out;
+      parents->outs.push(out);
 
     node->accept(*this);
 
     if (out)
-      parents->out = nullptr;
+      parents->outs.pop();
     this->storing = old_storing;
   }
 
@@ -165,7 +165,7 @@ namespace BC {
         size_t i = insert(current().names_, name.name);
         output(Operation::StoreGlobal, i);
       } else {
-        // throw UninitializedVariableException(name.name);
+        throw UninitializedVariableException(name.name);
       }
     }
   }
@@ -208,8 +208,16 @@ namespace BC {
   }
 
   void Compiler::visit(Call& call) {
-    for (auto it = call.arguments.rbegin(); it != call.arguments.rend(); ++it)
-      transpile(*it);
+    vector<InstructionList> argInsts;
+    for (auto arg : call.arguments) {
+      InstructionList argInst;
+      transpileTo(arg, &argInst);
+      argInsts.push_back(argInst);
+    }
+    reverse(argInsts.begin(), argInsts.end());
+    for (auto a : argInsts)
+      drain(a);
+
     loadConst(call.arguments.size());
     transpile(call.target);
     output(Operation::Call);

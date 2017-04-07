@@ -88,7 +88,7 @@ function
 			]
 		}
 	],
-	constants = [7, "", 5, 2, 1, 0],
+	constants = [7, 5, "", 2, 1, 0],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
@@ -106,8 +106,8 @@ function
 		store_global	3
 		load_func	3
 		store_global	4
-		load_const	1
 		load_const	2
+		load_const	1
 		load_const	3
 		load_global	4
 		call
