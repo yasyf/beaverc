@@ -13,8 +13,8 @@ OBJECTS = $(patsubst %.cpp, %.o, $(CPPSOURCES)) $(patsubst %.c, %.o, $(CSOURCES)
 
 .PHONY: parser clean extraclean
 
-BIOBJECTS = $(patsubst %.cpp, %.o, $(wildcard basic_interpreter/*.cpp))
-basic_interpreter: parser $(OBJECTS) $(BIOBJECTS)
+BIOBJECTS = $(patsubst %.cpp, %.o, $(wildcard interpreter/*.cpp))
+interpreter: parser $(OBJECTS) $(BIOBJECTS)
 	$(CXX) $(LDFLAGS) -o bin/$@ $(OBJECTS) $(BIOBJECTS)
 
 COOBJECTS = $(patsubst %.cpp, %.o, $(wildcard bccompiler/*.cpp))
