@@ -4,7 +4,6 @@
 #include <map>
 #include <stack>
 #include "../bccompiler/Types.h"
-#include "../debug.h"
 
 namespace VM {
   struct Value;

@@ -12,7 +12,6 @@
 #include "CompilerRefsScanner.h"
 #include "CompilerDependenciesScanner.h"
 #include "CompilerErrorsScanner.h"
-#include "../debug.h"
 
 using namespace std;
 using namespace std::experimental;
@@ -215,7 +214,6 @@ namespace BC {
       transpileTo(arg, &argInst);
       argInsts.push_back(argInst);
     }
-    reverse(argInsts.begin(), argInsts.end());
     for (auto a : argInsts)
       drain(a);
 

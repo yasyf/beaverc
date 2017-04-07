@@ -1,4 +1,5 @@
 #include "Interpreter.h"
+#include <algorithm>
 
 using namespace BC;
 
@@ -131,7 +132,8 @@ namespace VM {
           Instruction instruction = func.instructions[ip];
           int ip_increment = 1;
           #if DEBUG
-          std::cout << "instruction: " << ip << std::endl;
+          std::cout << "ip: " << ip << std::endl;
+          std::cout << "Instruction: " << instruction.toString() << std::endl;
           #endif
           switch (instruction.operation) {
               // Description: push a constant onto the operand stack
@@ -397,6 +399,7 @@ namespace VM {
                       }
                       arguments.push_back(value);
                   }
+                  std::reverse(arguments.begin(), arguments.end());
                   stack.push(function->call(*this, arguments));
               }
               break;
