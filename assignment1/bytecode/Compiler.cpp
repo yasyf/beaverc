@@ -14,11 +14,30 @@ using namespace std;
 using namespace std::experimental;
 
 namespace BC {
+  const vector<pair<string, int>> Builtins = {{"print", 1}, {"input", 0}, {"intcast", 1}};
+
   Compiler::Compiler() {
     result = shared_ptr<Function>(new Function());
     result->parameter_count_ = 0;
 
     parents = shared_ptr<FunctionLinkedList>(new FunctionLinkedList(result));
+
+    for (auto const& b : Builtins) {
+      addNativeFunction(b.first, b.second);
+    }
+  }
+
+  void Compiler::addNativeFunction(string name, size_t argc) {
+    shared_ptr<Function> function(new Function());
+    function->parameter_count_ = argc;
+    current().functions_.push_back(function);
+    this->parents = parents->extend(function);
+    loadNone();
+    outputReturn();
+    this->parents = parents->last;
+
+    output(Operation::LoadFunc, current().functions_.size() - 1);
+    output(Operation::StoreGlobal, insert(current().names_, name));
   }
 
   void Compiler::transpile(AST_node *node, bool storing, InstructionList* out) {

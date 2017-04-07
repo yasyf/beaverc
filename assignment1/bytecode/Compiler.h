@@ -19,6 +19,7 @@ namespace BC {
     bool isGlobal() {
       return parents->function == result;
     }
+    void addNativeFunction(string name, size_t argc);
     void transpile(AST::AST_node *node, bool storing = false, InstructionList* out = nullptr);
     void transpileTo(AST::AST_node *node, InstructionList* out);
     void store(AST::AST_node *node);
