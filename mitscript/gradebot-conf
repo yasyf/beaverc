@@ -2,10 +2,10 @@
   "a1" : {
     "schema" : "v1",
     "lang" : "cpp",
-    "root_dir" : "assignment1",
+    "root_dir" : "mitscript",
     "makefile_dir" : ".",
-    "bin_dir" : ".",
-    "bin" : "main",
+    "bin_dir" : "bin",
+    "bin" : "pprinter",
     "tests" : "tests",
     "stdin_or_arg" : "stdin",
     "feedback_dir" : "assignment1-feedback"
@@ -13,12 +13,23 @@
   "a2" : {
     "schema" : "v1",
     "lang" : "cpp",
-    "root_dir" : "assignment1",
+    "root_dir" : "mitscript",
     "makefile_dir" : ".",
-    "bin_dir" : ".",
+    "bin_dir" : "bin",
     "bin" : "interpreter",
     "tests" : "tests",
     "stdin_or_arg" : "arg",
     "feedback_dir" : "assignment2-feedback"
+  },
+  "a3" : {
+    "schema" : "v1",
+    "lang" : "cpp",
+    "root_dir" : "mitscript",
+    "makefile_dir" : ".",
+    "bin_dir" : "bin",
+    "bin" : "vm",
+    "tests" : "tests",
+    "stdin_or_arg" : "arg",
+    "feedback_dir" : "assignment3-feedback"
   }
 }
