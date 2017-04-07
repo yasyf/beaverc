@@ -160,7 +160,7 @@ namespace BC {
       if (storing && isGlobal()) {
         size_t i = insert(current().names_, name.name);
         output(Operation::StoreGlobal, i);
-      } else if (!index(parents->storing, name.name)) {
+      } else {
         throw UninitializedVariableException(name.name);
       }
     }
@@ -195,7 +195,7 @@ namespace BC {
   void Compiler::visit(Assignment& assign) {
     // Inform scanner of current assignment
     if (Name *name = dynamic_cast<Name *>(assign.lhs))
-      parents->storing.push_back(name->name);
+      parents->storing = name->name;
 
     // Leaves value at top of stack
     transpile(assign.expr);

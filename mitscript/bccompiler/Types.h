@@ -92,7 +92,7 @@ namespace BC {
     std::shared_ptr<FunctionLinkedList> last;
     std::vector<std::string> local_reference_vars_;
     std::vector<std::string> free_reference_vars_;
-    std::vector<std::string> storing;
+    std::string storing;
     bool returned = false;
 
     FunctionLinkedList(std::shared_ptr<Function> function) : function(function), last(nullptr),
@@ -102,7 +102,6 @@ namespace BC {
     std::shared_ptr<FunctionLinkedList> extend(std::shared_ptr<Function> function) {
       std::shared_ptr<FunctionLinkedList> fll(new FunctionLinkedList(function));
       fll->last = shared_from_this();
-      fll->storing = storing;
       return fll;
     }
 

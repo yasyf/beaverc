@@ -30,6 +30,7 @@ namespace BC {
     }
 
     shared_ptr<FunctionLinkedList> node = functions->last;
+    shared_ptr<FunctionLinkedList> last_node;
     vector<shared_ptr<FunctionLinkedList>> ancestors;
 
     while (node) {
@@ -51,10 +52,14 @@ namespace BC {
       }
 
       ancestors.push_back(node);
+      last_node = node;
       node = node->last;
     }
 
-    if (!index(functions->storing, name.name))
+    // Special case for recursive define at top level
+    if (last_node->storing == name.name)
+      insert(current().names_, name.name);
+    else
       throw UninitializedVariableException(name.name);
   }
 
