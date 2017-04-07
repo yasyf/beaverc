@@ -1,10 +1,12 @@
 #include <iostream>
-#include "parser.h"
-#include "lexer.h"
+#include "../parser/parser.h"
+#include "../parser/lexer.h"
 #include "Interpreter.h"
 #include "Exception.h"
 
 using namespace std;
+using namespace AST;
+using namespace BasicInterpreter;
 
 int main(int argc, char** argv){
   Program* program;

@@ -12,6 +12,7 @@
 
 using namespace std;
 using namespace std::experimental;
+using namespace AST;
 
 namespace BC {
   const vector<pair<string, int>> Builtins = {{"print", 1}, {"input", 0}, {"intcast", 1}};
@@ -53,7 +54,7 @@ namespace BC {
     this->storing = old_storing;
   }
 
-  void Compiler::transpileTo(AST::AST_node *node, InstructionList* out) {
+  void Compiler::transpileTo(AST_node *node, InstructionList* out) {
     transpile(node, false, out);
   }
 
@@ -122,13 +123,13 @@ namespace BC {
     }
   }
 
-  void Compiler::visit(AST::Block& block) {
+  void Compiler::visit(Block& block) {
     for (Statement *stmt : block.statements) {
       transpile(stmt);
     }
   }
 
-  void Compiler::visit(AST::Name& name) {
+  void Compiler::visit(Name& name) {
     if (auto i = index(current().names_, name.name)) {
       if (storing)
         output(Operation::StoreGlobal, *i);
@@ -165,7 +166,7 @@ namespace BC {
     }
   }
 
-  void Compiler::visit(AST::IndexExpression& ie) {
+  void Compiler::visit(IndexExpression& ie) {
     if (storing) {
       transpile(ie.base);  // S :: value :: record
       output(Operation::Swap); // S :: record :: value
@@ -179,7 +180,7 @@ namespace BC {
     }
   }
 
-  void Compiler::visit(AST::FieldDereference& fd) {
+  void Compiler::visit(FieldDereference& fd) {
     size_t i = insert(current().names_, fd.field->name);
     if (storing) {
       transpile(fd.base);  // S :: value :: record
@@ -191,14 +192,14 @@ namespace BC {
     }
   }
 
-  void Compiler::visit(AST::Assignment& assign) {
+  void Compiler::visit(Assignment& assign) {
     // Leaves value at top of stack
     transpile(assign.expr);
     // Handlers will know to store value instead of loading
     store(assign.lhs);
   }
 
-  void Compiler::visit(AST::Call& call) {
+  void Compiler::visit(Call& call) {
     for (auto it = call.arguments.rbegin(); it != call.arguments.rend(); ++it)
       transpile(*it);
     loadConst(call.arguments.size());
@@ -206,16 +207,16 @@ namespace BC {
     output(Operation::Call);
   }
 
-  void Compiler::visit(AST::CallStatement& cs) {
+  void Compiler::visit(CallStatement& cs) {
     transpile(cs.call);
     output(Operation::Pop);
   }
 
-  void Compiler::visit(AST::Global& global) {
+  void Compiler::visit(Global& global) {
     // noop
   }
 
-  void Compiler::visit(AST::IfStatement& is) {
+  void Compiler::visit(IfStatement& is) {
     // Set up blocks
     InstructionList thenInst, elseInst;
     transpileTo(is.thenBlock, &thenInst);
@@ -230,7 +231,7 @@ namespace BC {
     drain(elseInst); // else-block
   }
 
-  void Compiler::visit(AST::WhileLoop& wl) {
+  void Compiler::visit(WhileLoop& wl) {
     InstructionList bodyInst, condInst;
     transpileTo(wl.body, &bodyInst);
     transpileTo(wl.cond, &condInst);
@@ -244,7 +245,7 @@ namespace BC {
     output(Operation::Goto, loop_start - count()); // loop-goto: back up to cond-block
   }
 
-  void Compiler::visit(AST::Return& ret) {
+  void Compiler::visit(Return& ret) {
     transpile(ret.expr);
     outputReturn();
   }
@@ -252,7 +253,7 @@ namespace BC {
   void Compiler::visit(AST::Function& func) {
     shared_ptr<Function> function(new Function());
     function->parameter_count_ = func.arguments.size();
-    for (AST::Name* name : func.arguments)
+    for (Name* name : func.arguments)
       insert(function->local_vars_, name->name);
 
     // Set current context to new function
@@ -302,7 +303,7 @@ namespace BC {
     }
   }
 
-  void Compiler::visit(AST::Record& rec) {
+  void Compiler::visit(Record& rec) {
     output(Operation::AllocRecord);
     rec.record.iterate([this] (string key, Expression *value) {
       output(Operation::Dup);
@@ -311,24 +312,24 @@ namespace BC {
     });
   }
 
-  void Compiler::visit(AST::ValueConstant<bool>& boolconst) {
+  void Compiler::visit(ValueConstant<bool>& boolconst) {
     loadBool(boolconst.value);
   }
 
-  void Compiler::visit(AST::StringConstant& strconst) {
+  void Compiler::visit(StringConstant& strconst) {
     loadConst(strconst.value);
   }
 
-  void Compiler::visit(AST::ValueConstant<int>& intconst) {
+  void Compiler::visit(ValueConstant<int>& intconst) {
     loadConst(intconst.value);
   }
 
-  void Compiler::visit(AST::NullConstant& nullconst) {
+  void Compiler::visit(NullConstant& nullconst) {
     loadNone();
   }
 
   template <BinOpSym op>
-  void Compiler::visitBinop(AST::BinaryOp<op>& binop, Operation operation, bool reverse) {
+  void Compiler::visitBinop(BinaryOp<op>& binop, Operation operation, bool reverse) {
     if (reverse) {
       transpile(binop.right);
       transpile(binop.left);
@@ -340,60 +341,60 @@ namespace BC {
   }
 
   template <UnOpSym op>
-  void Compiler::visitUnop(AST::UnaryOp<op>& unop, Operation operation) {
+  void Compiler::visitUnop(UnaryOp<op>& unop, Operation operation) {
     transpile(unop.expr);
     output(operation);
   }
 
-  void Compiler::visit(AST::BinaryOp<OR>& orop) {
+  void Compiler::visit(BinaryOp<OR>& orop) {
     this->visitBinop(orop, Operation::Or);
   }
 
-  void Compiler::visit(AST::BinaryOp<AND>& andop) {
+  void Compiler::visit(BinaryOp<AND>& andop) {
     this->visitBinop(andop, Operation::And);
   }
 
-  void Compiler::visit(AST::BinaryOp<LT>& ltop) {
+  void Compiler::visit(BinaryOp<LT>& ltop) {
     this->visitBinop(ltop, Operation::Gt, true);
   }
 
-  void Compiler::visit(AST::BinaryOp<LTE>& lteop) {
+  void Compiler::visit(BinaryOp<LTE>& lteop) {
     this->visitBinop(lteop, Operation::Geq, true);
   }
 
-  void Compiler::visit(AST::BinaryOp<GT>& gtop) {
+  void Compiler::visit(BinaryOp<GT>& gtop) {
     this->visitBinop(gtop, Operation::Gt);
   }
 
-  void Compiler::visit(AST::BinaryOp<GTE>& gteop) {
+  void Compiler::visit(BinaryOp<GTE>& gteop) {
     this->visitBinop(gteop, Operation::Geq);
   }
 
-  void Compiler::visit(AST::BinaryOp<EQ>& eqop) {
+  void Compiler::visit(BinaryOp<EQ>& eqop) {
     this->visitBinop(eqop, Operation::Eq);
   }
 
-  void Compiler::visit(AST::BinaryOp<PLUS>& plusop) {
+  void Compiler::visit(BinaryOp<PLUS>& plusop) {
     this->visitBinop(plusop, Operation::Add);
   }
 
-  void Compiler::visit(AST::BinaryOp<MINUS>& minusop) {
+  void Compiler::visit(BinaryOp<MINUS>& minusop) {
     this->visitBinop(minusop, Operation::Sub);
   }
 
-  void Compiler::visit(AST::BinaryOp<MUL>& mulop) {
+  void Compiler::visit(BinaryOp<MUL>& mulop) {
     this->visitBinop(mulop, Operation::Mul);
   }
 
-  void Compiler::visit(AST::BinaryOp<DIV>& divop) {
+  void Compiler::visit(BinaryOp<DIV>& divop) {
     this->visitBinop(divop, Operation::Div);
   }
 
-  void Compiler::visit(AST::UnaryOp<NOT>& notop) {
+  void Compiler::visit(UnaryOp<NOT>& notop) {
     this->visitUnop(notop, Operation::Not);
   }
 
-  void Compiler::visit(AST::UnaryOp<NEG>& negop) {
+  void Compiler::visit(UnaryOp<NEG>& negop) {
     this->visitUnop(negop, Operation::Neg);
   }
 }

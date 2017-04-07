@@ -1,7 +1,7 @@
 *.o
-lexer.c
-lexer.h
-parser.cpp
-parser.h
+parser/lexer.c
+parser/lexer.h
+parser/parser.cpp
+parser/parser.h
 bin/
 .gdb_history

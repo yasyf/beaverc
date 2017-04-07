@@ -1,7 +1,7 @@
-#include "Types.h"
 #include <memory>
 #include <iostream>
 #include <cassert>
+#include "Types.h"
 
 namespace BC {
     class PrettyPrinter

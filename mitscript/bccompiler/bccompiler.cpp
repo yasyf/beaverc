@@ -1,6 +1,6 @@
 #include <iostream>
-#include "../parser.h"
-#include "../lexer.h"
+#include "../parser/parser.h"
+#include "../parser/lexer.h"
 #include "../AST.h"
 #include "Types.h"
 #include "Compiler.h"

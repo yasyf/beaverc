@@ -7,33 +7,41 @@ CFLAGS = -std=c++1y -g
 CXXFLAGS = -std=c++1y -g
 LDFLAGS =
 
-CPPSOURCES=$(wildcard *.cpp) $(wildcard */*.cpp)
-CSOURCES=$(wildcard *.c)
-OBJECTS=$(patsubst %.cpp, %.o, $(CPPSOURCES)) $(patsubst %.c, %.o, $(CSOURCES))
+CPPSOURCES = $(wildcard *.cpp) $(wildcard parser/*.cpp)
+CSOURCES = $(wildcard *.c) $(wildcard parser/*.c)
+OBJECTS = $(patsubst %.cpp, %.o, $(CPPSOURCES)) $(patsubst %.c, %.o, $(CSOURCES))
 
-interpreter: lexer.c parser.cpp $(OBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ interpret.o parser.o lexer.o AST.o FunctionScanner.o Interpreter.o
+.PHONY: parser clean extraclean
 
-printer: lexer.c parser.cpp $(OBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ print.o parser.o lexer.o AST.o PrettyPrinter.o
+BIOBJECTS = $(patsubst %.cpp, %.o, $(wildcard basic_interpreter/*.cpp))
+basic_interpreter: parser $(OBJECTS) $(BIOBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ $(OBJECTS) $(BIOBJECTS)
 
-astprinter: lexer.c parser.cpp $(OBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
+COOBJECTS = $(patsubst %.cpp, %.o, $(wildcard bccompiler/*.cpp))
+bccompiler: parser $(OBJECTS) $(COOBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ $(OBJECTS) $(COOBJECTS)
 
-bcprinter: lexer.c parser.cpp $(OBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ bytecode/bcprint.o parser.o lexer.o AST.o bytecode/CompilerFunctionScanner.o bytecode/Compiler.o
+PPOBJECTS = $(patsubst %.cpp, %.o, $(wildcard pprinter/*.cpp))
+pprinter: parser $(OBJECTS) $(PPOBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ $(OBJECTS) $(PPOBJECTS)
 
-lexer.c: lexer.lex
-	$(LEX) --debug --header-file=lexer.h -o lexer.c lexer.lex
+ASOBJECTS = $(patsubst %.cpp, %.o, $(wildcard astprinter/*.cpp))
+astprinter: parser $(OBJECTS) pprinter/PrettyPrinter.o $(ASOBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ $(OBJECTS) pprinter/PrettyPrinter.o $(ASOBJECTS)
 
-parser.cpp: parser.yy
-	$(YACC) --debug --defines=parser.h -o parser.cpp parser.yy
+parser: parser/lexer.c parser/parser.cpp
+
+parser/lexer.c:
+	$(LEX) --debug --header-file=parser/lexer.h -o parser/lexer.c parser/lexer.lex
+
+parser/parser.cpp:
+	$(YACC) --debug --defines=parser/parser.h -o parser/parser.cpp parser/parser.yy
 
 %.o: %.cpp %.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f bin/* *.o bytecode/*.o
+	rm -f bin/* *.o */*.o bytecode/*.o
 
 extraclean: clean
-	rm -f lexer.c lexer.h parser.cpp parser.h
+	rm -f parser/lexer.c parser/lexer.h parser/parser.cpp parser/parser.h

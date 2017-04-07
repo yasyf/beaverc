@@ -1,8 +1,8 @@
 #include <iostream>
-#include "parser.h"
-#include "lexer.h"
-#include "AST.h"
-#include "PrettyPrinter.h"
+#include "../parser/parser.h"
+#include "../parser/lexer.h"
+#include "../AST.h"
+#include "ASTPrinter.h"
 
 using namespace std;
 
@@ -10,7 +10,7 @@ using namespace std;
 
 
 int main(int argc, char** argv){
-  PrettyPrinter printer;
+  ASTPrinter printer;
   Program* program;
   void* scanner;
 

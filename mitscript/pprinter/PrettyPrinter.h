@@ -1,30 +1,31 @@
 #pragma once
 
-#include "Visitor.h"
-#include "Heap.h"
-#include "Op.h"
+#include "../Visitor.h"
+#include "../AST.h"
 
 using namespace std;
 using namespace AST;
 
-Value* NativePrint(vector<Value *> args);
-Value* NativeInput(vector<Value *> args);
-Value* NativeIntcast(vector<Value *> args);
+//This is where you get to define your pretty printer class, which should be
+//a subtype of visitor.
+class PrettyPrinter : public Visitor {
+protected:
+  int first_block = true;
+  int indent_level = 0;
+  char last_printed = 0;
+  bool line_started = false;
 
-class Interpreter : public Visitor {
-  stack<Value*> asvals;
-  Value *retval;
-  Heap heap;
-
-  void print(string msg, bool newline);
+  void print(string msg, bool newline = false);
   void println(string msg);
-  void exec(AST_node *node, Value *asval);
-  Value* eval(Expression *exp);
-  void ReturnVal(Value *retval);
+  void nextline();
+  void indent();
+  void dedent();
+  template <BinOpSym op>
+  void visitBinop(BinaryOp<op>& binop, string opstring);
+  template <UnOpSym op>
+  void visitUnop(UnaryOp<op>& unop, string opstring);
 
 public:
-  Interpreter();
-
   void visit(Program& prog) override;
   void visit(Block& block) override;
   void visit(Name& name) override;
@@ -43,8 +44,6 @@ public:
   void visit(StringConstant& strconst) override;
   void visit(ValueConstant<int>& intconst) override;
   void visit(NullConstant& nullconst) override;
-  template<BinOpSym op, typename F>
-  void visitIntOp(BinaryOp<op>& binop, F func);
   void visit(BinaryOp<OR>& orop) override;
   void visit(BinaryOp<AND>& andop) override;
   void visit(BinaryOp<LT>& ltop) override;
