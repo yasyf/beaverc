@@ -115,6 +115,9 @@ namespace VM {
           }
           for (int i = 0; i < arguments.size(); i++) {
               std::string var_name = func.local_vars_[i];
+              #if DEBUG
+              std::cout << var_name << " = " << arguments[i]->toString() << std::endl;
+              #endif
               if (local_reference_vars->count(var_name) == 0) {
                   (*local_variables)[var_name] = arguments[i];
               } else {

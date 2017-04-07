@@ -14,6 +14,17 @@ CFLAGS = -std=c++1y
 CXXFLAGS = -std=c++1y
 LDFLAGS =
 
+DEBUG ?= 0
+ifeq ($(DEBUG), 1)
+    CFLAGS += -DDEBUG -g -O0
+    CXXFLAGS += -DDEBUG -g -O0
+    LDFLAGS += -DDEBUG -g -O0
+else
+    CFLAGS += -DNDEBUG -O2
+    CXXFLAGS += -DNDEBUG -O2
+    LDFLAGS += -DNDEBUG -O2
+endif
+
 CPPSOURCES = $(wildcard *.cpp)
 CSOURCES = $(wildcard *.c)
 OBJECTS = $(patsubst %.cpp, %.o, $(CPPSOURCES)) $(patsubst %.c, %.o, $(CSOURCES))
