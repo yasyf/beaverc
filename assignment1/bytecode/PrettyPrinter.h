@@ -44,11 +44,6 @@ namespace BC {
                     }
 
                     print(*function.functions_[i], os);
-
-                    if (i != (function.functions_.size() - 1))
-                    {
-                        print_indent(os) << ",";
-                    }
                 }
 
                 unindent();
