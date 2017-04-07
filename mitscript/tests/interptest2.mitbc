@@ -1,0 +1,190 @@
+function
+{
+	functions =
+	[
+		function
+		{
+			functions = [],
+			constants = [None],
+			parameter_count = 1,
+			local_vars = [],
+			local_ref_vars = [],
+			free_vars = [],
+			names = [],
+			instructions = 
+			[
+				load_const	0
+				return
+			]
+		},
+		function
+		{
+			functions = [],
+			constants = [None],
+			parameter_count = 0,
+			local_vars = [],
+			local_ref_vars = [],
+			free_vars = [],
+			names = [],
+			instructions = 
+			[
+				load_const	0
+				return
+			]
+		},
+		function
+		{
+			functions = [],
+			constants = [None],
+			parameter_count = 1,
+			local_vars = [],
+			local_ref_vars = [],
+			free_vars = [],
+			names = [],
+			instructions = 
+			[
+				load_const	0
+				return
+			]
+		},
+		function
+		{
+			functions = [],
+			constants = [" foobar ", 1, None],
+			parameter_count = 2,
+			local_vars = [a, b],
+			local_ref_vars = [],
+			free_vars = [],
+			names = [print],
+			instructions = 
+			[
+				load_local	0
+				load_const	0
+				add
+				load_local	1
+				add
+				load_const	1
+				load_global	0
+				call
+				pop
+				load_const	2
+				return
+			]
+		},
+		function
+		{
+			functions = [],
+			constants = [1, 2, None],
+			parameter_count = 0,
+			local_vars = [z],
+			local_ref_vars = [],
+			free_vars = [],
+			names = [z, f],
+			instructions = 
+			[
+				load_global	0
+				load_const	0
+				add
+				store_global	0
+				load_global	0
+				load_global	0
+				load_const	1
+				load_global	1
+				call
+				pop
+				load_const	2
+				return
+			]
+		}
+	],
+	constants = [1, "foobar", "foo", "bar", "nope", 2, 5, 0, false],
+	parameter_count = 0,
+	local_vars = [],
+	local_ref_vars = [],
+	free_vars = [],
+	names = [print, input, intcast, x, b, y, r, f, z, f2],
+	instructions = 
+	[
+		load_func	0
+		store_global	0
+		load_func	1
+		store_global	1
+		load_func	2
+		store_global	2
+		load_const	0
+		neg
+		store_global	3
+		load_const	1
+		store_global	4
+		alloc_record
+		dup
+		load_const	2
+		field_store	5
+		dup
+		load_const	3
+		field_store	3
+		store_global	6
+		load_global	6
+		load_global	6
+		eq
+		if	2
+		goto	7
+		load_global	6
+		load_const	0
+		load_global	0
+		call
+		pop
+		goto	6
+		load_const	4
+		load_const	0
+		load_global	0
+		call
+		pop
+		load_func	3
+		store_global	7
+		load_const	6
+		load_global	3
+		gt
+		if	2
+		goto	14
+		load_global	3
+		load_const	0
+		sub
+		load_global	3
+		load_const	5
+		load_global	7
+		call
+		pop
+		load_global	3
+		load_const	0
+		add
+		store_global	3
+		goto	-17
+		load_const	8
+		if	2
+		goto	6
+		load_global	3
+		load_const	7
+		div
+		store_global	3
+		goto	-7
+		load_const	0
+		store_global	8
+		load_func	4
+		store_global	9
+		load_const	7
+		load_global	9
+		call
+		load_const	0
+		load_global	0
+		call
+		pop
+		load_global	8
+		load_const	0
+		load_global	0
+		call
+		pop
+		load_const	7
+		return
+	]
+}

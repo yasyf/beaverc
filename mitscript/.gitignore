@@ -3,8 +3,5 @@ lexer.c
 lexer.h
 parser.cpp
 parser.h
-printer
-astprinter
-interpreter
-bcprinter
+bin/
 .gdb_history

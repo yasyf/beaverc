@@ -7,17 +7,21 @@ CFLAGS = -std=c++1y -g
 CXXFLAGS = -std=c++1y -g
 LDFLAGS =
 
-interpreter: lexer.c parser.cpp interpret.o parser.o lexer.o AST.o FunctionScanner.o Interpreter.o
-	$(CXX) $(LDFLAGS) -o $@ interpret.o parser.o lexer.o AST.o FunctionScanner.o Interpreter.o
+CPPSOURCES=$(wildcard *.cpp) $(wildcard */*.cpp)
+CSOURCES=$(wildcard *.c)
+OBJECTS=$(patsubst %.cpp, %.o, $(CPPSOURCES)) $(patsubst %.c, %.o, $(CSOURCES))
 
-printer: lexer.c parser.cpp print.o parser.o lexer.o AST.o PrettyPrinter.o
-	$(CXX) $(LDFLAGS) -o $@ print.o parser.o lexer.o AST.o PrettyPrinter.o
+interpreter: lexer.c parser.cpp $(OBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ interpret.o parser.o lexer.o AST.o FunctionScanner.o Interpreter.o
 
-astprinter: lexer.c parser.cpp astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
-	$(CXX) $(LDFLAGS) -o $@ astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
+printer: lexer.c parser.cpp $(OBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ print.o parser.o lexer.o AST.o PrettyPrinter.o
 
-bcprinter: lexer.c parser.cpp bytecode/bcprint.o parser.o lexer.o AST.o bytecode/CompilerFunctionScanner.o bytecode/Compiler.o
-	$(CXX) $(LDFLAGS) -o $@ bytecode/bcprint.o parser.o lexer.o AST.o bytecode/CompilerFunctionScanner.o bytecode/Compiler.o
+astprinter: lexer.c parser.cpp $(OBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ astprint.o parser.o lexer.o AST.o PrettyPrinter.o ASTPrinter.o
+
+bcprinter: lexer.c parser.cpp $(OBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ bytecode/bcprint.o parser.o lexer.o AST.o bytecode/CompilerFunctionScanner.o bytecode/Compiler.o
 
 lexer.c: lexer.lex
 	$(LEX) --debug --header-file=lexer.h -o lexer.c lexer.lex
@@ -29,7 +33,7 @@ parser.cpp: parser.yy
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f bcprinter astprinter printer interpreter *.o bytecode/*.o
+	rm -f bin/* *.o bytecode/*.o
 
 extraclean: clean
 	rm -f lexer.c lexer.h parser.cpp parser.h
