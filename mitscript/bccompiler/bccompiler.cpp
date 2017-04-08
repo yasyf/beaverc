@@ -14,8 +14,22 @@ int main(int argc, char** argv){
   Program* program;
   void* scanner;
 
+  FILE* infile;
+
+  if (argc == 1) {
+    infile = stdin;
+  } else if (argc == 2) {
+    infile = fopen(argv[1], "r");
+    if (!infile) {
+      cout << "error: cannot open " << argv[1] << endl;
+      return 1;
+    }
+  } else {
+    return 1;
+  }
+
   yylex_init(&scanner);
-  yyset_in(stdin, scanner);
+  yyset_in(infile, scanner);
 
   if (yyparse(scanner, program) != 0) {
     cout << "Parsing failed" << endl;
