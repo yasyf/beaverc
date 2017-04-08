@@ -5,5 +5,5 @@ parser/*.h
 bcparser/*.c
 bcparser/*.cpp
 bcparser/*.h
-bin/
 .gdb_history
+bin/
