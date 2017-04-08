@@ -32,7 +32,9 @@ OBJECTS = $(patsubst %.cpp, %.o, $(CPPSOURCES)) $(patsubst %.c, %.o, $(CSOURCES)
 PARSE_OBJECTS = parser/parser.o parser/lexer.o
 BCPARSE_OBJECTS = bcparser/parser.o bcparser/lexer.o
 
-.PHONY: parser bcparser clean extraclean
+.PHONY: parser bcparser clean extraclean all
+
+default: vm bccompiler
 
 BIOBJECTS = $(patsubst %.cpp, %.o, $(wildcard interpreter/*.cpp))
 interpreter: parser $(PARSE_OBJECTS) $(OBJECTS) $(BIOBJECTS)
