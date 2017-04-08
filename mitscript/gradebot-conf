@@ -27,7 +27,7 @@
     "root_dir" : "mitscript",
     "makefile_dir" : ".",
     "bin_dir" : "bin",
-    "bin" : "vm",
+    "bin" : ["compiler", "vm"],
     "tests" : "tests",
     "stdin_or_arg" : "arg",
     "feedback_dir" : "assignment3-feedback"
