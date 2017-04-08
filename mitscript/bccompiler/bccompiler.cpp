@@ -16,12 +16,12 @@ int main(int argc, char** argv){
 
   FILE* infile;
 
-  if (argc == 2) {
+  if (argc == 1) {
     infile = stdin;
-  } else if (argc == 3) {
-    infile = fopen(argv[2], "r");
+  } else if (argc == 2) {
+    infile = fopen(argv[1], "r");
     if (!infile) {
-      cout << "error: cannot open " << argv[2] << endl;
+      cout << "error: cannot open " << argv[1] << endl;
       return 1;
     }
   } else {
