@@ -1,0 +1,258 @@
+Our program has a heap h which is a map from addresses to values of the following types:
+
+Integer - stores just an integer value
+
+Function - contains:
+a list of instructions i,
+a list of local variable names L,
+a list of local_reference variable names R, R subset L.
+a list of global variable names
+a list of addresses of functions that are it's children
+a finally it contains a list of addresses of values (av1, av2, av3)... which are the constants used in the function.
+
+Variable References - contains a variable name and an address to a Mapping that contains that variable.
+
+Closures - contains a function and a list of variable references
+
+Mapping - contains a mapping { x1: v1, x2: v2, x3: v3 ...} between variable names and values.
+
+----
+
+We also have a stack C of stack frames. Stack frame s = { LV: A_mlv, LR: A_mlr, S: (a1, a2, a3...) } contains an address to a mapping for all local-but-not-local_reference variables. It also contains an address to a mapping for all local_reference variables.
+
+It also contains an operand stack S of addresses to values which is used to perform the calculations of instructions.
+
+-------
+
+Finally, it contains a special mapping with address g which points to a Mapping of global variables.
+
+-------
+
+------
+
+The semantic of an instruction is to take in a stack C, heap h, a function f, and instruction and produce an updated heap. The instruction optionally has an operand attached to it
+
+The program is just an empty closure (no variable references, just an underlying function) f, and to run the program we iterate through its instructions, using the new heap
+
+We run the program (the top level function) by looping through:
+
+(LV, LR, S1, h1, f, i1) -> h2, S2
+...
+(LV, LR, S_n, h_n, f, i(n)) -> h_n+1, S_n+1
+
+---
+
+===========
+LoadConst
+===========
+
+(LV, LR, S, h, f, LoadConst(n)) -> h', S'
+
+S' := S;(av_n of f))
+
+===========
+LoadFunc
+===========
+
+(LV, LR, S, f, LoadConst(n)) -> h', S'
+
+S' := S;((function_address n of f))
+
+===========
+LoadLocal
+===========
+
+(LV, LR, S, LoadLocal(n)) -> h', S'
+
+Let vname = The nth variable name in f's local variable list.
+
+If vname in LR:
+S' := S;(h(LR)[vname])
+
+Else
+S' := S;(h(LV)[vname])
+
+UninitializedVariableException if vname is not in the mapping
+
+===========
+StoreLocal
+===========
+
+(LV, LR, S, f, StoreLocal(n)) -> h', S'
+
+Let S';a = S
+Let vname = The nth variable name in f's local variable list.
+If vname in LR:
+h(LR)[vname] = a;
+else
+h(LV)[vname] = a;
+
+===========
+LoadGlobal
+===========
+
+(LV, LR, S, h, f, LoadGlobal(n)) -> h', S'
+
+Let vname = The nth variable name in f's global variable list.
+h(g) is a mapping
+S' := S;(h(g)[vname])
+
+UninitializedVariableException if vname is not in h(g)
+
+===========
+StoreGlobal
+===========
+
+(LV, LR, S, h, f, StoreGlobal(n)) -> h', S'
+C = C'; cur_frame
+Let S';a = S
+Let vname = The nth variable name in f's global variable list.
+h(g) is a mapping
+update h(g)[vname] := a
+Update S of cur_frame := S'
+
+===========
+PushReference
+===========
+
+(LV, LR, S, h, f, PushReference(n)) -> h', S'
+
+if n < length(f's local reference variable list)
+vname := the nth item in f's local reference variable_list
+mapping_address := LR
+
+else:
+index := (n - length(f's local reference variable list))
+vname := the index'th element in f's free varialbe list
+mapping_address := address of ReferenceValue(name, address) in f's list of references st. vname = name 
+
+a' = freshAddress(h)
+h' := h{a' -> ReferenceValve(vname, mapping_address)}
+S' := S;a'
+
+===========
+LoadReference
+===========
+
+(LV, LR, S, h, f, LoadReference) -> h', S'
+
+Let S1;address = S
+reference = h(address)
+
+S' := S1;h(reference.mapping_address)[reference.vname]
+
+===========
+StoreReference
+===========
+
+(LV, LR, S, h, f, StoreReference) -> h'
+
+Let S';ref_address;val_address = S
+
+reference = h(ref_address)
+Update h(reference.mapping_address)[reference.vname] = val_address
+
+===========
+AllocClosure
+===========
+
+(LV, LR, S, h, f, AllocClosure) -> h', S'
+
+Let S1;ref_address_n;ref_address_(n-1);...;ref_address_1;integer_value_address;function_address = S
+
+closure_address = freshAddress(h)
+h' := h{closure_address -> ClosureValue(function_address, ref_address1, ... ref_address_n)}
+S' := S1:closure_address
+
+RuntimeException if h(function_address) is not a function, or h(integer_value_address) is not an integer value or h(ref_address_i) is not a reference
+
+===========
+Call
+===========
+
+(LV, LR, S, h, f, Call) -> h', S'
+
+C = C';cur_frame
+Let S1;arg_1;arg_2;...;arg_n;integer_value_address;function_address = S
+
+if h(function_address) is a function:
+let closure := Closure(function_address, [])
+
+else
+let closure := h(function_address)
+
+N_LR = freshAddress(h)
+local_vars = Mapping()
+h' = h{N_LR -> local_vars }
+
+N_LV = freshAddress(h)
+local_ref_vars = Mapping()
+h'' = h'{N_LV -> local_ref_vars }
+
+Update the two new mappings as follows:
+    for arg_i, (vname = ith vname in closure's local_vars list)
+        if vname in closure's function's local_ref_vars list:
+            local_ref_vars[vname] = arg_i
+        else
+            local_vars[vname] = arg_i
+
+N_S := []
+
+Iterate through the instructions of the function, with the new stack and new addresses
+
+(N_LV, N_LR, N_S, h'', closure, i_1) -> h1, N_S_1
+...
+(N_LV, N_LR, N_S_n, h_n, closure, i_n) -> h_n+1, N_S_(n+1)
+
+
+Finally
+
+h' := h_n+1
+S' := S1;(N_S_n.top)
+
+IllegalCastException if h(function_address) is not a closure or a function
+RuntimeException if h(integer_value_address) is not an integer.
+
+===========
+Add
+===========
+
+(LV, LR, S, h, f, Add) -> h', S'
+
+Let S1;intaddr1;intaddr2 = S
+
+new_value = h(intaddr1) + h(intaddr2)
+new_value_addr = freshAddress(h)
+
+h' := h{ new_value_addr -> new_value }
+S' := S1;new_value_addr
+
+IllegalCastException if h(intaddr1) or h(intaddr2) are not Integers
+
+===========
+Dup
+===========
+
+(LV, LR, S, h, f, Add) -> h, S'
+
+Let S1;addr = S
+
+S' := S1;addr;addr
+
+===========
+Swap
+===========
+
+(LV, LR, S, h, f, Add) -> h, S'
+
+Let S1;addr1;addr2 = S
+
+S' := S1;addr2;addr1
+
+===========
+Pop
+===========
+
+(LV, LR, S, h, f, Add) -> h, S'
+
+Let S';addr = S
