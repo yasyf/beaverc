@@ -1,4 +1,5 @@
 #pragma once
+#include <list>
 #include <cstdio>
 #include <vector>
 #include <iostream>
@@ -16,7 +17,7 @@ namespace GC {
     -
   */
   class CollectedHeap {
-    vector<Collectable*> allocated;
+    list<Collectable*> allocated;
 
   private:
     template<typename T>
