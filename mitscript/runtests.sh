@@ -27,10 +27,10 @@ bad() {
 check_memory() {
   mem=$(memusg bin/vm -mem 4 -s "$1")
   if [[ "$mem" -lt "$MAX_MEM" ]]; then
-    good "$1" "check_mem"
+    good "$1" "check_mem $mem kb"
   else
     echo "used $mem > $MAX_MEM kb"
-    bad "$1" "check_mem"
+    bad "$1" "check_mem $mem kb"
   fi
 }
 
