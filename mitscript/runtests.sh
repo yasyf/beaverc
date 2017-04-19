@@ -26,11 +26,12 @@ bad() {
 check_memory() {
   echo "$1"
   bin/vm -mem 0 -s "$1"
-  output=$(memusg bin/vm -mem 0 -s "$1")
-  if [[ "$output" -lt "4096" ]]; then
-    good "$1" "yay"
+  mem=$(memusg bin/vm -mem 0 -s "$1")
+  if [[ "$mem" -lt "4096" ]]; then
+    good "$1" "check_mem"
   else
-    bad "$1" "used too much memory - $output kb"
+    echo "used $mem kb"
+    bad "$1" "check_mem"
   fi
 }
 
