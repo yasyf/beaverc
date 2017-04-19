@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cstring>
 #include <vector>
 #include <iostream>
 #include <stdexcept>
@@ -53,9 +54,13 @@ namespace VM {
   };
 
   struct StringValue : public Value {
-    std::string value;
+    char* memory;
+    size_t length;
 
-    StringValue(GC::CollectedHeap& heap, std::string value) : Value(heap), value(value) {
+    StringValue(GC::CollectedHeap& heap, const std::string& value) : Value(heap) {
+      length = value.size();
+      memory = static_cast<char*>(malloc(length * sizeof(char)));
+      strncpy(memory, value.c_str(), length);
       heap.increaseSize(size());
     }
 
@@ -63,19 +68,21 @@ namespace VM {
       #ifdef DEBUG
       cout << "DELETING StringValue: " << toString() << endl;
       #endif
+      free(memory);
       heap.decreaseSize(size());
     }
 
-    std::string toString() { return value; };
+    std::string toString() { return std::string(memory, length); };
 
     virtual size_t size() {
-      return sizeof(StringValue) + value.capacity() * sizeof(char);
+      return sizeof(StringValue) + length * sizeof(char);
     }
 
     virtual void markChildren() {}
 
-    bool equals(const Value& other) {
-      return value == dynamic_cast<const StringValue &>(other).value;
+    bool equals(const Value& other_) {
+      const StringValue& other = dynamic_cast<const StringValue &>(other_);
+      return length == other.length && strncmp(memory, other.memory, length) == 0;
     }
   };
 
@@ -381,7 +388,7 @@ namespace VM {
             }
             StringValue* string = force_cast<StringValue>(arguments[0]);
             try {
-              return heap.allocate<IntegerValue>(std::stoi(string->value));
+              return heap.allocate<IntegerValue>(std::stoi(string->toString()));
             } catch (std::invalid_argument& ex) {
               throw IllegalCastException("string passed to intcast doesn't represent int");
             } catch (std::out_of_range& ex) {
