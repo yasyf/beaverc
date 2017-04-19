@@ -4,6 +4,8 @@
 using namespace BC;
 using namespace GC;
 
+#define COLLECTION_RATIO 0.9
+
 namespace VM {
   Interpreter::Interpreter(std::shared_ptr<Function> const & main_func, size_t max_size) : heap(max_size) {
       main_function = main_func;
@@ -18,9 +20,12 @@ namespace VM {
     }
   };
 
-  void Interpreter::push_frame(ValueMap* local, std::map<std::string, std::shared_ptr<ReferenceValue>>* local_reference) {
+  void Interpreter::push_frame(ValueMap* local,
+                               std::map<std::string, std::shared_ptr<ReferenceValue>>* local_reference,
+                               std::stack<std::shared_ptr<Value>>* local_stack) {
     local_variable_stack.push_back(local);
     local_reference_variable_stack.push_back(local_reference);
+    operand_stack_stack.push_back(local_stack);
   }
 
   void Interpreter::pop_frame() {
@@ -36,7 +41,15 @@ namespace VM {
   }
 
   void Interpreter::potentially_garbage_collect() {
-    if (heap.bytes_current >= heap.bytes_max * 0.9) {
+    #ifdef DEBUG
+    std::cout << "$$$ Num objects: " << heap.getCount() << std::endl;
+    std::cout << "$$$ Bytes current: " << heap.bytes_current << std::endl;
+    std::cout << "$$$ Bytes max: " << heap.bytes_max << std::endl;
+    #endif
+    if (heap.bytes_current >= heap.bytes_max * COLLECTION_RATIO) {
+      #ifdef DEBUG
+      std::cout << "$$$$$ Collecting garbage..." << std::endl;
+      #endif 
       std::vector<std::shared_ptr<Value>> roots;
       for (auto local_variables : local_variable_stack) {
         for (auto keyvalue : *local_variables) {
@@ -46,6 +59,18 @@ namespace VM {
       for (auto local_reference_variables : local_reference_variable_stack) {
         for (auto keyvalue : *local_reference_variables) {
           roots.push_back(keyvalue.second);
+        }
+      }
+      for (auto local_stack : operand_stack_stack) {
+        std::vector<std::shared_ptr<Value>> stack_holder;
+        while (!local_stack->empty()) {
+            auto v = local_stack->top();
+            roots.push_back(v);
+            stack_holder.insert(stack_holder.begin(), v);
+            local_stack->pop();
+        }
+        for (auto v : stack_holder) {
+            local_stack->push(v);
         }
       }
       for (auto keyvalue : global_variables) {
@@ -131,7 +156,7 @@ namespace VM {
       std::stack<std::shared_ptr<Value>> stack;
       ValueMap local_variables;
       std::map<std::string, std::shared_ptr<ReferenceValue>> local_reference_vars;
-      push_frame(&local_variables, &local_reference_vars);
+      push_frame(&local_variables, &local_reference_vars, &stack);
 
       if (func.parameter_count_ != arguments.size()) {
           throw RuntimeException("An incorrect number of parameters was passed to the function");
