@@ -63,13 +63,24 @@ namespace VM {
 namespace GC {
   template<>
   VM::NoneValue* CollectedHeap::allocate<VM::NoneValue>() {
-    static VM::NoneValue *instance = nullptr;
-
-    if (!instance) {
+    static VM::NoneValue* instance = nullptr;
+    if (!instance)
       instance = new VM::NoneValue(*this);
-      register_allocation(instance);
-    }
-
     return instance;
+  }
+
+  template<>
+  VM::BooleanValue* CollectedHeap::allocate<VM::BooleanValue>(bool value) {
+    static VM::BooleanValue* trueInstance = nullptr;
+    static VM::BooleanValue* falseInstance = nullptr;
+    if (value) {
+      if (!trueInstance)
+        trueInstance = new VM::BooleanValue(*this, true);
+      return trueInstance;
+    } else {
+      if (!falseInstance)
+        falseInstance = new VM::BooleanValue(*this, false);
+      return falseInstance;
+    }
   }
 }
