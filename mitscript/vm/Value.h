@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <map>
 #include "../bccompiler/Types.h"
+#include "../gc/CollectedHeap.h"
 #include "../gc/Collectable.h"
 #include "InterpreterException.h"
 #include "Interpreter.h"
@@ -41,11 +42,13 @@ namespace VM {
     return true;
   }
 
-  struct Value : public Collectable {
+  struct Value : public GC::Collectable {
     virtual std::string toString() = 0;
     bool operator==(const Value& other) {
       return typeid(*this) == typeid(other) && equals(other);
     }
+  protected:
+    std::shared_ptr<GC::CollectedHeap> heap;
   private:
     virtual bool equals(const Value& other) = 0;
   };
@@ -54,6 +57,15 @@ namespace VM {
     std::string value;
     StringValue(std::string value) : value(value) {};
     std::string toString() { return value; };
+
+    virtual int size() {
+      #warning TODO(implement size)
+      return 0;
+    }
+
+    virtual void follow(GC::CollectedHeap& heap) {
+      #warning TODO(implement follow)
+    }
 
     bool equals(const Value& other) {
       return value == dynamic_cast<const StringValue &>(other).value;
@@ -65,6 +77,15 @@ namespace VM {
     BooleanValue(bool value) : value(value) {};
     std::string toString() { return (value) ? "True" : "False"; };
 
+    virtual int size() {
+      #warning TODO(implement size)
+      return 0;
+    }
+
+    virtual void follow(GC::CollectedHeap& heap) {
+      #warning TODO(implement follow)
+    }
+
     bool equals(const Value& other) {
       return value == dynamic_cast<const BooleanValue &>(other).value;
     }
@@ -72,6 +93,15 @@ namespace VM {
 
   struct NoneValue : public Value {
     std::string toString() { return "None"; }
+
+    virtual int size() {
+      #warning TODO(implement size)
+      return 0;
+    }
+
+    virtual void follow(GC::CollectedHeap& heap) {
+      #warning TODO(implement follow)
+    }
 
     bool equals(const Value& other) {
       return true;
@@ -82,6 +112,15 @@ namespace VM {
     int value;
     IntegerValue(int value) : value(value) {};
     std::string toString() { return std::to_string(value); };
+
+    virtual int size() {
+      #warning TODO(implement size)
+      return 0;
+    }
+
+    virtual void follow(GC::CollectedHeap& heap) {
+      #warning TODO(implement follow)
+    }
 
     bool equals(const Value& other) {
       return value == dynamic_cast<const IntegerValue &>(other).value;
@@ -108,6 +147,15 @@ namespace VM {
       return result;
     };
 
+    virtual int size() {
+      #warning TODO(implement size)
+      return 0;
+    }
+
+    virtual void follow(GC::CollectedHeap& heap) {
+      #warning TODO(implement follow)
+    }
+
     bool equals(const Value& other) {
       return this == &other;
     }
@@ -125,6 +173,15 @@ namespace VM {
       #endif
     };
 
+    virtual int size() {
+      #warning TODO(implement size)
+      return 0;
+    }
+
+    virtual void follow(GC::CollectedHeap& heap) {
+      #warning TODO(implement follow)
+    }
+
     bool equals(const Value& other) {
       throw RuntimeException("Can't check equality with a ReferenceValue");
     }
@@ -133,6 +190,15 @@ namespace VM {
   struct AbstractFunctionValue : public Value {
     std::string toString() { return "FUNCTION"; };
     virtual std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) = 0;
+
+    virtual int size() {
+      #warning TODO(implement size)
+      return 0;
+    }
+
+    virtual void follow(GC::CollectedHeap& heap) {
+      #warning TODO(implement follow)
+    }
 
     bool equals(const Value& o) {
       return this == &o;
@@ -145,6 +211,15 @@ namespace VM {
     std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
       return interpreter.run_function(*value, arguments, std::vector<std::shared_ptr<ReferenceValue>>());
     };
+
+    virtual int size() {
+      #warning TODO(implement size)
+      return 0;
+    }
+
+    virtual void follow(GC::CollectedHeap& heap) {
+      #warning TODO(implement follow)
+    }
   };
 
   struct ClosureFunctionValue : public AbstractFunctionValue {
@@ -155,6 +230,15 @@ namespace VM {
     std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
       return interpreter.run_function(*value, arguments, references);
     };
+
+    virtual int size() {
+      #warning TODO(implement size)
+      return 0;
+    }
+
+    virtual void follow(GC::CollectedHeap& heap) {
+      #warning TODO(implement follow)
+    }
   };
 
   enum class BuiltInFunctionType {
@@ -168,6 +252,14 @@ namespace VM {
     BuiltInFunctionType type;
     BuiltInFunctionValue(BuiltInFunctionType type) : type(type) {};
     BuiltInFunctionValue(int t) { type = static_cast<BuiltInFunctionType>(t); };
+    virtual int size() {
+      #warning TODO(implement size)
+      return 0;
+    }
+
+    virtual void follow(GC::CollectedHeap& heap) {
+      #warning TODO(implement follow)
+    }
     std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
       switch (type) {
           case BuiltInFunctionType::Print: {

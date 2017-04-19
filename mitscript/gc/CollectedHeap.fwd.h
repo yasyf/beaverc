@@ -1,3 +1,5 @@
 #pragma once
 
-class CollectedHeap;
+namespace GC {
+  class CollectedHeap;
+}
