@@ -25,8 +25,7 @@ bad() {
 }
 
 check_memory() {
-  bin/vm -mem 0 -s "$1"
-  mem=$(memusg bin/vm -mem 0 -s "$1")
+  mem=$(memusg bin/vm -mem 4 -s "$1")
   if [[ "$mem" -lt "$MAX_MEM" ]]; then
     good "$1" "check_mem"
   else
