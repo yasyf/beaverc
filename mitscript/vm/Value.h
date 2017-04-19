@@ -56,7 +56,15 @@ namespace VM {
 
   struct StringValue : public Value {
     std::string value;
-    StringValue(GC::CollectedHeap& heap, std::string value) : Value(heap), value(value) {};
+
+    StringValue(GC::CollectedHeap& heap, std::string value) : Value(heap), value(value) {
+      heap.increaseSize(size());
+    }
+
+    ~StringValue() {
+      heap.decreaseSize(size());
+    }
+
     std::string toString() { return value; };
 
     virtual size_t size() {
@@ -72,8 +80,16 @@ namespace VM {
 
   struct BooleanValue : public Value {
     bool value;
-    BooleanValue(GC::CollectedHeap& heap, bool value) : Value(heap), value(value) {};
-    std::string toString() { return (value) ? "True" : "False"; };
+
+    BooleanValue(GC::CollectedHeap& heap, bool value) : Value(heap), value(value) {
+      heap.increaseSize(size());
+    }
+
+    ~BooleanValue() {
+      heap.decreaseSize(size());
+    }
+
+    std::string toString() { return (value) ? "True" : "False"; }
 
     virtual size_t size() {
       return sizeof(BooleanValue);
@@ -87,7 +103,13 @@ namespace VM {
   };
 
   struct NoneValue : public Value {
-    NoneValue(GC::CollectedHeap& heap): Value(heap) {}
+    NoneValue(GC::CollectedHeap& heap): Value(heap) {
+      heap.increaseSize(size());
+    }
+
+    ~NoneValue() {
+      heap.decreaseSize(size());
+    }
 
     std::string toString() { return "None"; }
 
@@ -104,8 +126,16 @@ namespace VM {
 
   struct IntegerValue : public Value {
     int value;
-    IntegerValue(GC::CollectedHeap& heap, int value) : Value(heap), value(value) {};
-    std::string toString() { return std::to_string(value); };
+
+    IntegerValue(GC::CollectedHeap& heap, int value) : Value(heap), value(value) {
+      heap.increaseSize(size());
+    }
+
+    ~IntegerValue() {
+      heap.decreaseSize(size());
+    }
+
+    std::string toString() { return std::to_string(value); }
 
     virtual size_t size() {
       return sizeof(IntegerValue);
@@ -121,7 +151,13 @@ namespace VM {
   struct RecordValue : public Value {
     std::map<std::string, std::shared_ptr<Value>> values;
 
-    RecordValue(GC::CollectedHeap& heap) : Value(heap) {};
+    RecordValue(GC::CollectedHeap& heap) : Value(heap) {
+      heap.increaseSize(size());
+    }
+
+    ~RecordValue() {
+      heap.decreaseSize(size());
+    }
 
     void insert(std::string key, std::shared_ptr<Value> inserted) {
       if (values.count(key) == 0)
@@ -135,7 +171,7 @@ namespace VM {
       }
       return heap.allocate<NoneValue>();
     }
-    
+
     std::string toString() {
       std::string result = "{";
       for (auto keyvalue : values) {
@@ -167,7 +203,13 @@ namespace VM {
     std::string name;
     std::shared_ptr<Value> value;
 
-    ReferenceValue(GC::CollectedHeap& heap, std::string n, std::shared_ptr<Value> v) : Value(heap), name(n), value(v) {}
+    ReferenceValue(GC::CollectedHeap& heap, std::string n, std::shared_ptr<Value> v) : Value(heap), name(n), value(v) {
+      heap.increaseSize(size());
+    }
+
+    ~ReferenceValue() {
+      heap.decreaseSize(size());
+    }
 
     std::string toString() {
       #if DEBUG
@@ -192,6 +234,7 @@ namespace VM {
 
   struct AbstractFunctionValue : public Value {
     AbstractFunctionValue(GC::CollectedHeap& heap) : Value(heap) {}
+
     std::string toString() { return "FUNCTION"; };
     virtual std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) = 0;
 
@@ -202,7 +245,15 @@ namespace VM {
 
   struct BareFunctionValue : public AbstractFunctionValue {
     std::shared_ptr<BC::Function> value;
-    BareFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {};
+
+    BareFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {
+      heap.increaseSize(size());
+    }
+
+    ~BareFunctionValue() {
+      heap.decreaseSize(size());
+    }
+
     std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
       return interpreter.run_function(*value, arguments, std::vector<std::shared_ptr<ReferenceValue>>());
     };
@@ -217,7 +268,16 @@ namespace VM {
   struct ClosureFunctionValue : public AbstractFunctionValue {
     std::shared_ptr<BC::Function> value;
     std::vector<std::shared_ptr<ReferenceValue>> references;
-    ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {};
+
+    ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {
+      heap.increaseSize(size());
+    }
+
+    ~ClosureFunctionValue() {
+      heap.decreaseSize(size());
+    }
+
+
     void add_reference(std::shared_ptr<ReferenceValue> reference) { references.push_back(reference); };
     std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
       return interpreter.run_function(*value, arguments, references);
@@ -242,8 +302,19 @@ namespace VM {
 
   struct BuiltInFunctionValue : public AbstractFunctionValue {
     BuiltInFunctionType type;
-    BuiltInFunctionValue(GC::CollectedHeap& heap, BuiltInFunctionType type) : AbstractFunctionValue(heap), type(type) {};
-    BuiltInFunctionValue(GC::CollectedHeap& heap, int t) : AbstractFunctionValue(heap) { type = static_cast<BuiltInFunctionType>(t); };
+
+    BuiltInFunctionValue(GC::CollectedHeap& heap, BuiltInFunctionType type) : AbstractFunctionValue(heap), type(type) {
+      heap.increaseSize(size());
+    }
+
+    BuiltInFunctionValue(GC::CollectedHeap& heap, int t) : AbstractFunctionValue(heap) {
+      heap.increaseSize(size());
+      type = static_cast<BuiltInFunctionType>(t);
+    }
+
+    ~BuiltInFunctionValue() {
+      heap.decreaseSize(size());
+    }
 
     virtual size_t size() {
       return sizeof(BuiltInFunctionValue);

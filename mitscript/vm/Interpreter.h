@@ -5,6 +5,7 @@
 #include <map>
 #include <stack>
 #include "../bccompiler/Types.h"
+#include "../gc/Collectable.h"
 #include "../gc/CollectedHeap.h"
 
 namespace VM {

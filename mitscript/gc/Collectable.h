@@ -6,11 +6,12 @@ namespace GC {
   //Any object that inherits from collectable can be created and tracked by the garbage collector.
   class Collectable {
   public:
-    Collectable(CollectedHeap& heap) : heap(heap) {
-      heap.increaseSize(size());
-    }
-    ~Collectable() {
-      heap.decreaseSize(size());
+    Collectable(CollectedHeap& heap) : heap(heap) {}
+    virtual ~Collectable() {}
+
+    void mark() {
+      this->marked = true;
+      markChildren();
     }
   private:
     //Any private fields you add to the Collectable class will be accessible by the CollectedHeap
@@ -29,11 +30,7 @@ namespace GC {
 
     friend CollectedHeap;
 
-    void mark() {
-      this->marked = true;
-      markChildren();
-    }
     virtual void markChildren() = 0;
-    virtual size_t size();
+    virtual size_t size() = 0;
   };
 }
