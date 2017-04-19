@@ -5,7 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <stdexcept>
-#include <map>
+#include <unordered_map>
 #include "../bccompiler/Types.h"
 #include "../gc/CollectedHeap.h"
 #include "../gc/Collectable.h"
@@ -166,7 +166,7 @@ namespace VM {
   };
 
   struct RecordValue : public Value {
-    std::map<std::string, Value*> values;
+    std::unordered_map<std::string, Value*> values;
 
     RecordValue(GC::CollectedHeap& heap) : Value(heap) {
       heap.increaseSize(size());
