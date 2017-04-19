@@ -35,10 +35,16 @@ namespace GC {
     CollectedHeap(size_t maxmem) : bytes_max(maxmem) {}
 
     void increaseSize(size_t n) {
+      #if DEBUG
+        cout << "increasing stack by " << n << endl;
+      #endif
       __sync_fetch_and_add(&bytes_current, n);
     }
 
     void decreaseSize(size_t n) {
+      #if DEBUG
+        cout << "decreasing stack by " << n << endl;
+      #endif
       __sync_fetch_and_sub(&bytes_current, n);
     }
 

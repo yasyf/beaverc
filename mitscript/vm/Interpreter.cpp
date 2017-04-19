@@ -50,7 +50,7 @@ namespace VM {
     if (heap.bytes_current >= heap.bytes_max * COLLECTION_RATIO) {
       #ifdef DEBUG
       std::cout << "$$$$$ Building roots..." << std::endl;
-      #endif 
+      #endif
       std::vector<Value*> roots;
       for (auto local_variables : local_variable_stack) {
         for (auto keyvalue : *local_variables) {
@@ -79,7 +79,7 @@ namespace VM {
       }
       #ifdef DEBUG
       std::cout << "$$$$$ Collecting garbage..." << std::endl;
-      #endif 
+      #endif
       heap.gc(roots.begin(), roots.end());
     }
   };

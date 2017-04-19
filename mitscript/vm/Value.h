@@ -300,7 +300,11 @@ namespace VM {
     }
 
 
-    void add_reference(ReferenceValue* reference) { references.push_back(reference); };
+    void add_reference(ReferenceValue* reference) {
+      heap.increaseSize(sizeof(ReferenceValue*));
+      references.push_back(reference);
+    };
+
     Value* call(Interpreter & interpreter, std::vector<Value*> & arguments) {
       return interpreter.run_function(*value, arguments, references);
     };
