@@ -83,7 +83,7 @@ int main(int argc, char** argv)
   size_t current_memory = rss() * KB_TO_B;
   size_t usable_memory = (max_memory > current_memory) ? max_memory - current_memory : 0;
 
-  #if 1
+  #ifdef DEBUG
     cout
       << "Starting with "
       << current_memory / KB_TO_B
