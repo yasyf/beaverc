@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdio>
-#include "Collectable.h"
+#include "Collectable.fwd.h"
 
 using namespace std;
 
@@ -17,6 +17,15 @@ namespace GC {
     volatile int bytes_current = 0;
     vector<weak_ptr<Collectable>> allocated;
 
+  private:
+
+    template<typename T>
+    shared_ptr<T> _allocate(T* t_) {
+      shared_ptr<T> t = shared_ptr<T>(t_);
+      allocated.push_back(t);
+      return t;
+    }
+
   public:
 
     /*
@@ -28,13 +37,20 @@ namespace GC {
     */
     CollectedHeap(int maxmem) : bytes_max(maxmem) {}
 
+    void increaseSize(size_t n) {
+      __sync_fetch_and_add(&bytes_current, n);
+    }
+
+    void decreaseSize(size_t n) {
+      __sync_fetch_and_sub(&bytes_current, n);
+    }
 
     /*
     return number of objects in the heap.
     This is different from the size of the heap, which should also be tracked
     by the garbage collector.
     */
-    int getSize() {
+    int getCount() {
       return allocated.size();
     }
 
@@ -45,11 +61,8 @@ namespace GC {
     */
     template<typename T>
     shared_ptr<T> allocate() {
-      shared_ptr<T> t = make_shared<T>();
-      allocated.push_back(t);
-      __sync_fetch_and_add(&bytes_current, t.size());
+      return _allocate(new T(this));
     }
-
 
     /*
     A variant of the method above; this version of allocate can be used to allocate objects whose constructor
@@ -57,6 +70,7 @@ namespace GC {
     */
     template<typename T, typename ARG>
     shared_ptr<T> allocate(ARG a) {
+      return _allocate(new T(this, a));
     }
 
     /*
