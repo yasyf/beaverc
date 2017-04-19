@@ -1,6 +1,7 @@
 #include "Collectable.h"
 #include "CollectedHeap.h"
 
+#define SIZEOF_TO_BYTES 4
 #define OVERHEAD_FACTOR 5
 
 namespace GC {
@@ -12,6 +13,6 @@ namespace GC {
   };
 
   size_t Collectable::size() {
-    return _size() * OVERHEAD_FACTOR;
+    return _size() * SIZEOF_TO_BYTES * OVERHEAD_FACTOR;
   };
 }

@@ -4,7 +4,7 @@
 using namespace BC;
 using namespace GC;
 
-#define COLLECTION_RATIO 0.6
+#define COLLECTION_RATIO 0.5
 
 namespace VM {
   Interpreter::Interpreter(Function* const & main_func, size_t max_size) : heap(max_size) {
