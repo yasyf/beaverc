@@ -25,21 +25,19 @@ namespace VM {
   struct BuiltinFunctionValue;
 
   template<typename T>
-  std::shared_ptr<T> force_cast(std::shared_ptr<Value> value) {
-    std::shared_ptr<T> other = std::dynamic_pointer_cast<T>(value);
-    if (!other) {
-      throw IllegalCastException("Can't convert to needed type");
+  T* force_cast(Value* value) {
+    if (T* other = dynamic_cast<T*>(value)) {
+      return other;
     }
-    return other;
+    throw IllegalCastException("Can't convert to needed type");
   }
 
   template<typename T>
-  bool can_cast(std::shared_ptr<Value> value) {
-    std::shared_ptr<T> other = std::dynamic_pointer_cast<T>(value);
-    if (!other) {
-      return false;
+  bool can_cast(Value* value) {
+    if (T* other = dynamic_cast<T*>(value)) {
+      return true;
     }
-    return true;
+    return false;
   }
 
   struct Value : public GC::Collectable {
@@ -161,7 +159,7 @@ namespace VM {
   };
 
   struct RecordValue : public Value {
-    std::map<std::string, std::shared_ptr<Value>> values;
+    std::map<std::string, Value*> values;
 
     RecordValue(GC::CollectedHeap& heap) : Value(heap) {
       heap.increaseSize(size());
@@ -174,13 +172,13 @@ namespace VM {
       heap.decreaseSize(size());
     }
 
-    void insert(std::string key, std::shared_ptr<Value> inserted) {
+    void insert(std::string key, Value* inserted) {
       if (values.count(key) == 0)
-        heap.increaseSize(sizeof(std::string) + key.capacity() * sizeof(char) + sizeof(std::shared_ptr<Value>));
+        heap.increaseSize(sizeof(std::string) + key.capacity() * sizeof(char) + sizeof(Value*));
       values[key] = inserted;
     }
 
-    std::shared_ptr<Value> get(std::string key) {
+    Value* get(std::string key) {
       if (values.count(key) > 0) {
         return values.at(key);
       }
@@ -199,7 +197,7 @@ namespace VM {
     virtual size_t size() {
       size_t s = sizeof(RecordValue);
       for (auto pair : values) {
-        s += sizeof(std::string) + pair.first.capacity() * sizeof(char) + sizeof(std::shared_ptr<Value>);
+        s += sizeof(std::string) + pair.first.capacity() * sizeof(char) + sizeof(Value*);
       }
       return s;
     }
@@ -216,9 +214,9 @@ namespace VM {
 
   struct ReferenceValue : public Value {
     std::string name;
-    std::shared_ptr<Value> value;
+    Value* value;
 
-    ReferenceValue(GC::CollectedHeap& heap, std::string n, std::shared_ptr<Value> v) : Value(heap), name(n), value(v) {
+    ReferenceValue(GC::CollectedHeap& heap, std::string n, Value* v) : Value(heap), name(n), value(v) {
       heap.increaseSize(size());
     }
 
@@ -254,7 +252,7 @@ namespace VM {
     AbstractFunctionValue(GC::CollectedHeap& heap) : Value(heap) {}
 
     std::string toString() { return "FUNCTION"; };
-    virtual std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) = 0;
+    virtual Value* call(Interpreter & interpreter, std::vector<Value*> & arguments) = 0;
 
     bool equals(const Value& o) {
       return this == &o;
@@ -275,8 +273,8 @@ namespace VM {
       heap.decreaseSize(size());
     }
 
-    std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
-      return interpreter.run_function(*value, arguments, std::vector<std::shared_ptr<ReferenceValue>>());
+    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments) {
+      return interpreter.run_function(*value, arguments, std::vector<ReferenceValue*>());
     };
 
     virtual size_t size() {
@@ -288,7 +286,7 @@ namespace VM {
 
   struct ClosureFunctionValue : public AbstractFunctionValue {
     std::shared_ptr<BC::Function> value;
-    std::vector<std::shared_ptr<ReferenceValue>> references;
+    std::vector<ReferenceValue*> references;
 
     ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {
       heap.increaseSize(size());
@@ -302,13 +300,13 @@ namespace VM {
     }
 
 
-    void add_reference(std::shared_ptr<ReferenceValue> reference) { references.push_back(reference); };
-    std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
+    void add_reference(ReferenceValue* reference) { references.push_back(reference); };
+    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments) {
       return interpreter.run_function(*value, arguments, references);
     };
 
     virtual size_t size() {
-      return sizeof(ClosureFunctionValue) + references.size() * sizeof(std::shared_ptr<ReferenceValue>);
+      return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
     }
 
     virtual void markChildren() {
@@ -349,7 +347,7 @@ namespace VM {
 
     virtual void markChildren() {}
 
-    std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
+    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments) {
       switch (type) {
           case BuiltInFunctionType::Print: {
             if (arguments.size() != 1) {
@@ -377,7 +375,7 @@ namespace VM {
             if (arguments.size() != 1) {
               throw RuntimeException("Wrong number of arguments to intcast");
             }
-            std::shared_ptr<StringValue> string = force_cast<StringValue>(arguments[0]);
+            StringValue* string = force_cast<StringValue>(arguments[0]);
             try {
               return heap.allocate<IntegerValue>(std::stoi(string->value));
             } catch (std::invalid_argument& ex) {

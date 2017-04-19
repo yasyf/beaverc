@@ -79,7 +79,7 @@ int main(int argc, char** argv)
   size_t current_memory = 512 * 1024;
   size_t usable_memory = (max_memory > current_memory) ? max_memory - current_memory : 0;
 
-  VM::Interpreter interpreter(function, usable_memory);
+  VM::Interpreter interpreter(function.get(), usable_memory);
   try {
     return interpreter.interpret();
   } catch (SystemException& ex) {

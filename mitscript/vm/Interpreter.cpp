@@ -7,13 +7,13 @@ using namespace GC;
 #define COLLECTION_RATIO 0.9
 
 namespace VM {
-  Interpreter::Interpreter(std::shared_ptr<Function> const & main_func, size_t max_size) : heap(max_size) {
+  Interpreter::Interpreter(Function* const & main_func, size_t max_size) : heap(max_size) {
       main_function = main_func;
   }
 
   int Interpreter::interpret() {
-    std::shared_ptr<Value> val = run_function(*main_function, std::vector<std::shared_ptr<Value>>(), std::vector<std::shared_ptr<ReferenceValue>>());
-    if (std::shared_ptr<IntegerValue> i = std::dynamic_pointer_cast<IntegerValue>(val)) {
+    Value* val = run_function(*main_function, std::vector<Value*>(), std::vector<ReferenceValue*>());
+    if (IntegerValue* i = dynamic_cast<IntegerValue*>(val)) {
       return i->value;
     } else {
       return -1;
@@ -21,8 +21,8 @@ namespace VM {
   };
 
   void Interpreter::push_frame(ValueMap* local,
-                               std::map<std::string, std::shared_ptr<ReferenceValue>>* local_reference,
-                               std::stack<std::shared_ptr<Value>>* local_stack) {
+                               std::map<std::string, ReferenceValue*>* local_reference,
+                               std::stack<Value*>* local_stack) {
     local_variable_stack.push_back(local);
     local_reference_variable_stack.push_back(local_reference);
     operand_stack_stack.push_back(local_stack);
@@ -51,7 +51,7 @@ namespace VM {
       #ifdef DEBUG
       std::cout << "$$$$$ Building roots..." << std::endl;
       #endif 
-      std::vector<std::shared_ptr<Value>> roots;
+      std::vector<Value*> roots;
       for (auto local_variables : local_variable_stack) {
         for (auto keyvalue : *local_variables) {
           roots.push_back(keyvalue.second);
@@ -63,7 +63,7 @@ namespace VM {
         }
       }
       for (auto local_stack : operand_stack_stack) {
-        std::vector<std::shared_ptr<Value>> stack_holder;
+        std::vector<Value*> stack_holder;
         while (!local_stack->empty()) {
             auto v = local_stack->top();
             roots.push_back(v);
@@ -84,7 +84,7 @@ namespace VM {
     }
   };
 
-  static std::shared_ptr<Value> constant_to_value(CollectedHeap& heap, std::shared_ptr<Constant> constant) {
+  static Value* constant_to_value(CollectedHeap& heap, std::shared_ptr<Constant> constant) {
       if (std::shared_ptr<None> c = std::dynamic_pointer_cast<None>(constant)) {
           return heap.allocate<NoneValue>();
       }
@@ -101,15 +101,15 @@ namespace VM {
   }
 
   template<typename Input, typename Output, typename F>
-  static std::shared_ptr<Value> binary_op(CollectedHeap& heap, std::shared_ptr<Value> _a, std::shared_ptr<Value> _b, F func) {
-      std::shared_ptr<Input> a = force_cast<Input>(_a);
-      std::shared_ptr<Input> b = force_cast<Input>(_b);
+  static Value* binary_op(CollectedHeap& heap, Value* _a, Value* _b, F func) {
+      Input* a = force_cast<Input>(_a);
+      Input* b = force_cast<Input>(_b);
       return heap.allocate<Output>(func(a->value, b->value));
   }
 
   template<typename T, typename F>
-  static std::shared_ptr<Value> unary_op(CollectedHeap& heap, std::shared_ptr<Value> _a, F func) {
-      std::shared_ptr<T> a = force_cast<T>(_a);
+  static Value* unary_op(CollectedHeap& heap, Value* _a, F func) {
+      T* a = force_cast<T>(_a);
       return heap.allocate<T>(func(a->value));
   }
 
@@ -139,8 +139,8 @@ namespace VM {
       throw InsufficentStackException("Can't peek off an empty stack!");
   }
 
-  static void print_stack(std::stack<std::shared_ptr<Value>> & stack) {
-      std::vector<std::shared_ptr<Value>> stack_holder;
+  static void print_stack(std::stack<Value*> & stack) {
+      std::vector<Value*> stack_holder;
       while (!stack.empty()) {
           auto v = stack.top();
           std::cout << v->toString() << std::endl;
@@ -152,14 +152,14 @@ namespace VM {
       }
   };
 
-  std::shared_ptr<Value> Interpreter::run_function(
+  Value* Interpreter::run_function(
       Function const & func,
-      std::vector<std::shared_ptr<Value>> const & arguments,
-      std::vector<std::shared_ptr<ReferenceValue>> const & references
+      std::vector<Value*> const & arguments,
+      std::vector<ReferenceValue*> const & references
   ) {
-      std::stack<std::shared_ptr<Value>> stack;
+      std::stack<Value*> stack;
       ValueMap local_variables;
-      std::map<std::string, std::shared_ptr<ReferenceValue>> local_reference_vars;
+      std::map<std::string, ReferenceValue*> local_reference_vars;
       push_frame(&local_variables, &local_reference_vars, &stack);
 
       if (func.parameter_count_ != arguments.size()) {
@@ -293,7 +293,7 @@ namespace VM {
               // Mnemonic:  load_ref
               // Stack:     S :: operand 1 => S :: value_of(operand 1)
               case Operation::LoadReference: {
-                  std::shared_ptr<ReferenceValue> rv = std::dynamic_pointer_cast<ReferenceValue>(safe_pop(stack));
+                  ReferenceValue* rv = dynamic_cast<ReferenceValue*>(safe_pop(stack));
                   if (!rv) {
                       throw RuntimeException("The top of the stack isn't a ReferenceValue");
                   }
@@ -308,8 +308,8 @@ namespace VM {
               // Mnemonic:  load_ref
               // Stack:     S :: operand 2 :: operand 1 => S
               case Operation::StoreReference: {
-                  std::shared_ptr<Value> value = safe_pop(stack);
-                  std::shared_ptr<ReferenceValue> rv = std::dynamic_pointer_cast<ReferenceValue>(safe_pop(stack));
+                  Value* value = safe_pop(stack);
+                  ReferenceValue* rv = dynamic_cast<ReferenceValue*>(safe_pop(stack));
                   if (!rv) {
                       throw RuntimeException("The top of the stack isn't a ReferenceValue");
                   }
@@ -333,7 +333,7 @@ namespace VM {
               // Stack:     S :: operand 1 => S :: record_value_of(operand, f.names[i])
               case Operation::FieldLoad: {
                   std::string var_name = safe_index(func.names_, instruction.operand0.value());
-                  std::shared_ptr<RecordValue> rv = std::dynamic_pointer_cast<RecordValue>(safe_pop(stack));
+                  RecordValue* rv = dynamic_cast<RecordValue*>(safe_pop(stack));
                   if (!rv) {
                       throw IllegalCastException("Couldn't cast the top of the stack to a record");
                   }
@@ -349,8 +349,8 @@ namespace VM {
               // Stack:    S :: operand 2 :: operand 1 => S
               case Operation::FieldStore: {
                   std::string var_name = safe_index(func.names_, instruction.operand0.value());
-                  std::shared_ptr<Value> stored_value = safe_pop(stack);
-                  std::shared_ptr<RecordValue> rv = std::dynamic_pointer_cast<RecordValue>(safe_pop(stack));
+                  Value* stored_value = safe_pop(stack);
+                  RecordValue* rv = dynamic_cast<RecordValue*>(safe_pop(stack));
                   if (!rv) {
                       throw IllegalCastException("Couldn't cast the top of the stack to a record");
                   }
@@ -364,9 +364,9 @@ namespace VM {
               // Operand 2: the record to read from
               // Stack:     S :: operand 2 :: operand 1 => S
               case Operation::IndexLoad: {
-                  std::shared_ptr<Value> index_value = safe_pop(stack);
+                  Value* index_value = safe_pop(stack);
                   std::string var_name = index_value->toString();
-                  std::shared_ptr<RecordValue> rv = std::dynamic_pointer_cast<RecordValue>(safe_pop(stack));
+                  RecordValue* rv = dynamic_cast<RecordValue*>(safe_pop(stack));
                   if (!rv) {
                       throw IllegalCastException("Couldn't cast the top of the stack to a record");
                   }
@@ -381,10 +381,10 @@ namespace VM {
               // Operand 3: the record to store into
               // Stack:     S :: operand 3 :: operand 2 :: operand 1 => S
               case Operation::IndexStore: {
-                  std::shared_ptr<Value> stored_value = safe_pop(stack);
-                  std::shared_ptr<Value> index_value = safe_pop(stack);
+                  Value* stored_value = safe_pop(stack);
+                  Value* index_value = safe_pop(stack);
                   std::string var_name = index_value->toString();
-                  std::shared_ptr<RecordValue> rv = std::dynamic_pointer_cast<RecordValue>(safe_pop(stack));
+                  RecordValue* rv = dynamic_cast<RecordValue*>(safe_pop(stack));
                   if (!rv) {
                       throw IllegalCastException("Couldn't cast the top of the stack to a record");
                   }
@@ -400,17 +400,17 @@ namespace VM {
               // Mnemonic:   alloc_closure
               // Stack:      S :: operand n :: ... :: operand 3 :: operand 2 :: operand 1 => S :: closure
               case Operation::AllocClosure: {
-                  std::shared_ptr<BareFunctionValue> function = std::dynamic_pointer_cast<BareFunctionValue>(safe_pop(stack));
+                  BareFunctionValue* function = dynamic_cast<BareFunctionValue*>(safe_pop(stack));
                   if (!function) {
                       throw RuntimeException("Top of stack wasn't a bare function");
                   }
-                  std::shared_ptr<IntegerValue> num_vars = std::dynamic_pointer_cast<IntegerValue>(safe_pop(stack));
+                  IntegerValue* num_vars = dynamic_cast<IntegerValue*>(safe_pop(stack));
                   if (!num_vars) {
                       throw RuntimeException("Number of variables wasn't an integer");
                   }
-                  std::shared_ptr<ClosureFunctionValue> closure = heap.allocate<ClosureFunctionValue>(function->value);
+                  ClosureFunctionValue* closure = heap.allocate<ClosureFunctionValue>(function->value);
                   for (int i = 0; i < num_vars->value; i++) {
-                      std::shared_ptr<ReferenceValue> reference_value = std::dynamic_pointer_cast<ReferenceValue>(safe_pop(stack));
+                      ReferenceValue* reference_value = dynamic_cast<ReferenceValue*>(safe_pop(stack));
                       if (!reference_value) {
                           throw RuntimeException("Error creating closure - value on stack wasn't a reference value");
                       }
@@ -429,18 +429,18 @@ namespace VM {
               // Stack:         S::operand n :: .. :: operand 3 :: operand 2 :: operand 1 => S :: value
               case Operation::Call: {
                   auto value = safe_pop(stack);
-                  std::shared_ptr<AbstractFunctionValue> function = std::dynamic_pointer_cast<AbstractFunctionValue>(value);
+                  AbstractFunctionValue* function = dynamic_cast<AbstractFunctionValue*>(value);
                   if (!function) {
                       throw IllegalCastException(value->toString());
                   }
-                  std::shared_ptr<IntegerValue> num_args = std::dynamic_pointer_cast<IntegerValue>(safe_pop(stack));
+                  IntegerValue* num_args = dynamic_cast<IntegerValue*>(safe_pop(stack));
                   if (!num_args) {
                       throw RuntimeException("Number of arguments wasn't an integer");
                   }
-                  std::vector<std::shared_ptr<Value>> arguments;
+                  std::vector<Value*> arguments;
                   for (int i = 0; i < num_args->value; i++) {
-                      std::shared_ptr<Value> value = safe_pop(stack);
-                      std::shared_ptr<ReferenceValue> reference_value = std::dynamic_pointer_cast<ReferenceValue>(value);
+                      Value* value = safe_pop(stack);
+                      ReferenceValue* reference_value = dynamic_cast<ReferenceValue*>(value);
                       if (reference_value) {
                           throw RuntimeException("Error calling function - value on stack was a reference value");
                       }
@@ -471,13 +471,13 @@ namespace VM {
               // Stack:     S:: operand 2 :: operand 1 => S :: op(operand 2, operand 1)
 
               case Operation::Add: {
-                  std::shared_ptr<Value> operand_1 = safe_pop(stack);
-                  std::shared_ptr<Value> operand_2 = safe_pop(stack);
+                  Value* operand_1 = safe_pop(stack);
+                  Value* operand_2 = safe_pop(stack);
                   if (can_cast<StringValue>(operand_1) || can_cast<StringValue>(operand_2)) {
                       stack.push(heap.allocate<StringValue>(operand_2->toString() + operand_1->toString()));
                   } else {
-                      std::shared_ptr<IntegerValue> operand_1_integer = std::dynamic_pointer_cast<IntegerValue>(operand_1);
-                      std::shared_ptr<IntegerValue> operand_2_integer = std::dynamic_pointer_cast<IntegerValue>(operand_2);
+                      IntegerValue* operand_1_integer = dynamic_cast<IntegerValue*>(operand_1);
+                      IntegerValue* operand_2_integer = dynamic_cast<IntegerValue*>(operand_2);
                       if (operand_1_integer == nullptr || operand_2_integer == nullptr) {
                           throw IllegalCastException("Can't perform addition");
                       }
@@ -501,36 +501,36 @@ namespace VM {
               // Mnemonic:  gt/geq
               // Stack:     S :: operand 2 :: operand 1 => S:: op(operand 2, operand 1)
               case Operation::Gt: {
-                  std::shared_ptr<Value> operand_1 = safe_pop(stack);
-                  std::shared_ptr<Value> operand_2 = safe_pop(stack);
+                  Value* operand_1 = safe_pop(stack);
+                  Value* operand_2 = safe_pop(stack);
                   stack.push(binary_op<IntegerValue, BooleanValue>(heap, operand_2, operand_1, [] (int a, int b) { return a > b; }));
               }
               break;
 
               case Operation::Geq: {
-                  std::shared_ptr<Value> operand_1 = safe_pop(stack);
-                  std::shared_ptr<Value> operand_2 = safe_pop(stack);
+                  Value* operand_1 = safe_pop(stack);
+                  Value* operand_2 = safe_pop(stack);
                   stack.push(binary_op<IntegerValue, BooleanValue>(heap, operand_2, operand_1, [] (int a, int b) { return a >= b; }));
               }
               break;
 
               case Operation::Sub: {
-                  std::shared_ptr<Value> operand_1 = safe_pop(stack);
-                  std::shared_ptr<Value> operand_2 = safe_pop(stack);
+                  Value* operand_1 = safe_pop(stack);
+                  Value* operand_2 = safe_pop(stack);
                   stack.push(binary_op<IntegerValue, IntegerValue>(heap, operand_2, operand_1, [] (int a, int b) { return a - b; }));
               }
               break;
 
               case Operation::Mul: {
-                  std::shared_ptr<Value> operand_1 = safe_pop(stack);
-                  std::shared_ptr<Value> operand_2 = safe_pop(stack);
+                  Value* operand_1 = safe_pop(stack);
+                  Value* operand_2 = safe_pop(stack);
                   stack.push(binary_op<IntegerValue, IntegerValue>(heap, operand_2, operand_1, [] (int a, int b) { return a * b; }));
               }
               break;
 
               case Operation::Div: {
-                  std::shared_ptr<Value> operand_1 = safe_pop(stack);
-                  std::shared_ptr<Value> operand_2 = safe_pop(stack);
+                  Value* operand_1 = safe_pop(stack);
+                  Value* operand_2 = safe_pop(stack);
                   stack.push(binary_op<IntegerValue, IntegerValue>(heap, operand_2, operand_1, [] (int a, int b) {
                       if (b == 0) {
                           throw IllegalArithmeticException("divide by zero");
@@ -558,8 +558,8 @@ namespace VM {
               // Mnemonic:  gt/geq
               // Stack:     S :: operand 2 :: operand 1 => S:: eq(operand 2, operand 1)
               case Operation::Eq: {
-                  std::shared_ptr<Value> operand_1 = safe_pop(stack);
-                  std::shared_ptr<Value> operand_2 = safe_pop(stack);
+                  Value* operand_1 = safe_pop(stack);
+                  Value* operand_2 = safe_pop(stack);
                   stack.push(heap.allocate<BooleanValue>(*operand_2 == *operand_1));
               }
               break;
@@ -571,15 +571,15 @@ namespace VM {
               // Mnemonic:  and/or
               // Stack:     S :: operand 2 :: operand 1 => S:: op(operand 2, operand 1)
               case Operation::And: {
-                  std::shared_ptr<Value> operand_1 = safe_pop(stack);
-                  std::shared_ptr<Value> operand_2 = safe_pop(stack);
+                  Value* operand_1 = safe_pop(stack);
+                  Value* operand_2 = safe_pop(stack);
                   stack.push(binary_op<BooleanValue, BooleanValue>(heap, operand_2, operand_1, [] (bool a, bool b) { return a && b; }));
               }
               break;
 
               case Operation::Or: {
-                  std::shared_ptr<Value> operand_1 = safe_pop(stack);
-                  std::shared_ptr<Value> operand_2 = safe_pop(stack);
+                  Value* operand_1 = safe_pop(stack);
+                  Value* operand_2 = safe_pop(stack);
                   stack.push(binary_op<BooleanValue, BooleanValue>(heap, operand_2, operand_1, [] (bool a, bool b) { return a || b; }));
               }
               break;
@@ -610,7 +610,7 @@ namespace VM {
               // Mnemonic:  if i
               // Stack:     S :: operand 1 => S
               case Operation::If: {
-                  std::shared_ptr<BooleanValue> operand_1 = std::dynamic_pointer_cast<BooleanValue>(safe_pop(stack));
+                  BooleanValue* operand_1 = dynamic_cast<BooleanValue*>(safe_pop(stack));
                   if (!operand_1) {
                       throw IllegalCastException("Can't cast value to boolean for if condition");
                   }
@@ -637,8 +637,8 @@ namespace VM {
               // Mnemonic:  swap
               // Stack:     S :: operand 2 :: operand 1 => S :: operand 1 :: operand 2
               case Operation::Swap: {
-                  std::shared_ptr<Value> operand_1 = safe_pop(stack);
-                  std::shared_ptr<Value> operand_2 = safe_pop(stack);
+                  Value* operand_1 = safe_pop(stack);
+                  Value* operand_2 = safe_pop(stack);
                   stack.push(operand_1);
                   stack.push(operand_2);
               }

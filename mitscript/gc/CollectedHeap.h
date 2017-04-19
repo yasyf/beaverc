@@ -16,16 +16,9 @@ namespace GC {
     -
   */
   class CollectedHeap {
-    vector<weak_ptr<Collectable>> allocated;
+    vector<Collectable*> allocated;
 
   private:
-
-    template<typename T>
-    shared_ptr<T> _allocate(T* t_) {
-      shared_ptr<T> t = shared_ptr<T>(t_);
-      allocated.push_back(t);
-      return t;
-    }
 
   public:
     size_t generation = 0;
@@ -64,8 +57,10 @@ namespace GC {
     it can be deallocated later.
     */
     template<typename T>
-    shared_ptr<T> allocate() {
-      return _allocate(new T(*this));
+    T* allocate() {
+      auto t = new T(*this);
+      allocated.push_back(t);
+      return t;
     }
 
     /*
@@ -73,13 +68,17 @@ namespace GC {
     takes one parameter. Useful when allocating Integer or String objects.
     */
     template<typename T, typename ARG>
-    shared_ptr<T> allocate(ARG a) {
-      return _allocate(new T(*this, a));
+    T* allocate(ARG a) {
+      auto t = new T(*this, a);
+      allocated.push_back(t);
+      return t;
     }
 
     template<typename T, typename ARG, typename ARG2>
-    shared_ptr<T> allocate(ARG a, ARG2 b) {
-      return _allocate(new T(*this, a, b));
+    T* allocate(ARG a, ARG2 b) {
+      auto t = new T(*this, a, b);
+      allocated.push_back(t);
+      return t;
     }
 
     /*
@@ -107,17 +106,12 @@ namespace GC {
 
       auto it = allocated.begin();
       while (it != allocated.end()) {
-        if (it->expired()) {
-          it = allocated.erase(it);
-          continue;
-        }
-
-        auto lit = it->lock();
-        if (lit->marked != generation) {
+        auto ptr = *it;
+        if (ptr->marked != generation) {
           #ifdef DEBUG
           cout << "ABOUT TO COLLECT: ";
           #endif
-          delete lit.get();
+          delete ptr;
           it = allocated.erase(it);
           continue;
         }
