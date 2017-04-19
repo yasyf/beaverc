@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdio>
+#include <vector>
 #include "Collectable.fwd.h"
 
 using namespace std;
@@ -13,8 +14,8 @@ namespace GC {
     -
   */
   class CollectedHeap {
-    int bytes_max;
-    volatile int bytes_current = 0;
+    size_t bytes_max;
+    volatile size_t bytes_current = 0;
     vector<weak_ptr<Collectable>> allocated;
 
   private:
@@ -35,7 +36,7 @@ namespace GC {
     your VM could be using some extra memory that is not managed by the garbage collector, so
     make sure you account for this.
     */
-    CollectedHeap(int maxmem) : bytes_max(maxmem) {}
+    CollectedHeap(size_t maxmem) : bytes_max(maxmem) {}
 
     void increaseSize(size_t n) {
       __sync_fetch_and_add(&bytes_current, n);
@@ -61,7 +62,7 @@ namespace GC {
     */
     template<typename T>
     shared_ptr<T> allocate() {
-      return _allocate(new T(this));
+      return _allocate(new T(*this));
     }
 
     /*
@@ -70,7 +71,12 @@ namespace GC {
     */
     template<typename T, typename ARG>
     shared_ptr<T> allocate(ARG a) {
-      return _allocate(new T(this, a));
+      return _allocate(new T(*this, a));
+    }
+
+    template<typename T, typename ARG, typename ARG2>
+    shared_ptr<T> allocate(ARG a, ARG2 b) {
+      return _allocate(new T(*this, a, b));
     }
 
     /*

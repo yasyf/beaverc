@@ -70,7 +70,7 @@ int main(int argc, char** argv)
     function = std::shared_ptr<BC::Function>(funcptr);
   }
 
-  VM::Interpreter interpreter(function);
+  VM::Interpreter interpreter(function, 10);
   try {
     return interpreter.interpret();
   } catch (SystemException& ex) {

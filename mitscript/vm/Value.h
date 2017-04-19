@@ -133,9 +133,9 @@ namespace VM {
       if (values.count(key) > 0) {
         return values.at(key);
       }
-      return std::shared_ptr<Value>(new NoneValue());
+      return heap.allocate<NoneValue>();
     }
-
+    
     std::string toString() {
       std::string result = "{";
       for (auto keyvalue : values) {
@@ -261,7 +261,7 @@ namespace VM {
             std::cout << "===== ";
             #endif
             std::cout << arguments[0]->toString() << std::endl;
-            return std::shared_ptr<Value>(new NoneValue());
+            return heap.allocate<NoneValue>();
           }
           break;
 
@@ -271,7 +271,7 @@ namespace VM {
             }
             std::string input;
             std::cin >> input;
-            return std::shared_ptr<Value>(new StringValue(input));
+            return heap.allocate<StringValue>(input);
           }
           break;
 
@@ -281,7 +281,7 @@ namespace VM {
             }
             std::shared_ptr<StringValue> string = force_cast<StringValue>(arguments[0]);
             try {
-              return std::shared_ptr<Value>(new IntegerValue(std::stoi(string->value)));
+              return heap.allocate<IntegerValue>(std::stoi(string->value));
             } catch (std::invalid_argument& ex) {
               throw IllegalCastException("string passed to intcast doesn't represent int");
             } catch (std::out_of_range& ex) {
