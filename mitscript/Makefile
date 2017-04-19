@@ -1,21 +1,18 @@
 CC = g++
 CXX = g++
 
-CFLAGS = -std=c++1y
-CXXFLAGS = -std=c++1y
-LDFLAGS =
-
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
     CC = g++-6
     CXX = g++-6
-    CFLAGS += -DMAC_OS
-    CXXFLAGS += -DMAC_OS
-    LDFLAGS += -DMAC_OS
 endif
 
 LEX = flex
 YACC = bison
+
+CFLAGS = -std=c++1y
+CXXFLAGS = -std=c++1y
+LDFLAGS =
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
