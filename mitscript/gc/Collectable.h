@@ -9,6 +9,9 @@ namespace GC {
     Collectable(CollectedHeap& heap) : heap(heap) {
       heap.increaseSize(size());
     }
+    ~Collectable() {
+      heap.decreaseSize(size());
+    }
   private:
     //Any private fields you add to the Collectable class will be accessible by the CollectedHeap
     //(since it is declared as friend below). You can think of these fields as the header for the object,
@@ -31,6 +34,6 @@ namespace GC {
       markChildren();
     }
     virtual void markChildren() = 0;
-    virtual int size();
+    virtual size_t size();
   };
 }

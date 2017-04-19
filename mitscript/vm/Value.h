@@ -59,14 +59,11 @@ namespace VM {
     StringValue(GC::CollectedHeap& heap, std::string value) : Value(heap), value(value) {};
     std::string toString() { return value; };
 
-    virtual int size() {
-      #warning TODO(implement size)
-      return 0;
+    virtual size_t size() {
+      return sizeof(StringValue) + value.max_size() * sizeof(char);
     }
 
-    virtual void markChildren() {
-      #warning TODO(implement markChildren)
-    }
+    virtual void markChildren() {}
 
     bool equals(const Value& other) {
       return value == dynamic_cast<const StringValue &>(other).value;
@@ -78,14 +75,11 @@ namespace VM {
     BooleanValue(GC::CollectedHeap& heap, bool value) : Value(heap), value(value) {};
     std::string toString() { return (value) ? "True" : "False"; };
 
-    virtual int size() {
-      #warning TODO(implement size)
-      return 0;
+    virtual size_t size() {
+      return sizeof(BooleanValue);
     }
 
-    virtual void markChildren() {
-      #warning TODO(implement markChildren)
-    }
+    virtual void markChildren() {}
 
     bool equals(const Value& other) {
       return value == dynamic_cast<const BooleanValue &>(other).value;
@@ -97,14 +91,11 @@ namespace VM {
 
     std::string toString() { return "None"; }
 
-    virtual int size() {
-      #warning TODO(implement size)
-      return 0;
+    virtual size_t size() {
+      return sizeof(NoneValue);
     }
 
-    virtual void markChildren() {
-      #warning TODO(implement markChildren)
-    }
+    virtual void markChildren() {}
 
     bool equals(const Value& other) {
       return true;
@@ -116,14 +107,11 @@ namespace VM {
     IntegerValue(GC::CollectedHeap& heap, int value) : Value(heap), value(value) {};
     std::string toString() { return std::to_string(value); };
 
-    virtual int size() {
-      #warning TODO(implement size)
-      return 0;
+    virtual size_t size() {
+      return sizeof(IntegerValue);
     }
 
-    virtual void markChildren() {
-      #warning TODO(implement markChildren)
-    }
+    virtual void markChildren() { }
 
     bool equals(const Value& other) {
       return value == dynamic_cast<const IntegerValue &>(other).value;
@@ -136,14 +124,18 @@ namespace VM {
     RecordValue(GC::CollectedHeap& heap) : Value(heap) {};
 
     void insert(std::string key, std::shared_ptr<Value> inserted) {
+      if (values.count(key) == 0)
+        heap.increaseSize(sizeof(std::string) + key.max_size() * sizeof(char) + sizeof(std::shared_ptr<Value>));
       values[key] = inserted;
-    };
+    }
+
     std::shared_ptr<Value> get(std::string key) {
       if (values.count(key) > 0) {
-          return values.at(key);
+        return values.at(key);
       }
       return std::shared_ptr<Value>(new NoneValue());
-    };
+    }
+
     std::string toString() {
       std::string result = "{";
       for (auto keyvalue : values) {
@@ -151,15 +143,19 @@ namespace VM {
       };
       result += "}";
       return result;
-    };
+    }
 
-    virtual int size() {
-      #warning TODO(implement size)
-      return 0;
+    virtual size_t size() {
+      size_t s = sizeof(RecordValue);
+      for (auto pair : values) {
+        s += sizeof(std::string) + pair.first.max_size() * sizeof(char) + sizeof(std::shared_ptr<Value>);
+      }
+      return s;
     }
 
     virtual void markChildren() {
-      #warning TODO(implement markChildren)
+      for (auto pair : values)
+        pair.second->mark();
     }
 
     bool equals(const Value& other) {
@@ -170,22 +166,23 @@ namespace VM {
   struct ReferenceValue : public Value {
     std::string name;
     std::shared_ptr<Value> value;
-    ReferenceValue(GC::CollectedHeap& heap, std::string n, std::shared_ptr<Value> v) : Value(heap) { name = n; value = v; };
+
+    ReferenceValue(GC::CollectedHeap& heap, std::string n, std::shared_ptr<Value> v) : Value(heap), name(n), value(v) {}
+
     std::string toString() {
       #if DEBUG
         return "ref: " + name;
       #else
         throw RuntimeException("You have uncovered a bug :(");
       #endif
-    };
+    }
 
-    virtual int size() {
-      #warning TODO(implement size)
-      return 0;
+    virtual size_t size() {
+      return sizeof(ReferenceValue) + name.max_size() * sizeof(char);
     }
 
     virtual void markChildren() {
-      #warning TODO(implement markChildren)
+      value->mark();
     }
 
     bool equals(const Value& other) {
@@ -197,15 +194,6 @@ namespace VM {
     AbstractFunctionValue(GC::CollectedHeap& heap) : Value(heap) {}
     std::string toString() { return "FUNCTION"; };
     virtual std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) = 0;
-
-    virtual int size() {
-      #warning TODO(implement size)
-      return 0;
-    }
-
-    virtual void markChildren() {
-      #warning TODO(implement markChildren)
-    }
 
     bool equals(const Value& o) {
       return this == &o;
@@ -219,14 +207,11 @@ namespace VM {
       return interpreter.run_function(*value, arguments, std::vector<std::shared_ptr<ReferenceValue>>());
     };
 
-    virtual int size() {
-      #warning TODO(implement size)
-      return 0;
+    virtual size_t size() {
+      return sizeof(BareFunctionValue);
     }
 
-    virtual void markChildren() {
-      #warning TODO(implement markChildren)
-    }
+    virtual void markChildren() {}
   };
 
   struct ClosureFunctionValue : public AbstractFunctionValue {
@@ -238,13 +223,13 @@ namespace VM {
       return interpreter.run_function(*value, arguments, references);
     };
 
-    virtual int size() {
-      #warning TODO(implement size)
-      return 0;
+    virtual size_t size() {
+      return sizeof(ClosureFunctionValue) + references.size() * sizeof(std::shared_ptr<ReferenceValue>);
     }
 
     virtual void markChildren() {
-      #warning TODO(implement markChildren)
+      for (auto ref : references)
+        ref->mark();
     }
   };
 
@@ -259,14 +244,13 @@ namespace VM {
     BuiltInFunctionType type;
     BuiltInFunctionValue(GC::CollectedHeap& heap, BuiltInFunctionType type) : AbstractFunctionValue(heap), type(type) {};
     BuiltInFunctionValue(GC::CollectedHeap& heap, int t) : AbstractFunctionValue(heap) { type = static_cast<BuiltInFunctionType>(t); };
-    virtual int size() {
-      #warning TODO(implement size)
-      return 0;
+
+    virtual size_t size() {
+      return sizeof(BuiltInFunctionValue);
     }
 
-    virtual void markChildren() {
-      #warning TODO(implement markChildren)
-    }
+    virtual void markChildren() {}
+
     std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
       switch (type) {
           case BuiltInFunctionType::Print: {
