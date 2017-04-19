@@ -62,6 +62,9 @@ namespace VM {
     }
 
     ~StringValue() {
+      #ifdef DEBUG
+      cout << "DELETING StringValue: " << toString() << endl;
+      #endif
       heap.decreaseSize(size());
     }
 
@@ -86,6 +89,9 @@ namespace VM {
     }
 
     ~BooleanValue() {
+      #ifdef DEBUG
+      cout << "DELETING BooleanValue: " << toString() << endl;
+      #endif
       heap.decreaseSize(size());
     }
 
@@ -108,6 +114,9 @@ namespace VM {
     }
 
     ~NoneValue() {
+      #ifdef DEBUG
+      cout << "DELETING NoneValue: " << toString() << endl;
+      #endif
       heap.decreaseSize(size());
     }
 
@@ -132,6 +141,9 @@ namespace VM {
     }
 
     ~IntegerValue() {
+      #ifdef DEBUG
+      cout << "DELETING IntegerValue: " << toString() << endl;
+      #endif
       heap.decreaseSize(size());
     }
 
@@ -156,6 +168,9 @@ namespace VM {
     }
 
     ~RecordValue() {
+      #ifdef DEBUG
+      cout << "DELETING RecordValue: " << toString() << endl;
+      #endif
       heap.decreaseSize(size());
     }
 
@@ -208,6 +223,9 @@ namespace VM {
     }
 
     ~ReferenceValue() {
+      #ifdef DEBUG
+      cout << "DELETING ReferenceValue: " << toString() << endl;
+      #endif
       heap.decreaseSize(size());
     }
 
@@ -251,6 +269,9 @@ namespace VM {
     }
 
     ~BareFunctionValue() {
+      #ifdef DEBUG
+      cout << "DELETING BareFunctionValue: " << toString() << endl;
+      #endif
       heap.decreaseSize(size());
     }
 
@@ -274,6 +295,9 @@ namespace VM {
     }
 
     ~ClosureFunctionValue() {
+      #ifdef DEBUG
+      cout << "DELETING ClosureFunctionValue: " << toString() << endl;
+      #endif
       heap.decreaseSize(size());
     }
 
@@ -313,6 +337,9 @@ namespace VM {
     }
 
     ~BuiltInFunctionValue() {
+      #ifdef DEBUG
+      cout << "DELETING BuiltinFunctionValue: " << toString() << endl;
+      #endif
       heap.decreaseSize(size());
     }
 

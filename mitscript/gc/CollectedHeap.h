@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdio>
 #include <vector>
+#include <iostream>
 #include <memory>
 #include "Collectable.h"
 
@@ -100,8 +101,9 @@ namespace GC {
     void gc(ITERATOR begin, ITERATOR end) {
       generation++;
 
-      for (auto c = begin; c != end; c++)
+      for (auto c = begin; c != end; c++) {
         (*c)->mark();
+      }
 
       auto it = allocated.begin();
       while (it != allocated.end()) {
@@ -112,6 +114,9 @@ namespace GC {
 
         auto lit = it->lock();
         if (lit->marked != generation) {
+          #ifdef DEBUG
+          cout << "ABOUT TO COLLECT: ";
+          #endif
           delete lit.get();
           it = allocated.erase(it);
           continue;

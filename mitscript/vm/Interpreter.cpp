@@ -31,6 +31,7 @@ namespace VM {
   void Interpreter::pop_frame() {
     local_variable_stack.pop_back();
     local_reference_variable_stack.pop_back();
+    operand_stack_stack.pop_back();
   }
 
   bool Interpreter::is_top_level() {
@@ -48,7 +49,7 @@ namespace VM {
     #endif
     if (heap.bytes_current >= heap.bytes_max * COLLECTION_RATIO) {
       #ifdef DEBUG
-      std::cout << "$$$$$ Collecting garbage..." << std::endl;
+      std::cout << "$$$$$ Building roots..." << std::endl;
       #endif 
       std::vector<std::shared_ptr<Value>> roots;
       for (auto local_variables : local_variable_stack) {
@@ -76,6 +77,9 @@ namespace VM {
       for (auto keyvalue : global_variables) {
         roots.push_back(keyvalue.second);
       }
+      #ifdef DEBUG
+      std::cout << "$$$$$ Collecting garbage..." << std::endl;
+      #endif 
       heap.gc(roots.begin(), roots.end());
     }
   };
@@ -187,7 +191,6 @@ namespace VM {
 
       int ip = 0;
       while (ip >= 0 && ip < func.instructions.size()) {
-          potentially_garbage_collect();
           Instruction instruction = func.instructions[ip];
           int ip_increment = 1;
           #if DEBUG
@@ -654,6 +657,7 @@ namespace VM {
                   throw RuntimeException("Found an unknown opcode.");
               break;
           };
+          potentially_garbage_collect();
           #if DEBUG
           std::cout << "Stack:" << std::endl;
           print_stack(stack);
