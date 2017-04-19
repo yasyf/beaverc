@@ -68,7 +68,7 @@ namespace VM {
     std::string toString() { return value; };
 
     virtual size_t size() {
-      return sizeof(StringValue) + value.max_size() * sizeof(char);
+      return sizeof(StringValue) + value.capacity() * sizeof(char);
     }
 
     virtual void markChildren() {}
@@ -161,7 +161,7 @@ namespace VM {
 
     void insert(std::string key, std::shared_ptr<Value> inserted) {
       if (values.count(key) == 0)
-        heap.increaseSize(sizeof(std::string) + key.max_size() * sizeof(char) + sizeof(std::shared_ptr<Value>));
+        heap.increaseSize(sizeof(std::string) + key.capacity() * sizeof(char) + sizeof(std::shared_ptr<Value>));
       values[key] = inserted;
     }
 
@@ -184,7 +184,7 @@ namespace VM {
     virtual size_t size() {
       size_t s = sizeof(RecordValue);
       for (auto pair : values) {
-        s += sizeof(std::string) + pair.first.max_size() * sizeof(char) + sizeof(std::shared_ptr<Value>);
+        s += sizeof(std::string) + pair.first.capacity() * sizeof(char) + sizeof(std::shared_ptr<Value>);
       }
       return s;
     }
@@ -220,7 +220,7 @@ namespace VM {
     }
 
     virtual size_t size() {
-      return sizeof(ReferenceValue) + name.max_size() * sizeof(char);
+      return sizeof(ReferenceValue) + name.capacity() * sizeof(char);
     }
 
     virtual void markChildren() {
