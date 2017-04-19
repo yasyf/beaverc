@@ -4,9 +4,13 @@
 #include "../bcparser/lexer.h"
 #include "../bccompiler/Compiler.h"
 #include "Interpreter.h"
+#include "mem.h"
 #include <iostream>
 
 using namespace std;
+
+#define MB_TO_B 1024 * 1024
+#define KB_TO_B 1024
 
 enum Mode {SOURCE, BYTECODE};
 
@@ -75,9 +79,20 @@ int main(int argc, char** argv)
     function = std::shared_ptr<BC::Function>(funcptr);
   }
 
-  size_t max_memory = std::stoi(argv[2]) * 1024 * 1024;
-  size_t current_memory = 512 * 1024;
+  size_t max_memory = std::stoi(argv[2]) * MB_TO_B;
+  size_t current_memory = rss() * KB_TO_B;
   size_t usable_memory = (max_memory > current_memory) ? max_memory - current_memory : 0;
+
+  #if 1
+    cout
+      << "Starting with "
+      << current_memory / KB_TO_B
+      << " kb used, "
+      << usable_memory / KB_TO_B
+      << " kb usable."
+      << endl
+    ;
+  #endif
 
   VM::Interpreter interpreter(function.get(), usable_memory);
   try {
