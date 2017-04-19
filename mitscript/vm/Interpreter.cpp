@@ -35,6 +35,26 @@ namespace VM {
     return local_variable_stack.size() == 1;
   }
 
+  void Interpreter::potentially_garbage_collect() {
+    if (heap.bytes_current >= heap.bytes_max * 0.9) {
+      std::vector<std::shared_ptr<Value>> roots;
+      for (auto local_variables : local_variable_stack) {
+        for (auto keyvalue : *local_variables) {
+          roots.push_back(keyvalue.second);
+        }
+      }
+      for (auto local_reference_variables : local_reference_variable_stack) {
+        for (auto keyvalue : *local_reference_variables) {
+          roots.push_back(keyvalue.second);
+        }
+      }
+      for (auto keyvalue : global_variables) {
+        roots.push_back(keyvalue.second);
+      }
+      heap.gc(roots.begin(), roots.end());
+    }
+  };
+
   static std::shared_ptr<Value> constant_to_value(CollectedHeap& heap, std::shared_ptr<Constant> constant) {
       if (std::shared_ptr<None> c = std::dynamic_pointer_cast<None>(constant)) {
           return heap.allocate<NoneValue>();
@@ -142,6 +162,7 @@ namespace VM {
 
       int ip = 0;
       while (ip >= 0 && ip < func.instructions.size()) {
+          potentially_garbage_collect();
           Instruction instruction = func.instructions[ip];
           int ip_increment = 1;
           #if DEBUG

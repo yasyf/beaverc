@@ -28,6 +28,8 @@ namespace VM {
       void push_frame(ValueMap* local, std::map<std::string, std::shared_ptr<ReferenceValue>>* local_reference);
       void pop_frame();
       bool is_top_level();
+
+      void potentially_garbage_collect();
   };
 }
 

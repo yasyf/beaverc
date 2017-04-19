@@ -14,8 +14,6 @@ namespace GC {
     -
   */
   class CollectedHeap {
-    size_t bytes_max;
-    volatile size_t bytes_current = 0;
     vector<weak_ptr<Collectable>> allocated;
 
   private:
@@ -28,6 +26,8 @@ namespace GC {
     }
 
   public:
+    size_t bytes_max;
+    volatile size_t bytes_current = 0;
 
     /*
     The constructor should take as an argument the maximum size of the garbage collected heap.

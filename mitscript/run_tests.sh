@@ -42,7 +42,7 @@ check_interpret() {
 }
 
 check_interpret_vm_s() {
-  output=$(diff "$1.out" <(./bin/vm -s "$1"))
+  output=$(diff "$1.out" <(./bin/vm -mem 10 -s "$1"))
   if [[ -z $output ]]; then
     good "$1" "interpret_vm_s"
   else
@@ -52,7 +52,7 @@ check_interpret_vm_s() {
 }
 
 check_interpret_vm_b() {
-  output=$(diff "$1.out" <(./bin/vm -b "$1bc"))
+  output=$(diff "$1.out" <(./bin/vm -mem 10 -b "$1bc"))
   if [[ -z $output ]]; then
     good "$1" "interpret_vm_b"
   else

@@ -11,7 +11,7 @@ using namespace std;
 enum Mode {SOURCE, BYTECODE};
 
 void usage() {
-  cout << "Usage: vm [-s|-b] filename" << endl;
+  cout << "Usage: vm -mem <MEM> <-s|-b> <filename>" << endl;
 }
 
 int main(int argc, char** argv)
@@ -21,12 +21,12 @@ int main(int argc, char** argv)
   Mode mode;
   shared_ptr<BC::Function> function;
 
-  if (argc == 2) {
+  if (argc == 4) {
     infile = stdin;
-  } else if (argc == 3) {
-    infile = fopen(argv[2], "r");
+  } else if (argc == 5) {
+    infile = fopen(argv[4], "r");
     if (!infile) {
-      cout << "error: cannot open " << argv[2] << endl;
+      cout << "error: cannot open " << argv[4] << endl;
       return 1;
     }
   } else {
@@ -34,9 +34,14 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if (strcmp(argv[1], "-s") == 0) {
+  if (strcmp(argv[1], "-mem") != 0) {
+    usage();
+    return 1;
+  }
+
+  if (strcmp(argv[3], "-s") == 0) {
     mode = SOURCE;
-  } else if (strcmp(argv[1], "-b") == 0) {
+  } else if (strcmp(argv[3], "-b") == 0) {
     mode = BYTECODE;
   } else {
     usage();
@@ -70,7 +75,11 @@ int main(int argc, char** argv)
     function = std::shared_ptr<BC::Function>(funcptr);
   }
 
-  VM::Interpreter interpreter(function, 10);
+  size_t max_memory = std::stoi(argv[2]) * 1024 * 1024;
+  size_t current_memory = 512 * 1024;
+  size_t usable_memory = (max_memory > current_memory) ? max_memory - current_memory : 0;
+
+  VM::Interpreter interpreter(function, usable_memory);
   try {
     return interpreter.interpret();
   } catch (SystemException& ex) {
