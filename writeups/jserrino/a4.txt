@@ -1,0 +1,21 @@
+Keeping track of allocated objects in our implementation is pretty simple. Every object that gets allocated, gets allocated through a special function on the CollectedHeap object called allocate. This method allocates memory for the object, and also stores a pointer to it in a linked list of all the objects that have been allocated.
+
+We have a distinguished set of roots which are used as the bases for the mark and sweep algorithm. This includes: Every operand stack, local_variables, and local_variable_references of every stack frame, plus global variables.
+
+To perform a garbage collection, we keep track of a garbage collection epoch. Starting at the roots, we mark everything reachable from the roots with the current epoch number. Then we go through are giant list of everything allocated, and if something doesnt have the current epoch we free it and remove it from the list of allocated items.
+
+To keep track of the memory used by the program, we do a bunch of rough estimates. For the string class, we call capacity() on the string it operates on, plus we add in the size of hte string class itself. For records, we call perform the same action for every one of the keys of the map, plus the size of the pointers for the values, plus the size of the map object itself. Both of these are tuned with an "overhead" parameter that is multiplicative and takes into account things we might have missed.
+
+To trigger garbase collection, we see if our estimated heap size is some constant of our maximum size, and if so, it runs the garbage collection routine.
+
+==========
+
+We tried many things to get our garbage collector to work. At first, we were using shared pointers for most operations, and this gave us the best performance, except for when there were reference loops (in which case memory use became unboudned). After writing most of our garbage collector we realized there was no easy way to reconcile shared pointer loops, due to certain semantics about how shared pointers work. Thus, we changed everything to regular pointers and everything worked.
+
+We also made a couple of optimizations, perhaps only some of which will be present in our submission. Both optimizations we plan to have in our final interpreter, however.
+
+The first optimization was getting rid of std::string for the most part on the inside of the StringValue class. This helped us keep track of memory usage much efficiently.
+
+A second optimization was to rewrite the std::map class so we could have a more precise estimate of memory usage. This optimization may not make it into our submission, but we think it will have good effects.
+
+A third optimization was to cache certain types of values, like ints, bools, and None. This means our interpreter doesn't have to perform as many allocations and thus has to garbage collect less often.
