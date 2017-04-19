@@ -3,6 +3,7 @@
 DEFAULT="\033[39m"
 GREEN="\033[32m"
 RED="\033[31m"
+MAX_MEM="4096"
 
 memusg() {
   # detect operating system and prepare measurement
@@ -24,13 +25,12 @@ bad() {
 }
 
 check_memory() {
-  echo "$1"
   bin/vm -mem 0 -s "$1"
   mem=$(memusg bin/vm -mem 0 -s "$1")
-  if [[ "$mem" -lt "4096" ]]; then
+  if [[ "$mem" -lt "$MAX_MEM" ]]; then
     good "$1" "check_mem"
   else
-    echo "used $mem kb"
+    echo "used $mem > $MAX_MEM kb"
     bad "$1" "check_mem"
   fi
 }
