@@ -19,6 +19,11 @@ namespace GC {
     vector<Collectable*> allocated;
 
   private:
+    template<typename T>
+    void _allocate(T* t) {
+      allocated.push_back(t);
+      increaseSize(sizeof(Collectable*));
+    }
 
   public:
     size_t generation = 0;
@@ -32,7 +37,9 @@ namespace GC {
     your VM could be using some extra memory that is not managed by the garbage collector, so
     make sure you account for this.
     */
-    CollectedHeap(size_t maxmem) : bytes_max(maxmem) {}
+    CollectedHeap(size_t maxmem) : bytes_max(maxmem) {
+      increaseSize(sizeof(CollectedHeap));
+    }
 
     void increaseSize(size_t n) {
       #if DEBUG
@@ -65,7 +72,7 @@ namespace GC {
     template<typename T>
     T* allocate() {
       auto t = new T(*this);
-      allocated.push_back(t);
+      _allocate(t);
       return t;
     }
 
@@ -76,14 +83,14 @@ namespace GC {
     template<typename T, typename ARG>
     T* allocate(ARG a) {
       auto t = new T(*this, a);
-      allocated.push_back(t);
+      _allocate(t);
       return t;
     }
 
     template<typename T, typename ARG, typename ARG2>
     T* allocate(ARG a, ARG2 b) {
       auto t = new T(*this, a, b);
-      allocated.push_back(t);
+      _allocate(t);
       return t;
     }
 
@@ -115,10 +122,11 @@ namespace GC {
         auto ptr = *it;
         if (ptr->marked != generation) {
           #ifdef DEBUG
-          cout << "ABOUT TO COLLECT: ";
+            cout << "ABOUT TO COLLECT: ";
           #endif
           delete ptr;
           it = allocated.erase(it);
+          decreaseSize(sizeof(Collectable*));
           continue;
         }
 
