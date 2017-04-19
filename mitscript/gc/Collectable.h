@@ -10,10 +10,10 @@ namespace GC {
     virtual ~Collectable() {}
 
     void mark();
+    size_t size();
   private:
-    //Any private fields you add to the Collectable class will be accessible by the CollectedHeap
-    //(since it is declared as friend below). You can think of these fields as the header for the object,
-    //which will include metadata that is useful for the garbage collector.
+    virtual void markChildren() = 0;
+    virtual size_t _size() = 0;
   protected:
     /*
     The mark phase of the garbage collector needs to follow all pointers from the collectable objects, check
@@ -26,8 +26,5 @@ namespace GC {
     size_t marked = 0;
 
     friend CollectedHeap;
-
-    virtual void markChildren() = 0;
-    virtual size_t size() = 0;
   };
 }

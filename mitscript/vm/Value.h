@@ -74,7 +74,7 @@ namespace VM {
 
     std::string toString() { return std::string(memory, length); };
 
-    virtual size_t size() {
+    virtual size_t _size() {
       return sizeof(StringValue) + length * sizeof(char);
     }
 
@@ -102,7 +102,7 @@ namespace VM {
 
     std::string toString() { return (value) ? "True" : "False"; }
 
-    virtual size_t size() {
+    virtual size_t _size() {
       return sizeof(BooleanValue);
     }
 
@@ -127,7 +127,7 @@ namespace VM {
 
     std::string toString() { return "None"; }
 
-    virtual size_t size() {
+    virtual size_t _size() {
       return sizeof(NoneValue);
     }
 
@@ -154,7 +154,7 @@ namespace VM {
 
     std::string toString() { return std::to_string(value); }
 
-    virtual size_t size() {
+    virtual size_t _size() {
       return sizeof(IntegerValue);
     }
 
@@ -201,7 +201,7 @@ namespace VM {
       return result;
     }
 
-    virtual size_t size() {
+    virtual size_t _size() {
       size_t s = sizeof(RecordValue);
       for (auto pair : values) {
         s += sizeof(std::string) + pair.first.capacity() * sizeof(char) + sizeof(Value*);
@@ -242,7 +242,7 @@ namespace VM {
       #endif
     }
 
-    virtual size_t size() {
+    virtual size_t _size() {
       return sizeof(ReferenceValue) + name.capacity() * sizeof(char);
     }
 
@@ -284,7 +284,7 @@ namespace VM {
       return interpreter.run_function(*value, arguments, std::vector<ReferenceValue*>());
     };
 
-    virtual size_t size() {
+    virtual size_t _size() {
       return sizeof(BareFunctionValue);
     }
 
@@ -316,7 +316,7 @@ namespace VM {
       return interpreter.run_function(*value, arguments, references);
     };
 
-    virtual size_t size() {
+    virtual size_t _size() {
       return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
     }
 
@@ -352,7 +352,7 @@ namespace VM {
       heap.decreaseSize(size());
     }
 
-    virtual size_t size() {
+    virtual size_t _size() {
       return sizeof(BuiltInFunctionValue);
     }
 
