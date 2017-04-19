@@ -6,7 +6,6 @@ using namespace BC;
 namespace VM {
   Interpreter::Interpreter(std::shared_ptr<Function> const & main_func) {
       main_function = main_func;
-      global_variables.reset();
   }
 
   int Interpreter::interpret() {
@@ -17,6 +16,21 @@ namespace VM {
       return -1;
     }
   };
+
+  void Interpreter::push_frame(ValueMap* local_variables) {
+    local_variable_stack.push_back(local_variables);
+  }
+
+  void Interpreter::pop_frame() {
+    local_variable_stack.pop_back();
+  }
+
+  bool Interpreter::is_top_level() {
+    if (local_variable_stack.size() == 0) {
+      throw RuntimeException("Cannot call is_top_level, no function is executing");
+    }
+    return local_variable_stack.size() == 1;
+  }
 
   static std::shared_ptr<Value> constant_to_value(std::shared_ptr<Constant> constant) {
       if (std::shared_ptr<None> c = std::dynamic_pointer_cast<None>(constant)) {
@@ -91,42 +105,39 @@ namespace VM {
       std::vector<std::shared_ptr<Value>> const & arguments,
       std::vector<std::shared_ptr<ReferenceValue>> const & references
   ) {
+      std::stack<std::shared_ptr<Value>> stack;
+      ValueMap local_variables;
+      std::map<std::string, std::shared_ptr<ReferenceValue>> local_reference_vars;
+      push_frame(&local_variables);
+
       if (func.parameter_count_ != arguments.size()) {
           throw RuntimeException("An incorrect number of parameters was passed to the function");
       }
-      std::stack<std::shared_ptr<Value>> stack;
-      std::shared_ptr<ValueMap> local_variables = std::shared_ptr<ValueMap>(new ValueMap());
-      std::shared_ptr<ValueMap> local_reference_vars;
-      std::map<std::string, std::shared_ptr<ValueMap>> reference_locations;
-      if (!global_variables) {
-          // This is the global function
-          global_variables = local_reference_vars = local_variables;
-      } else {
-          local_reference_vars = std::shared_ptr<ValueMap>(new ValueMap());
-          for (auto var : func.local_reference_vars_) {
-              (*local_reference_vars)[var] = std::shared_ptr<Value>(new NoneValue());
-          }
-          for (auto var : func.local_vars_) {
-              if (local_reference_vars->count(var) == 0) {
-                  (*local_variables)[var] = std::shared_ptr<Value>(new NoneValue());
-              }
-          }
-          for (auto reference_value : references) {
-              reference_locations[reference_value->name] = reference_value->location;
-          }
-          for (int i = 0; i < arguments.size(); i++) {
-              std::string var_name = func.local_vars_[i];
-              #if DEBUG
-              std::cout << var_name << " = " << arguments[i]->toString() << std::endl;
-              #endif
-              if (local_reference_vars->count(var_name) == 0) {
-                  (*local_variables)[var_name] = arguments[i];
-              } else {
-                  (*local_reference_vars)[var_name] = arguments[i];
-              }
-          }
 
+      for (auto var : func.local_reference_vars_) {
+          auto none = std::shared_ptr<Value>(new NoneValue());
+          local_reference_vars[var] = std::shared_ptr<ReferenceValue>(new ReferenceValue(var, none));
       }
+      for (auto var : func.local_vars_) {
+          if (local_reference_vars.count(var) == 0) {
+              local_variables[var] = std::shared_ptr<Value>(new NoneValue());
+          }
+      }
+      for (auto reference_value : references) {
+          local_reference_vars[reference_value->name] = reference_value;
+      }
+      for (int i = 0; i < arguments.size(); i++) {
+          std::string var_name = func.local_vars_[i];
+          #if DEBUG
+          std::cout << var_name << " = " << arguments[i]->toString() << std::endl;
+          #endif
+          if (local_reference_vars.count(var_name) == 0) {
+              local_variables[var_name] = arguments[i];
+          } else {
+              local_reference_vars[var_name]->value = arguments[i];
+          }
+      }
+
       int ip = 0;
       while (ip >= 0 && ip < func.instructions.size()) {
           Instruction instruction = func.instructions[ip];
@@ -152,8 +163,7 @@ namespace VM {
               case Operation::LoadFunc: {
                   int index = instruction.operand0.value();
                   std::shared_ptr<Function> function = safe_index(func.functions_, instruction.operand0.value());
-                  if (global_variables == local_reference_vars && // This means we're top level
-                      index >= 0 && index < static_cast<int>(BuiltInFunctionType::MAX)) {
+                  if (is_top_level() && index >= 0 && index < static_cast<int>(BuiltInFunctionType::MAX)) {
                       stack.push(std::shared_ptr<Value>(new BuiltInFunctionValue(index)));
                   } else {
                       stack.push(std::shared_ptr<Value>(new BareFunctionValue(function)));
@@ -167,14 +177,7 @@ namespace VM {
               // S => S :: value_of(f.local_vars[i])
               case Operation::LoadLocal: {
                   std::string var_name = safe_index(func.local_vars_, instruction.operand0.value());
-                  if (local_reference_vars->count(var_name) == 0) {
-                      if (local_variables->count(var_name) == 0) {
-                          throw UninitializedVariableException(var_name + " has not been assigned yet, but it has been used");
-                      }
-                      stack.push(local_variables->at(var_name));
-                  } else {
-                      stack.push(local_reference_vars->at(var_name));
-                  }
+                  stack.push(local_variables.at(var_name));
               }
               break;
 
@@ -185,11 +188,7 @@ namespace VM {
               // Stack:     S :: operand 1==> S
               case Operation::StoreLocal: {
                   std::string var_name = safe_index(func.local_vars_, instruction.operand0.value());
-                  if (local_reference_vars->count(var_name) == 0) {
-                      (*local_variables)[var_name] = safe_pop(stack);
-                  } else {
-                      (*local_reference_vars)[var_name] = safe_pop(stack);
-                  }
+                  local_variables[var_name] = safe_pop(stack);
               }
               break;
 
@@ -199,10 +198,10 @@ namespace VM {
               // Stack:     S => global_value_of(f.names[i]) :: S
               case Operation::LoadGlobal: {
                   std::string var_name = safe_index(func.names_, instruction.operand0.value());
-                  if (global_variables->count(var_name) == 0) {
+                  if (global_variables.count(var_name) == 0) {
                       throw UninitializedVariableException(var_name + " has not been assigned yet, but it has been used");
                   }
-                  stack.push(global_variables->at(var_name));
+                  stack.push(global_variables.at(var_name));
               }
               break;
 
@@ -213,7 +212,7 @@ namespace VM {
               // Stack:     S :: operand 1 ==> S
               case Operation::StoreGlobal: {
                   std::string var_name = safe_index(func.names_, instruction.operand0.value());
-                  (*global_variables)[var_name] = safe_pop(stack);
+                  global_variables[var_name] = safe_pop(stack);
               }
               break;
 
@@ -226,14 +225,14 @@ namespace VM {
               case Operation::PushReference:{
                   int index = instruction.operand0.value();
                   if (index < 0) { throw RuntimeException("Index out of bounds."); }
+                  std::string var_name;
                   if (index < func.local_reference_vars_.size()) {
-                      std::string var_name = safe_index(func.local_reference_vars_, index);
-                      stack.push(std::shared_ptr<Value>(new ReferenceValue(var_name, local_reference_vars)));
+                      var_name = safe_index(func.local_reference_vars_, index);
                   } else {
                       index -= func.local_reference_vars_.size();
-                      std::string var_name = safe_index(func.free_vars_, index);
-                      stack.push(std::shared_ptr<Value>(new ReferenceValue(var_name, reference_locations[var_name])));
+                      var_name = safe_index(func.free_vars_, index);
                   }
+                  stack.push(local_reference_vars[var_name]);
               }
               break;
 
@@ -247,10 +246,7 @@ namespace VM {
                   if (!rv) {
                       throw RuntimeException("The top of the stack isn't a ReferenceValue");
                   }
-                  if (rv->location->count(rv->name) == 0) {
-                      throw UninitializedVariableException("A variable was accessed that has not been initialized");
-                  }
-                  stack.push(rv->location->at(rv->name));
+                  stack.push(rv->value);
               }
               break;
 
@@ -266,7 +262,7 @@ namespace VM {
                   if (!rv) {
                       throw RuntimeException("The top of the stack isn't a ReferenceValue");
                   }
-                  (*(rv->location))[rv->name] = value;
+                  rv->value = value;
               }
               break;
 
@@ -410,6 +406,7 @@ namespace VM {
               // Mnemonic:    return
               // Stack::      S :: operand 1 => S
               case Operation::Return: {
+                  pop_frame();
                   return safe_peek(stack);
               }
               break;
@@ -616,6 +613,7 @@ namespace VM {
           #endif
           ip += ip_increment;
       }
+      pop_frame();
       return std::shared_ptr<Value>(new NoneValue());
   }
 }

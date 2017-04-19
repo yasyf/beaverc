@@ -114,8 +114,8 @@ namespace VM {
 
   struct ReferenceValue : public Value {
       std::string name;
-      std::shared_ptr<ValueMap> location;
-      ReferenceValue(std::string n, std::shared_ptr<ValueMap> l) { name = n; location = l; };
+      std::shared_ptr<Value> value;
+      ReferenceValue(std::string n, std::shared_ptr<Value> v) { name = n; value = v; };
       std::string toString() {
         #if DEBUG
           return "ref: " + name;
