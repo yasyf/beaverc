@@ -1,7 +1,8 @@
 #pragma once
 #include <cstdio>
 #include <vector>
-#include "Collectable.fwd.h"
+#include <memory>
+#include "Collectable.h"
 
 using namespace std;
 
@@ -26,6 +27,7 @@ namespace GC {
     }
 
   public:
+    size_t generation = 0;
     size_t bytes_max;
     volatile size_t bytes_current = 0;
 
@@ -85,14 +87,6 @@ namespace GC {
     */
 
     /*
-    This is the method that is called by the follow(...) method of a Collectable object. This
-    is how a Collectable object lets the garbage collector know about other Collectable otjects pointed to
-    by itself.
-    */
-    inline void markSuccessors(Collectable* next) {
-    }
-
-    /*
     The gc method should be called by your VM (or by other methods in CollectedHeap)
     whenever the VM decides it is time to reclaim memory. This method
     triggers the mark and sweep process.
@@ -104,6 +98,27 @@ namespace GC {
     */
     template<typename ITERATOR>
     void gc(ITERATOR begin, ITERATOR end) {
+      generation++;
+
+      for (auto c = begin; c != end; c++)
+        (*c)->mark();
+
+      auto it = allocated.begin();
+      while (it != allocated.end()) {
+        if (it->expired()) {
+          it = allocated.erase(it);
+          continue;
+        }
+
+        auto lit = it->lock();
+        if (lit->marked != generation) {
+          delete lit.get();
+          it = allocated.erase(it);
+          continue;
+        }
+
+        ++it;
+      }
     }
   };
 }

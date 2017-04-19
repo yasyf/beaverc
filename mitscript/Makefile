@@ -55,8 +55,9 @@ astprinter: parser $(PARSE_OBJECTS) $(OBJECTS) pprinter/PrettyPrinter.o $(ASOBJE
 
 VMOBJECTS = $(patsubst %.cpp, %.o, $(wildcard vm/*.cpp))
 COVMOBJECTS = $(patsubst %.cpp, %.o, $(wildcard bccompiler/Compiler*.cpp))
-vm: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(COVMOBJECTS) $(VMOBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(COVMOBJECTS) $(VMOBJECTS)
+GCOBJECTS = $(patsubst %.cpp, %.o, $(wildcard gc/*.cpp))
+vm: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(COVMOBJECTS) $(VMOBJECTS) $(GCOBJECTS)
+	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(COVMOBJECTS) $(VMOBJECTS) $(GCOBJECTS)
 
 parser: parser/lexer.c parser/parser.cpp
 

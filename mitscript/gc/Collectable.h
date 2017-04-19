@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdio>
-#include "CollectedHeap.h"
+#include "CollectedHeap.fwd.h"
 
 namespace GC {
   //Any object that inherits from collectable can be created and tracked by the garbage collector.
@@ -9,10 +9,7 @@ namespace GC {
     Collectable(CollectedHeap& heap) : heap(heap) {}
     virtual ~Collectable() {}
 
-    void mark() {
-      this->marked = true;
-      markChildren();
-    }
+    void mark();
   private:
     //Any private fields you add to the Collectable class will be accessible by the CollectedHeap
     //(since it is declared as friend below). You can think of these fields as the header for the object,
@@ -26,7 +23,7 @@ namespace GC {
     markSuccessors() is the one responsible for checking if the object is marked and marking it.
     */
     CollectedHeap& heap;
-    bool marked = false;
+    size_t marked = 0;
 
     friend CollectedHeap;
 

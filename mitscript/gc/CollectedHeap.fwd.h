@@ -1,5 +1,5 @@
 #pragma once
 
 namespace GC {
-  class Collectable;
+  class CollectedHeap;
 }
