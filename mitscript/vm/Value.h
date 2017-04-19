@@ -194,6 +194,7 @@ namespace VM {
   };
 
   struct AbstractFunctionValue : public Value {
+    AbstractFunctionValue(GC::CollectedHeap& heap) : Value(heap) {}
     std::string toString() { return "FUNCTION"; };
     virtual std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) = 0;
 
@@ -213,7 +214,7 @@ namespace VM {
 
   struct BareFunctionValue : public AbstractFunctionValue {
     std::shared_ptr<BC::Function> value;
-    BareFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : Value(heap), value(value) {};
+    BareFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {};
     std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
       return interpreter.run_function(*value, arguments, std::vector<std::shared_ptr<ReferenceValue>>());
     };
@@ -231,7 +232,7 @@ namespace VM {
   struct ClosureFunctionValue : public AbstractFunctionValue {
     std::shared_ptr<BC::Function> value;
     std::vector<std::shared_ptr<ReferenceValue>> references;
-    ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : Value(heap), value(value) {};
+    ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {};
     void add_reference(std::shared_ptr<ReferenceValue> reference) { references.push_back(reference); };
     std::shared_ptr<Value> call(Interpreter & interpreter, std::vector<std::shared_ptr<Value>> & arguments) {
       return interpreter.run_function(*value, arguments, references);
@@ -256,8 +257,8 @@ namespace VM {
 
   struct BuiltInFunctionValue : public AbstractFunctionValue {
     BuiltInFunctionType type;
-    BuiltInFunctionValue(GC::CollectedHeap& heap, BuiltInFunctionType type) : Value(heap), type(type) {};
-    BuiltInFunctionValue(GC::CollectedHeap& heap, int t) : Value(heap) { type = static_cast<BuiltInFunctionType>(t); };
+    BuiltInFunctionValue(GC::CollectedHeap& heap, BuiltInFunctionType type) : AbstractFunctionValue(heap), type(type) {};
+    BuiltInFunctionValue(GC::CollectedHeap& heap, int t) : AbstractFunctionValue(heap) { type = static_cast<BuiltInFunctionType>(t); };
     virtual int size() {
       #warning TODO(implement size)
       return 0;
