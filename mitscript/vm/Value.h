@@ -175,12 +175,7 @@ namespace VM {
       values[key] = inserted;
     }
 
-    Value* get(std::string key) {
-      if (values.count(key) > 0) {
-        return values.at(key);
-      }
-      return heap.allocate<NoneValue>();
-    }
+    Value* get(std::string key);
 
     std::string toString() {
       std::string result = "{";
@@ -345,4 +340,9 @@ namespace VM {
 
     Value* call(Interpreter & interpreter, std::vector<Value*> & arguments);
   };
+}
+
+namespace GC {
+  template<>
+  VM::NoneValue* CollectedHeap::allocate<VM::NoneValue>();
 }

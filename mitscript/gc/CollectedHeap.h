@@ -21,7 +21,7 @@ namespace GC {
 
   private:
     template<typename T>
-    void _allocate(T* t) {
+    void register_allocation(T* t) {
       allocated.push_back(t);
       increaseSize(sizeof(Collectable*));
     }
@@ -73,7 +73,7 @@ namespace GC {
     template<typename T>
     T* allocate() {
       auto t = new T(*this);
-      _allocate(t);
+      register_allocation(t);
       return t;
     }
 
@@ -84,21 +84,16 @@ namespace GC {
     template<typename T, typename ARG>
     T* allocate(ARG a) {
       auto t = new T(*this, a);
-      _allocate(t);
+      register_allocation(t);
       return t;
     }
 
     template<typename T, typename ARG, typename ARG2>
     T* allocate(ARG a, ARG2 b) {
       auto t = new T(*this, a, b);
-      _allocate(t);
+      register_allocation(t);
       return t;
     }
-
-    /*
-    For performance reasons, you may want to implement specialized allocate methods to allocate particular kinds of objects.
-
-    */
 
     /*
     The gc method should be called by your VM (or by other methods in CollectedHeap)

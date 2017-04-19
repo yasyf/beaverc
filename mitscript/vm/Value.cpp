@@ -2,6 +2,13 @@
 #include "Interpreter.h"
 
 namespace VM {
+  Value* RecordValue::get(std::string key) {
+    if (values.count(key) > 0) {
+      return values.at(key);
+    }
+    return heap.allocate<NoneValue>();
+  }
+
   Value* BareFunctionValue::call(Interpreter & interpreter, std::vector<Value*> & arguments) {
     return interpreter.run_function(*value, arguments, std::vector<ReferenceValue*>());
   }
@@ -50,5 +57,19 @@ namespace VM {
         break;
     }
     throw RuntimeException("Reached end of builtin function execution");
+  }
+}
+
+namespace GC {
+  template<>
+  VM::NoneValue* CollectedHeap::allocate<VM::NoneValue>() {
+    static VM::NoneValue *instance = nullptr;
+
+    if (!instance) {
+      instance = new VM::NoneValue(*this);
+      register_allocation(instance);
+    }
+
+    return instance;
   }
 }
