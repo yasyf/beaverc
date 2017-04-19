@@ -10,20 +10,10 @@
 #include "../gc/CollectedHeap.h"
 #include "../gc/Collectable.h"
 #include "InterpreterException.h"
-#include "Interpreter.h"
+#include "Value.fwd.h"
 
 namespace VM {
-  struct Value;
-  struct NoneValue;
-  struct BooleanValue;
-  struct IntegerValue;
-  struct StringValue;
-  struct RecordValue;
-  struct ReferenceValue;
-  struct AbstractFunctionValue;
-  struct BareFunctionValue;
-  struct ClosureFunctionValue;
-  struct BuiltinFunctionValue;
+  struct Interpreter;
 
   template<typename T>
   T* force_cast(Value* value) {
@@ -280,9 +270,7 @@ namespace VM {
       heap.decreaseSize(size());
     }
 
-    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments) {
-      return interpreter.run_function(*value, arguments, std::vector<ReferenceValue*>());
-    };
+    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments);
 
     virtual size_t _size() {
       return sizeof(BareFunctionValue);
@@ -312,10 +300,7 @@ namespace VM {
       references.push_back(reference);
     };
 
-    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments) {
-      return interpreter.run_function(*value, arguments, references);
-    };
-
+    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments);
     virtual size_t _size() {
       return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
     }
@@ -358,46 +343,6 @@ namespace VM {
 
     virtual void markChildren() {}
 
-    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments) {
-      switch (type) {
-          case BuiltInFunctionType::Print: {
-            if (arguments.size() != 1) {
-              throw RuntimeException("Wrong number of arguments to print");
-            }
-            #if DEBUG
-            std::cout << "===== ";
-            #endif
-            std::cout << arguments[0]->toString() << std::endl;
-            return heap.allocate<NoneValue>();
-          }
-          break;
-
-          case BuiltInFunctionType::Input: {
-            if (arguments.size() != 0) {
-              throw RuntimeException("Wrong number of arguments to input");
-            }
-            std::string input;
-            std::cin >> input;
-            return heap.allocate<StringValue>(input);
-          }
-          break;
-
-          case BuiltInFunctionType::Intcast: {
-            if (arguments.size() != 1) {
-              throw RuntimeException("Wrong number of arguments to intcast");
-            }
-            StringValue* string = force_cast<StringValue>(arguments[0]);
-            try {
-              return heap.allocate<IntegerValue>(std::stoi(string->toString()));
-            } catch (std::invalid_argument& ex) {
-              throw IllegalCastException("string passed to intcast doesn't represent int");
-            } catch (std::out_of_range& ex) {
-              throw RuntimeException("the integer to be casted is too large");
-            }
-          }
-          break;
-      }
-      throw RuntimeException("Reached end of builtin function execution");
-    };
+    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments);
   };
 }
