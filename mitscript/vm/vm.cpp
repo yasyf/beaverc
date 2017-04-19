@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   }
 
   size_t max_memory = std::stoi(argv[2]) * MB_TO_B;
-  size_t current_memory = rss() * KB_TO_B;
+  size_t current_memory = rss();
   size_t usable_memory = (max_memory > current_memory) ? max_memory - current_memory : 0;
 
   #ifdef DEBUG
