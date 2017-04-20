@@ -348,4 +348,7 @@ namespace GC {
 
   template<>
   VM::BooleanValue* CollectedHeap::allocate<VM::BooleanValue>(bool value);
+
+  template<>
+  VM::IntegerValue* CollectedHeap::allocate<VM::IntegerValue>(int value);
 }

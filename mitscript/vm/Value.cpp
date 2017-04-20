@@ -1,5 +1,8 @@
 #include "Value.h"
 #include "Interpreter.h"
+#include <list>
+
+#define LRU_SIZE 2
 
 namespace VM {
   Value* RecordValue::get(std::string key) {
@@ -82,5 +85,32 @@ namespace GC {
         falseInstance = new VM::BooleanValue(*this, false);
       return falseInstance;
     }
+  }
+
+  template<>
+  VM::IntegerValue* CollectedHeap::allocate<VM::IntegerValue>(int value) {
+    static std::unordered_map<int, std::list<VM::IntegerValue*>::iterator> nodes;
+    static std::list<VM::IntegerValue*> values;
+
+    if (nodes.count(value)) {
+      auto it = nodes[value];
+      VM::IntegerValue* val = *it;
+      values.erase(it);
+      values.push_front(val);
+      nodes[value] = values.begin();
+      return val;
+    }
+
+    if (values.size() >= LRU_SIZE) {
+      VM::IntegerValue* old = values.back();
+      values.pop_back();
+      nodes.erase(old->value);
+      register_allocation(old);
+    }
+
+    VM::IntegerValue* val = new VM::IntegerValue(*this, value);
+    values.push_front(val);
+    nodes[value] = values.begin();
+    return val;
   }
 }
