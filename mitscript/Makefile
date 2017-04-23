@@ -11,18 +11,17 @@ LEX = flex
 YACC = bison
 
 CFLAGS = -std=c++1y
-CXXFLAGS = -std=c++1y
-LDFLAGS =
+CXXFLAGS = -std=c++1y -I../x64asm
+LDFLAGS = -lstdc++ -L../x64asm/lib
+LIBS = -lx64asm
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
     CFLAGS += -DDEBUG -g -O0
     CXXFLAGS += -DDEBUG -g -O0
-    LDFLAGS += -DDEBUG -g -O0
 else
     CFLAGS += -DNDEBUG -O2
     CXXFLAGS += -DNDEBUG -O2
-    LDFLAGS += -DNDEBUG -O2
 endif
 
 CPPSOURCES = $(wildcard *.cpp)
@@ -38,26 +37,30 @@ default: vm bccompiler interpreter pprinter
 
 BIOBJECTS = $(patsubst %.cpp, %.o, $(wildcard interpreter/*.cpp))
 interpreter: parser $(PARSE_OBJECTS) $(OBJECTS) $(BIOBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(OBJECTS) $(BIOBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(OBJECTS) $(BIOBJECTS) -o bin/$@
 
 COOBJECTS = $(patsubst %.cpp, %.o, $(wildcard bccompiler/*.cpp))
 bccompiler: parser $(PARSE_OBJECTS) $(OBJECTS) $(COOBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(OBJECTS) $(COOBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(OBJECTS) $(COOBJECTS) -o bin/$@
 
 PPOBJECTS = $(patsubst %.cpp, %.o, $(wildcard pprinter/*.cpp))
 pprinter: parser $(PARSE_OBJECTS) $(OBJECTS) $(PPOBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(OBJECTS) $(PPOBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(OBJECTS) $(PPOBJECTS) -o bin/$@
 
 ASOBJECTS = $(patsubst %.cpp, %.o, $(wildcard astprinter/*.cpp))
 PPASOBJECTS = pprinter/PrettyPrinter.o
 astprinter: parser $(PARSE_OBJECTS) $(OBJECTS) pprinter/PrettyPrinter.o $(ASOBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(OBJECTS) $(PPASOBJECTS) $(ASOBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(OBJECTS) $(PPASOBJECTS) $(ASOBJECTS) -o bin/$@
 
 VMOBJECTS = $(patsubst %.cpp, %.o, $(wildcard vm/*.cpp))
 COVMOBJECTS = $(patsubst %.cpp, %.o, $(wildcard bccompiler/Compiler*.cpp))
 GCOBJECTS = $(patsubst %.cpp, %.o, $(wildcard gc/*.cpp))
 vm: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(COVMOBJECTS) $(VMOBJECTS) $(GCOBJECTS)
-	$(CXX) $(LDFLAGS) -o bin/$@ $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(COVMOBJECTS) $(VMOBJECTS) $(GCOBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(COVMOBJECTS) $(VMOBJECTS) $(GCOBJECTS) -o bin/$@
+
+CGOBJECTS = $(patsubst %.cpp, %.o, $(wildcard codegen/*.cpp))
+codegen: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(CGOBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(CGOBJECTS) $(LIBS) -o bin/$@
 
 parser: parser/lexer.c parser/parser.cpp
 
