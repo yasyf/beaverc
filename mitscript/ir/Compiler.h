@@ -28,7 +28,7 @@ namespace IR {
             instructions.push_back(new StoreReg<Const>{nextReg(), Const{0}});
             break;
           case BC::Operation::LoadGlobal:
-            instructions.push_back(new StoreReg<Var>{nextReg(), Var{func.names_[instruction.operand0.value()]}});
+            instructions.push_back(new StoreReg<Glob>{nextReg(), Glob{func.names_[instruction.operand0.value()]}});
             break;
           case BC::Operation::LoadLocal:
             instructions.push_back(new StoreReg<Var>{nextReg(), Var{func.local_vars_[instruction.operand0.value()]}});
@@ -44,7 +44,7 @@ namespace IR {
             instructions.push_back(new StoreVar<Reg>{Var{func.local_vars_[instruction.operand0.value()]}, lastReg()});
             break;
           case BC::Operation::StoreGlobal:
-            instructions.push_back(new StoreVar<Reg>{Var{func.names_[instruction.operand0.value()]}, lastReg()});
+            instructions.push_back(new StoreGlob<Reg>{Glob{func.names_[instruction.operand0.value()]}, lastReg()});
             break;
           case BC::Operation::Return:
             instructions.push_back(new Return{lastReg()});

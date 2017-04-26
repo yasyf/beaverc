@@ -23,6 +23,13 @@ namespace IR {
     virtual string toString() { return "%" + name; }
   };
 
+  struct Glob : Operand {
+    string name;
+
+    Glob(string name) : name(name) {}
+    virtual string toString() { return "%%" + name; }
+  };
+
   struct Const : Operand {
     int64_t val;
 
@@ -49,6 +56,7 @@ namespace IR {
     AllocVar,
     StoreVar,
     StoreReg,
+    StoreGlob,
     Add,
     Return,
   };
@@ -74,6 +82,16 @@ namespace IR {
 
     StoreVar(Var dest, S src) : dest(dest), src(src) {}
     virtual Operation op() { return Operation::StoreVar; }
+    virtual string toString() { return dest.toString() + " = " + src.toString(); }
+  };
+
+  template<typename S>
+  struct StoreGlob : Instruction {
+    Glob dest;
+    S src;
+
+    StoreGlob(Glob dest, S src) : dest(dest), src(src) {}
+    virtual Operation op() { return Operation::StoreGlob; }
     virtual string toString() { return dest.toString() + " = " + src.toString(); }
   };
 
