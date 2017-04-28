@@ -1,7 +1,11 @@
 #pragma once
 #include "../bccompiler/Instructions.h"
 #include "Instructions.h"
+#include <algorithm>
+#include <vector>
 #include <stack>
+
+using namespace std;
 
 namespace IR {
   class Compiler {
@@ -30,9 +34,18 @@ namespace IR {
       for (auto instruction : func.instructions) {
         switch(instruction.operation) {
           case BC::Operation::LoadFunc:
-            // TODO: compile and store func, get pointer
-            instructions.push_back(new AssignTemp<Const>{nextTemp(), Const{0}});
+            instructions.push_back(new AssignTemp<Function>{nextTemp(), Function{(size_t)instruction.operand0.value()}});
             break;
+          case BC::Operation::Call: {
+            size_t arg_count = instruction.operand0.value();
+            Temp closure = popTemp();
+            vector<Temp> args;
+            for (size_t i = 0; i < arg_count; ++i)
+              args.push_back(popTemp());
+            reverse(args.begin(), args.end());
+            instructions.push_back(new Call{closure, args});
+            break;
+          }
           case BC::Operation::LoadGlobal:
             instructions.push_back(new AssignTemp<Glob>{nextTemp(), Glob{func.names_[instruction.operand0.value()]}});
             break;

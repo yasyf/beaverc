@@ -1,18 +1,20 @@
 #pragma once
 
 #include "../bccompiler/Types.h"
+#include <vector>
 
 using namespace std;
 
 namespace IR {
+  struct Operand {
+    virtual string toString() = 0;
+  };
+
   struct Label {
     string name;
 
     Label(string name) : name(name) {}
-  };
-
-  struct Operand {
-    virtual string toString() = 0;
+    virtual string toString() { return name; }
   };
 
   struct Temp : Operand {
@@ -37,6 +39,14 @@ namespace IR {
     Glob(string name) : name(name) {}
     virtual string toString() { return "%%" + name; }
   };
+
+  struct Function : Operand {
+    size_t num;
+
+    Function(size_t num) : num(num) {}
+    virtual string toString() { return "f" + to_string(num); }
+  };
+
 
   struct Const : Operand {
     int64_t val;
@@ -126,11 +136,12 @@ namespace IR {
   };
 
   struct Call : Instruction {
-    Label label;
+    Temp closure;
+    vector<Temp> args;
 
-    Call(Label label) : label(label) {}
+    Call(Temp closure, vector<Temp> args) : closure(closure), args(args) {}
     virtual Operation op() { return Operation::Call; }
-    virtual string toString() { return "call " + label.name; }
+    virtual string toString() { return "call " + closure.toString(); }
   };
 
   struct Return : Instruction {
@@ -146,7 +157,7 @@ namespace IR {
 
     OutputLabel(Label label) : label(label) {}
     virtual Operation op() { return Operation::OutputLabel; }
-    virtual string toString() { return label.name + ":"; }
+    virtual string toString() { return label.toString() + ":"; }
   };
 
   typedef vector<Instruction*> InstructionList;
