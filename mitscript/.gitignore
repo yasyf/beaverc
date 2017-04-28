@@ -7,3 +7,4 @@ bcparser/*.cpp
 bcparser/*.h
 .gdb_history
 bin/
+._*
