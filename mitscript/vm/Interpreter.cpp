@@ -278,7 +278,7 @@ namespace VM {
               //                                                           :  f.free_vars[i - f.local_reference_vars.size()]
               case Operation::PushReference:{
                   int index = instruction.operand0.value();
-                  stack.push(local_reference_vars[getVarFromRefIndex(func, index)]);
+                  stack.push(Value::makePointer(local_reference_vars[getVarFromRefIndex(func, index)]));
               }
               break;
 
