@@ -1,3 +1,3 @@
 Rect(5, 5)
-{x:5 y:5 a:4 b:1 print:FUNCTION }
+{print:FUNCTION x:5 y:5 a:4 b:1 }
 True

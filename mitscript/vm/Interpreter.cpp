@@ -293,11 +293,16 @@ namespace VM {
               // Mnemonic:  load_ref
               // Stack:     S :: operand 1 => S :: value_of(operand 1)
               case Operation::LoadReference: {
-                  ReferenceValue* rv = dynamic_cast<ReferenceValue*>(safe_pop(stack));
-                  if (!rv) {
-                      throw RuntimeException("The top of the stack isn't a ReferenceValue");
+                  int index = instruction.operand0.value();
+                  if (index < 0) { throw RuntimeException("Index out of bounds."); }
+                  std::string var_name;
+                  if (index < func.local_reference_vars_.size()) {
+                      var_name = safe_index(func.local_reference_vars_, index);
+                  } else {
+                      index -= func.local_reference_vars_.size();
+                      var_name = safe_index(func.free_vars_, index);
                   }
-                  stack.push(rv->value);
+                  stack.push(local_reference_vars[var_name]->value);
               }
               break;
 
@@ -309,11 +314,16 @@ namespace VM {
               // Stack:     S :: operand 2 :: operand 1 => S
               case Operation::StoreReference: {
                   Value* value = safe_pop(stack);
-                  ReferenceValue* rv = dynamic_cast<ReferenceValue*>(safe_pop(stack));
-                  if (!rv) {
-                      throw RuntimeException("The top of the stack isn't a ReferenceValue");
+                  int index = instruction.operand0.value();
+                  if (index < 0) { throw RuntimeException("Index out of bounds."); }
+                  std::string var_name;
+                  if (index < func.local_reference_vars_.size()) {
+                      var_name = safe_index(func.local_reference_vars_, index);
+                  } else {
+                      index -= func.local_reference_vars_.size();
+                      var_name = safe_index(func.free_vars_, index);
                   }
-                  rv->value = value;
+                  local_reference_vars[var_name]->value = value;
               }
               break;
 
@@ -404,12 +414,9 @@ namespace VM {
                   if (!function) {
                       throw RuntimeException("Top of stack wasn't a bare function");
                   }
-                  IntegerValue* num_vars = dynamic_cast<IntegerValue*>(safe_pop(stack));
-                  if (!num_vars) {
-                      throw RuntimeException("Number of variables wasn't an integer");
-                  }
+                  int num_vars = instruction.operand0.value();
                   ClosureFunctionValue* closure = heap.allocate<ClosureFunctionValue>(function->value);
-                  for (int i = 0; i < num_vars->value; i++) {
+                  for (int i = 0; i < num_vars; i++) {
                       ReferenceValue* reference_value = dynamic_cast<ReferenceValue*>(safe_pop(stack));
                       if (!reference_value) {
                           throw RuntimeException("Error creating closure - value on stack wasn't a reference value");
@@ -432,12 +439,9 @@ namespace VM {
                   if (!function) {
                       throw IllegalCastException(value->toString());
                   }
-                  IntegerValue* num_args = instruction.operand0.value();
-                  if (!num_args) {
-                      throw RuntimeException("Number of arguments wasn't an integer");
-                  }
+                  int num_args = instruction.operand0.value();
                   std::vector<Value*> arguments;
-                  for (int i = 0; i < num_args->value; i++) {
+                  for (int i = 0; i < num_args; i++) {
                       Value* value = safe_pop(stack);
                       ReferenceValue* reference_value = dynamic_cast<ReferenceValue*>(value);
                       if (reference_value) {
@@ -645,4 +649,26 @@ namespace VM {
 
               // Description: pops and discards the top of the stack
               // Operand 0: N/A
-              // Operand 1: a
+              // Operand 1: a value
+              // Mnemonic:  swap      
+              // Stack:     S :: operand 1 => S       
+              case Operation::Pop:        
+                  safe_pop(stack);        
+              break;      
+      
+              default:        
+                  throw RuntimeException("Found an unknown opcode.");     
+              break;      
+          };      
+          potentially_garbage_collect();      
+          #if DEBUG       
+          std::cout << "Stack:" << std::endl;     
+          print_stack(stack);     
+          std::cout << "----------" << std::endl;     
+          #endif      
+          ip += ip_increment;     
+      }       
+      pop_frame();        
+      return heap.allocate<NoneValue>();      
+  }       
+}

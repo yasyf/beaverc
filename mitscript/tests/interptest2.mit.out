@@ -1,4 +1,4 @@
-{y:foo x:bar }
+{x:bar y:foo }
 -1 foobar -2
 0 foobar -1
 1 foobar 0
