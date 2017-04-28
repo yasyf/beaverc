@@ -31,16 +31,6 @@ check_compile() {
   fi
 }
 
-check_interpret() {
-  output=$(diff "$1.out" <(./bin/interpreter "$1"))
-  if [[ -z $output ]]; then
-    good "$1" "interpret"
-  else
-    bad "$1" "interpret"
-    echo "$output"
-  fi
-}
-
 check_interpret_vm_s() {
   output=$(diff "$1.out" <(./bin/vm -mem 0 -s "$1"))
   if [[ -z $output ]]; then
@@ -69,7 +59,7 @@ check_bad_parse() {
   check_parse $1 1
 }
 
-make pprinter bccompiler interpreter vm
+make pprinter bccompiler vm
 
 for f in tests/good*.mit
 do
@@ -88,13 +78,11 @@ done
 
 for f in tests/interptest*.mit
 do
-  check_interpret "$f"
   check_interpret_vm_s "$f"
 done
 
 for f in tests/bytecodetest*.mit
 do
-  check_interpret "$f"
   check_compile "$f"
   check_interpret_vm_s "$f"
   check_interpret_vm_b "$f"
@@ -102,6 +90,5 @@ done
 
 for f in tests/staff/test*.mit
 do
-  check_interpret "$f"
   check_interpret_vm_s "$f"
 done
