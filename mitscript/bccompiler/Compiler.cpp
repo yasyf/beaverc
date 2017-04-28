@@ -349,10 +349,8 @@ namespace BC {
     // Push function
     output(Operation::LoadFunc, current().functions_.size() - 1);
 
-    // Alloc closure if needed
-    if (num_refs > 0) {
-      output(Operation::AllocClosure);
-    }
+    // Alloc closure
+    output(Operation::AllocClosure);
   }
 
   void Compiler::visit(Record& rec) {

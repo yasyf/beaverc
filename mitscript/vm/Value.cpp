@@ -13,7 +13,7 @@ namespace VM {
   }
 
   Value* BareFunctionValue::call(Interpreter & interpreter, std::vector<Value*> & arguments) {
-    return interpreter.run_function(*value, arguments, std::vector<ReferenceValue*>());
+    throw RuntimeException("call on a BareFunctionValue");
   }
 
   Value* ClosureFunctionValue::call(Interpreter & interpreter, std::vector<Value*> & arguments) {
