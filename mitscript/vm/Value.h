@@ -40,52 +40,54 @@ namespace VM {
   struct Value {
     uint64_t value;
 
+    Value() : value(_NONE_TAG) {};
+
     Value(uint64_t value) : value(value) {};
 
 
-    bool isInteger() {
+    bool isInteger() const {
       return __IS_INTEGER_VALUE(value);
     }
 
-    bool isString() {
+    bool isString() const {
       return __IS_STRING_VALUE(value);
     }
 
-    bool isPointer() {
+    bool isPointer() const {
       return __IS_POINTER_VALUE(value);
     }
 
 
-    bool getBoolean() {
+    bool getBoolean() const {
       if (unlikely(!__IS_BOOLEAN_VALUE(value))) {
         throw IllegalCastException("Value is not a boolean");
       }
       return static_cast<bool>(value & ~_VALUE_MASK);
     };
 
-    int64_t getInteger() {
+    int64_t getInteger() const {
       if (unlikely(!__IS_INTEGER_VALUE(value))) {
         throw IllegalCastException("Value is not a integer");
       }
       return static_cast<int64_t>(value & ~_VALUE_MASK) / 8;
-    }
+    };
 
-    PointerValue* getPointerValue() {
+    PointerValue* getPointerValue() const {
       if (unlikely(!__IS_POINTER_VALUE(value))) {
         throw IllegalCastException("Can't cast this value to a pointer type.");
       }
       return reinterpret_cast<PointerValue*>(value & ~_POINTER_MASK);
-    }
+    };
 
     template<typename T>
-    T* getPointer<T>() {
+    T* getPointer() const {
       if (T* t = dynamic_cast<T*>(getPointerValue())) {
         return t;
       }
       throw IllegalCastException("Can't cast the pointer to the needed type");
     }
 
-    std::string toString() {
+    std::string toString() const {
       switch (value & _VALUE_MASK) {
         case _INTEGER_TAG: {
           return std::to_string(getInteger());
@@ -172,7 +174,9 @@ namespace VM {
       heap.decreaseSize(size());
     }
 
-    Value get(std::string key);
+    Value get(std::string key) {
+      return values[key];
+    }
 
     void insert(std::string key, Value inserted) {
       if (values.count(key) == 0)
@@ -210,7 +214,7 @@ namespace VM {
     std::string name;
     Value value;
 
-    ReferenceValue(GC::CollectedHeap& heap, std::string n, Value v) : Value(heap), name(n), value(v) {
+    ReferenceValue(GC::CollectedHeap& heap, std::string n, Value v) : PointerValue(heap), name(n), value(v) {
       heap.increaseSize(size());
     }
 
@@ -241,7 +245,7 @@ namespace VM {
   };
 
   struct AbstractFunctionValue : public PointerValue {
-    AbstractFunctionValue(GC::CollectedHeap& heap) : Value(heap) {}
+    AbstractFunctionValue(GC::CollectedHeap& heap) : PointerValue(heap) {}
 
     std::string toString() { return "FUNCTION"; };
     virtual Value call(Interpreter & interpreter, std::vector<Value> & arguments) = 0;

@@ -14,7 +14,7 @@ namespace VM {
   int Interpreter::interpret() {
     Value val = run_function(*main_function, std::vector<Value>(), std::vector<ReferenceValue*>());
     if (val.isInteger()) {
-      return val.get<int64_t>();
+      return val.getInteger();
     } else {
       return -1;
     }
@@ -51,10 +51,12 @@ namespace VM {
       #ifdef DEBUG
       std::cout << "$$$$$ Building roots..." << std::endl;
       #endif
-      std::vector<Value> roots;
+      std::vector<PointerValue*> roots;
       for (auto local_variables : local_variable_stack) {
         for (auto keyvalue : *local_variables) {
-          roots.push_back(keyvalue.second);
+          if (keyvalue.second.isPointer()) {
+            roots.push_back(keyvalue.second.getPointerValue());
+          }
         }
       }
       for (auto local_reference_variables : local_reference_variable_stack) {
@@ -66,7 +68,9 @@ namespace VM {
         std::vector<Value> stack_holder;
         while (!local_stack->empty()) {
             auto v = local_stack->top();
-            roots.push_back(v);
+            if (v.isPointer()) {
+              roots.push_back(v.getPointerValue());
+            }
             stack_holder.insert(stack_holder.begin(), v);
             local_stack->pop();
         }
@@ -75,7 +79,9 @@ namespace VM {
         }
       }
       for (auto keyvalue : global_variables) {
-        roots.push_back(keyvalue.second);
+        if (keyvalue.second.isPointer()) {
+          roots.push_back(keyvalue.second.getPointerValue());
+        }
       }
       #ifdef DEBUG
       std::cout << "$$$$$ Collecting garbage..." << std::endl;
@@ -130,7 +136,7 @@ namespace VM {
       std::vector<Value> stack_holder;
       while (!stack.empty()) {
           auto v = stack.top();
-          std::cout << v->toString() << std::endl;
+          std::cout << v.toString() << std::endl;
           stack_holder.insert(stack_holder.begin(), v);
           stack.pop();
       }
@@ -392,8 +398,7 @@ namespace VM {
                   int32_t num_args = instruction.operand0.value();
                   std::vector<Value> arguments;
                   for (int i = 0; i < num_args; i++) {
-                      ReferenceValue* reference_value = safe_pop(stack).getPointer<ReferenceValue>();
-                      arguments.push_back(Value::makePointer(value));
+                      arguments.push_back(safe_pop(stack));
                   }
                   std::reverse(arguments.begin(), arguments.end());
                   stack.push(function->call(*this, arguments));
@@ -425,7 +430,7 @@ namespace VM {
                   if (operand_1.isString() || operand_2.isString()) {
                       stack.push(Value::makeString(heap.allocate<StringValue>(operand_2.toString() + operand_1.toString())));
                   } else if (operand_1.isInteger() && operand_2.isInteger()) {
-                      stack.push(Value::makeInteger(operand_1.get<int64_t>() + operand_2.get<int64_t>()));
+                      stack.push(Value::makeInteger(operand_1.getInteger() + operand_2.getInteger()));
                   } else {
                       throw IllegalCastException("Can't perform addition");
                   }
@@ -449,38 +454,38 @@ namespace VM {
               case Operation::Gt: {
                   Value operand_1 = safe_pop(stack);
                   Value operand_2 = safe_pop(stack);
-                  stack.push(Value::makeBoolean(operand_2.get<int64_t>() > operand_1.get<int64_t>()));
+                  stack.push(Value::makeBoolean(operand_2.getInteger() > operand_1.getInteger()));
               }
               break;
 
               case Operation::Geq: {
                   Value operand_1 = safe_pop(stack);
                   Value operand_2 = safe_pop(stack);
-                  stack.push(Value::makeBoolean(operand_2.get<int64_t>() >= operand_1.get<int64_t>()));
+                  stack.push(Value::makeBoolean(operand_2.getInteger() >= operand_1.getInteger()));
               }
               break;
 
               case Operation::Sub: {
                   Value operand_1 = safe_pop(stack);
                   Value operand_2 = safe_pop(stack);
-                  stack.push(Value::makeInteger(operand_2.get<int64_t>() - operand_1.get<int64_t>()));
+                  stack.push(Value::makeInteger(operand_2.getInteger() - operand_1.getInteger()));
               }
               break;
 
               case Operation::Mul: {
                   Value operand_1 = safe_pop(stack);
                   Value operand_2 = safe_pop(stack);
-                  stack.push(Value::makeInteger(operand_2.get<int64_t>() * operand_1.get<int64_t>()));
+                  stack.push(Value::makeInteger(operand_2.getInteger() * operand_1.getInteger()));
               }
               break;
 
               case Operation::Div: {
                   Value operand_1 = safe_pop(stack);
                   Value operand_2 = safe_pop(stack);
-                  if (operand_1.get<int64_t>() == 0) {
+                  if (operand_1.getInteger() == 0) {
                       throw IllegalArithmeticException("divide by zero");
                   }
-                  stack.push(Value::makeInteger(operand_2.get<int64_t>() / operand_1.get<int64_t>()));
+                  stack.push(Value::makeInteger(operand_2.getInteger() / operand_1.getInteger()));
               }
               break;
 
@@ -490,7 +495,7 @@ namespace VM {
               // Mnemonic:  neg
               // Stack:     S :: operand 1 => S:: - operand 1
               case Operation::Neg: {
-                  stack.push(Value::makeInteger(-safe_pop(stack).get<int64_t>());
+                  stack.push(Value::makeInteger(-safe_pop(stack).getInteger()));
               }
               break;
 
@@ -517,14 +522,14 @@ namespace VM {
               case Operation::And: {
                   Value operand_1 = safe_pop(stack);
                   Value operand_2 = safe_pop(stack);
-                  stack.push(Value::makeBoolean(operand_2.get<bool>() && operand_1.get<bool>()));
+                  stack.push(Value::makeBoolean(operand_2.getBoolean() && operand_1.getBoolean()));
               }
               break;
 
               case Operation::Or: {
                   Value operand_1 = safe_pop(stack);
                   Value operand_2 = safe_pop(stack);
-                  stack.push(Value::makeBoolean(operand_2.get<bool>() || operand_1.get<bool>()));
+                  stack.push(Value::makeBoolean(operand_2.getBoolean() || operand_1.getBoolean()));
               }
               break;
 
@@ -534,7 +539,7 @@ namespace VM {
               // Mnemonic:  and/or
               // Stack:     S :: operand 1 => S:: op(operand 1)
               case Operation::Not: {
-                  stack.push(Value::makeInteger(!safe_pop(stack).get<bool>());
+                  stack.push(Value::makeBoolean(!safe_pop(stack).getBoolean()));
               }
               break;
 
@@ -554,7 +559,7 @@ namespace VM {
               // Mnemonic:  if i
               // Stack:     S :: operand 1 => S
               case Operation::If: {
-                  if (safe_pop(stack).get<bool>()) {
+                  if (safe_pop(stack).getBoolean()) {
                       ip_increment = instruction.operand0.value();
                   }
               }
@@ -577,8 +582,8 @@ namespace VM {
               // Mnemonic:  swap
               // Stack:     S :: operand 2 :: operand 1 => S :: operand 1 :: operand 2
               case Operation::Swap: {
-                  Value* operand_1 = safe_pop(stack);
-                  Value* operand_2 = safe_pop(stack);
+                  Value operand_1 = safe_pop(stack);
+                  Value operand_2 = safe_pop(stack);
                   stack.push(operand_1);
                   stack.push(operand_2);
               }

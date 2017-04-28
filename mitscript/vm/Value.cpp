@@ -5,12 +5,6 @@
 #define LRU_SIZE 2
 
 namespace VM {
-  Value RecordValue::get(std::string key) {
-    if (values.count(key) > 0) {
-      return values.at(key);
-    }
-    return Value::makeNone();
-  }
 
   Value BareFunctionValue::call(Interpreter & interpreter, std::vector<Value> & arguments) {
     throw RuntimeException("call on a BareFunctionValue");
@@ -29,7 +23,7 @@ namespace VM {
           #if DEBUG
           std::cout << "===== ";
           #endif
-          std::cout << arguments[0]->toString() << std::endl;
+          std::cout << arguments[0].toString() << std::endl;
           return Value::makeNone();
         }
         break;
@@ -48,7 +42,7 @@ namespace VM {
           if (arguments.size() != 1) {
             throw RuntimeException("Wrong number of arguments to intcast");
           }
-          StringValue* string = arguments[0].getPointer<StringValue*>();
+          StringValue* string = arguments[0].getPointer<StringValue>();
           try {
             return Value::makeInteger(std::stoi(string->toString()));
           } catch (std::invalid_argument& ex) {
