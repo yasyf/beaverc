@@ -88,7 +88,7 @@ function
 					]
 				}
 			],
-			constants = [1, "STRING2", None],
+			constants = [1, "STRING2", 0, None],
 			parameter_count = 1,
 			local_vars = [x, f2, print],
 			local_ref_vars = [print],
@@ -106,16 +106,18 @@ function
 				load_local	1
 				call
 				pop
+				load_const	2
 				load_func	1
+				alloc_closure
 				push_ref	0
 				swap
 				store_ref
-				load_const	2
+				load_const	3
 				return
 			]
 		}
 	],
-	constants = ["STRING2", 1, 0],
+	constants = [0, "STRING2", 1],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
@@ -129,14 +131,16 @@ function
 		store_global	1
 		load_func	2
 		store_global	2
-		load_func	3
-		store_global	3
 		load_const	0
+		load_func	3
+		alloc_closure
+		store_global	3
 		load_const	1
+		load_const	2
 		load_global	3
 		call
 		pop
-		load_const	2
+		load_const	0
 		return
 	]
 }

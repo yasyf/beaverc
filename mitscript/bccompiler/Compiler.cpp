@@ -343,8 +343,8 @@ namespace BC {
 
     // Push num_refs
     size_t num_refs = localRef0sScanner.refs.size() + freeRef0sScanner.refs.size();
-    if (num_refs > 0)
-      loadConst(num_refs);
+
+    loadConst(num_refs);
 
     // Push function
     output(Operation::LoadFunc, current().functions_.size() - 1);
