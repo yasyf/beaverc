@@ -217,9 +217,8 @@ namespace BC {
     for (auto a : argInsts)
       drain(a);
 
-    loadConst(call.arguments.size());
     transpile(call.target);
-    output(Operation::Call);
+    output(Operation::Call, call.arguments.size());
   }
 
   void Compiler::visit(CallStatement& cs) {
@@ -341,16 +340,12 @@ namespace BC {
       output(Operation::PushReference, num_local_ref_vars + i);
     }
 
-    // Push num_refs
-    size_t num_refs = localRef0sScanner.refs.size() + freeRef0sScanner.refs.size();
-
-    loadConst(num_refs);
-
     // Push function
     output(Operation::LoadFunc, current().functions_.size() - 1);
 
     // Alloc closure
-    output(Operation::AllocClosure);
+    size_t num_refs = localRef0sScanner.refs.size() + freeRef0sScanner.refs.size();
+    output(Operation::AllocClosure, num_refs);
   }
 
   void Compiler::visit(Record& rec) {

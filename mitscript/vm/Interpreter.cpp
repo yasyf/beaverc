@@ -393,10 +393,9 @@ namespace VM {
               break;
 
               // Description: allocate a closure
-              // Operand 0:       N/A
+              // Operand 0:       the number of free variable references passed to the closure
               // Operand 1:       function
-              // Operand 2:       the number of free variable references passed to the closure
-              // Operand 3:  - N: references to the function's free variables
+              // Operand 2:  - N: references to the function's free variables
               // Mnemonic:   alloc_closure
               // Stack:      S :: operand n :: ... :: operand 3 :: operand 2 :: operand 1 => S :: closure
               case Operation::AllocClosure: {
@@ -404,12 +403,9 @@ namespace VM {
                   if (!function) {
                       throw RuntimeException("Top of stack wasn't a bare function");
                   }
-                  IntegerValue* num_vars = dynamic_cast<IntegerValue*>(safe_pop(stack));
-                  if (!num_vars) {
-                      throw RuntimeException("Number of variables wasn't an integer");
-                  }
+                  int32_t num_vars = instruction.operand0.value();
                   ClosureFunctionValue* closure = heap.allocate<ClosureFunctionValue>(function->value);
-                  for (int i = 0; i < num_vars->value; i++) {
+                  for (int i = 0; i < num_vars; i++) {
                       ReferenceValue* reference_value = dynamic_cast<ReferenceValue*>(safe_pop(stack));
                       if (!reference_value) {
                           throw RuntimeException("Error creating closure - value on stack wasn't a reference value");
@@ -421,10 +417,9 @@ namespace VM {
               break;
 
               // Description: call a closure
-              // Operand 0:     N/A
+              // Operand 0:     number of arguments
               // Operand 1:     closure to call (closure reference)
-              // Operand 2:     number of arguments
-              // Operand 3 - N: argument ((N - 3) - i)
+              // Operand 2 - N: argument ((N - 2) - i)
               // Mnemonic:      call
               // Stack:         S::operand n :: .. :: operand 3 :: operand 2 :: operand 1 => S :: value
               case Operation::Call: {
@@ -433,12 +428,9 @@ namespace VM {
                   if (!function) {
                       throw IllegalCastException(value->toString());
                   }
-                  IntegerValue* num_args = dynamic_cast<IntegerValue*>(safe_pop(stack));
-                  if (!num_args) {
-                      throw RuntimeException("Number of arguments wasn't an integer");
-                  }
+                  int32_t num_args = instruction.operand0.value();
                   std::vector<Value*> arguments;
-                  for (int i = 0; i < num_args->value; i++) {
+                  for (int i = 0; i < num_args; i++) {
                       Value* value = safe_pop(stack);
                       ReferenceValue* reference_value = dynamic_cast<ReferenceValue*>(value);
                       if (reference_value) {

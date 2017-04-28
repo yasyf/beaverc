@@ -104,19 +104,17 @@ namespace BC {
         IndexStore,
 
         // Description: allocate a closure
-        // Operand 0:       N/A
+        // Operand 0:       the number of free variable references passed to the closure
         // Operand 1:       function
-        // Operand 2:       the number of free variable references passed to the closure
-        // Operand 3:  - N: references to the function's free variables
+        // Operand 2:  - N: references to the function's free variables
         // Mnemonic:   alloc_closure
         // Stack:      S :: operand n :: ... :: operand 3 :: operand 2 :: operand 1 => S :: closure
         AllocClosure,
 
         // Description: call a closure
-        // Operand 0:     N/A
+        // Operand 0:     number of arguments
         // Operand 1:     closure to call (closure reference)
-        // Operand 2:     number of arguments
-        // Operand 3 - N: argument ((N - 3) - i)
+        // Operand 2 - N: argument ((N - 2) - i)
         // Mnemonic:      call
         // Stack:         S::operand n :: .. :: operand 3 :: operand 2 :: operand 1 => S :: value
         Call,

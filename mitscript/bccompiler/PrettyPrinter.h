@@ -254,13 +254,15 @@ namespace BC {
             }
             case Operation::AllocClosure:
             {
-                os << "alloc_closure";
+                os << "alloc_closure"
+                    << "\t" << inst.operand0.value();
 
                 break;
             }
             case Operation::Call:
             {
-                os << "call";
+                os << "call"
+                    << "\t" << inst.operand0.value();
 
                 break;
             }

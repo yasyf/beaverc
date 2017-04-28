@@ -71,9 +71,8 @@ function
 		add
 		store_global	5
 		load_global	5
-		load_const	0
 		load_global	0
-		call
+		call	1
 		pop
 		load_const	2
 		return
