@@ -27,10 +27,10 @@ namespace IR {
   struct Ret : Operand {};
 
   struct Var : Operand {
-    string name;
+    size_t num;
 
-    Var(string name) : name(name) {}
-    virtual string toString() { return "%" + name; }
+    Var(size_t num) : num(num) {}
+    virtual string toString() { return "%" + to_string(num); }
   };
 
   struct Glob : Operand {

@@ -37,8 +37,8 @@ namespace IR {
     }
 
     void compile(BC::Function& func) {
-      for (auto it = func.local_vars_.begin() + func.parameter_count_; it != func.local_vars_.end(); ++it) {
-        instructions.push_back(new AllocVar{Var{*it}, sizeof(int64_t)});
+      for (size_t i = func.parameter_count_; i < func.local_vars_.size(); ++i) {
+        instructions.push_back(new AllocVar{Var{i}, sizeof(int64_t)});
       }
 
       for (auto instruction : func.instructions) {
@@ -66,7 +66,7 @@ namespace IR {
             assign(Glob{func.names_[instruction.operand0.value()]});
             break;
           case BC::Operation::LoadLocal:
-            assign(Var{func.local_vars_[instruction.operand0.value()]});
+            assign(Var{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::LoadConst:
             assign(Const{func.constants_[instruction.operand0.value()]});
@@ -75,7 +75,7 @@ namespace IR {
             store(Deref{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::StoreLocal:
-            store(Var{func.local_vars_[instruction.operand0.value()]});
+            store(Var{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::StoreGlobal:
             store(Glob{func.names_[instruction.operand0.value()]});
