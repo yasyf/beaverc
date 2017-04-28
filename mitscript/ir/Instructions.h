@@ -5,16 +5,24 @@
 using namespace std;
 
 namespace IR {
+  struct Label {
+    string name;
+
+    Label(string name) : name(name) {}
+  };
+
   struct Operand {
     virtual string toString() = 0;
   };
 
-  struct Reg : Operand {
+  struct Temp : Operand {
     size_t num;
 
-    Reg(size_t num) : num(num) {}
-    virtual string toString() { return "%" + to_string(num); }
+    Temp(size_t num) : num(num) {}
+    virtual string toString() { return "t" + to_string(num); }
   };
+
+  struct Ret : Operand {};
 
   struct Var : Operand {
     string name;
@@ -53,12 +61,14 @@ namespace IR {
 
   // TODO: Is this necessary?
   enum class Operation {
+    AssignTemp,
     AllocVar,
     StoreVar,
-    StoreReg,
     StoreGlob,
     Add,
+    Call,
     Return,
+    OutputLabel,
   };
 
   struct Instruction {
@@ -96,31 +106,47 @@ namespace IR {
   };
 
   template<typename S>
-  struct StoreReg : Instruction {
-    Reg dest;
+  struct AssignTemp : Instruction {
+    Temp dest;
     S src;
 
-    StoreReg(Reg dest, S src) : dest(dest), src(src) {}
-    virtual Operation op() { return Operation::StoreReg; }
+    AssignTemp(Temp dest, S src) : dest(dest), src(src) {}
+    virtual Operation op() { return Operation::AssignTemp; }
     virtual string toString() { return dest.toString() + " = " + src.toString(); }
   };
 
   struct Add : Instruction {
-    Reg dest;
-    Reg src1;
-    Reg src2;
+    Temp dest;
+    Temp src1;
+    Temp src2;
 
-    Add(Reg dest, Reg src1, Reg src2) : dest(dest), src1(src1), src2(src2) {}
+    Add(Temp dest, Temp src1, Temp src2) : dest(dest), src1(src1), src2(src2) {}
     virtual Operation op() { return Operation::Add; }
     virtual string toString() { return dest.toString() + " = " + src1.toString() + " + " + src2.toString(); }
   };
 
-  struct Return : Instruction {
-    Reg val;
+  struct Call : Instruction {
+    Label label;
 
-    Return(Reg val) : val(val) {}
+    Call(Label label) : label(label) {}
+    virtual Operation op() { return Operation::Call; }
+    virtual string toString() { return "call " + label.name; }
+  };
+
+  struct Return : Instruction {
+    Temp val;
+
+    Return(Temp val) : val(val) {}
     virtual Operation op() { return Operation::Return; }
     virtual string toString() { return "return " + val.toString(); }
+  };
+
+  struct OutputLabel : Instruction {
+    Label label;
+
+    OutputLabel(Label label) : label(label) {}
+    virtual Operation op() { return Operation::OutputLabel; }
+    virtual string toString() { return label.name + ":"; }
   };
 
   typedef vector<Instruction*> InstructionList;

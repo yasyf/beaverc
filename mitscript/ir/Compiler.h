@@ -1,19 +1,25 @@
 #pragma once
 #include "../bccompiler/Instructions.h"
 #include "Instructions.h"
+#include <stack>
 
 namespace IR {
   class Compiler {
+    stack<Temp> operands;
     shared_ptr<BC::Function> bytecode;
     InstructionList instructions;
-    size_t reg_count = 0;
+    size_t temp_count = 0;
 
-    Reg lastReg(size_t count = 1) {
-      return Reg{reg_count - count};
+    Temp popTemp() {
+      Temp t = operands.top();
+      operands.pop();
+      return t;
     }
 
-    Reg nextReg() {
-      return Reg{reg_count++};
+    Temp nextTemp() {
+      Temp t = Temp{temp_count++};
+      operands.push(t);
+      return t;
     }
 
     void compile(BC::Function& func) {
@@ -25,29 +31,32 @@ namespace IR {
         switch(instruction.operation) {
           case BC::Operation::LoadFunc:
             // TODO: compile and store func, get pointer
-            instructions.push_back(new StoreReg<Const>{nextReg(), Const{0}});
+            instructions.push_back(new AssignTemp<Const>{nextTemp(), Const{0}});
             break;
           case BC::Operation::LoadGlobal:
-            instructions.push_back(new StoreReg<Glob>{nextReg(), Glob{func.names_[instruction.operand0.value()]}});
+            instructions.push_back(new AssignTemp<Glob>{nextTemp(), Glob{func.names_[instruction.operand0.value()]}});
             break;
           case BC::Operation::LoadLocal:
-            instructions.push_back(new StoreReg<Var>{nextReg(), Var{func.local_vars_[instruction.operand0.value()]}});
+            instructions.push_back(new AssignTemp<Var>{nextTemp(), Var{func.local_vars_[instruction.operand0.value()]}});
             break;
           case BC::Operation::LoadConst:
-            instructions.push_back(new StoreReg<Const>{nextReg(), Const{func.constants_[instruction.operand0.value()]}});
+            instructions.push_back(new AssignTemp<Const>{nextTemp(), Const{func.constants_[instruction.operand0.value()]}});
             break;
-          case BC::Operation::Add:
-            // this will probably break on more complex stuff that uses intermediary regs
-            instructions.push_back(new Add{nextReg(), lastReg(2), lastReg()});
+          case BC::Operation::Add: {
+            // TODO: handle non-ints
+            Temp arg1 = popTemp();
+            Temp arg2 = popTemp();
+            instructions.push_back(new Add{nextTemp(), arg1, arg2});
             break;
+          }
           case BC::Operation::StoreLocal:
-            instructions.push_back(new StoreVar<Reg>{Var{func.local_vars_[instruction.operand0.value()]}, lastReg()});
+            instructions.push_back(new StoreVar<Temp>{Var{func.local_vars_[instruction.operand0.value()]}, popTemp()});
             break;
           case BC::Operation::StoreGlobal:
-            instructions.push_back(new StoreGlob<Reg>{Glob{func.names_[instruction.operand0.value()]}, lastReg()});
+            instructions.push_back(new StoreGlob<Temp>{Glob{func.names_[instruction.operand0.value()]}, popTemp()});
             break;
           case BC::Operation::Return:
-            instructions.push_back(new Return{lastReg()});
+            instructions.push_back(new Return{popTemp()});
             break;
         }
       }
