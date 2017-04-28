@@ -140,20 +140,17 @@ namespace BC {
       else
         output(Operation::LoadGlobal, *i);
     } else if (auto i = index(current().free_vars_, name.name)) {
-      output(Operation::PushReference, current().local_reference_vars_.size() + *i);
+      size_t index = current().local_reference_vars_.size() + *i;
       if (storing) {
-        output(Operation::Swap);
-        output(Operation::StoreReference);
+        output(Operation::StoreReference, index);
       } else {
-        output(Operation::LoadReference);
+        output(Operation::LoadReference, index);
       }
     } else if (auto i = index(current().local_reference_vars_, name.name)) {
-      output(Operation::PushReference, *i);
       if (storing) {
-        output(Operation::Swap);
-        output(Operation::StoreReference);
+        output(Operation::StoreReference, *i);
       } else {
-        output(Operation::LoadReference);
+        output(Operation::LoadReference, *i);
       }
     } else if (auto i = index(current().local_vars_, name.name)) {
       if (storing)

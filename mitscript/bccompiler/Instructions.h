@@ -53,16 +53,14 @@ namespace BC {
         PushReference,
 
         // Description: loads the value of a reference onto the operand stack
-        // Operand 0: N/A
-        // Operand 1: reference to load from
+        // Operand 0: index of local variable reference
         // Mnemonic:  load_ref
         // Stack:     S :: operand 1 => S :: value_of(operand 1)
         LoadReference,
 
         // Description: loads the value of a reference onto the operand stack
-        // Operand 0: N/A
+        // Operand 0: index of local variable reference
         // Operand 1: value to store
-        // Operand 2: reference to store to
         // Mnemonic:  load_ref
         // Stack:     S :: operand 2 :: operand 1 => S
         StoreReference,

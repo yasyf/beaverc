@@ -47,6 +47,19 @@ namespace IR {
     virtual string toString() { return "f" + to_string(num); }
   };
 
+  struct Ref : Operand {
+    size_t num;
+
+    Ref(size_t num) : num(num) {}
+    virtual string toString() { return "r" + to_string(num); }
+  };
+
+  struct Deref : Operand {
+    size_t num;
+
+    Deref(size_t num) : num(num) {}
+    virtual string toString() { return "*r" + to_string(num); }
+  };
 
   struct Const : Operand {
     int64_t val;
@@ -71,10 +84,9 @@ namespace IR {
 
   // TODO: Is this necessary?
   enum class Operation {
-    AssignTemp,
+    Assign,
+    Store,
     AllocVar,
-    StoreVar,
-    StoreGlob,
     Add,
     Call,
     Return,
@@ -95,33 +107,24 @@ namespace IR {
     virtual string toString() { return var.toString() + " = alloc(" + to_string(size) + ")"; }
   };
 
-  template<typename S>
-  struct StoreVar : Instruction {
-    Var dest;
-    S src;
-
-    StoreVar(Var dest, S src) : dest(dest), src(src) {}
-    virtual Operation op() { return Operation::StoreVar; }
-    virtual string toString() { return dest.toString() + " = " + src.toString(); }
-  };
 
   template<typename S>
-  struct StoreGlob : Instruction {
-    Glob dest;
-    S src;
-
-    StoreGlob(Glob dest, S src) : dest(dest), src(src) {}
-    virtual Operation op() { return Operation::StoreGlob; }
-    virtual string toString() { return dest.toString() + " = " + src.toString(); }
-  };
-
-  template<typename S>
-  struct AssignTemp : Instruction {
+  struct Assign : Instruction {
     Temp dest;
     S src;
 
-    AssignTemp(Temp dest, S src) : dest(dest), src(src) {}
-    virtual Operation op() { return Operation::AssignTemp; }
+    Assign(Temp dest, S src) : dest(dest), src(src) {}
+    virtual Operation op() { return Operation::Assign; }
+    virtual string toString() { return dest.toString() + " = " + src.toString(); }
+  };
+
+  template<typename D>
+  struct Store : Instruction {
+    D dest;
+    Temp src;
+
+    Store(D dest, Temp src) : dest(dest), src(src) {}
+    virtual Operation op() { return Operation::Store; }
     virtual string toString() { return dest.toString() + " = " + src.toString(); }
   };
 

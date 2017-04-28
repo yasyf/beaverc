@@ -210,13 +210,15 @@ namespace BC {
             }
             case Operation::LoadReference:
             {
-                os << "load_ref";
+                os << "load_ref"
+                   << "\t" << inst.operand0.value();
 
                 break;
             }
             case Operation::StoreReference:
             {
-                os << "store_ref";
+                os << "store_ref"
+                   << "\t" << inst.operand0.value();
 
                 break;
             }

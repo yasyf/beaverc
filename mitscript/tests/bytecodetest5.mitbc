@@ -63,14 +63,12 @@ function
 					instructions = 
 					[
 						load_const	0
-						push_ref	0
-						load_ref
+						load_ref	0
 						field_load	1
 						add
 						load_const	1
 						add
-						push_ref	0
-						load_ref
+						load_ref	0
 						field_load	2
 						add
 						load_const	2
@@ -93,12 +91,10 @@ function
 			[
 				alloc_record
 				dup
-				push_ref	1
-				load_ref
+				load_ref	1
 				field_store	0
 				dup
-				push_ref	2
-				load_ref
+				load_ref	2
 				field_store	1
 				dup
 				load_local	2
@@ -113,11 +109,8 @@ function
 				load_func	0
 				alloc_closure	3
 				field_store	4
-				push_ref	0
-				swap
-				store_ref
-				push_ref	0
-				load_ref
+				store_ref	0
+				load_ref	0
 				return
 			]
 		}

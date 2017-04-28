@@ -297,13 +297,13 @@ Instruction:
 {
 	$$ = new Instruction(Operation::PushReference, safe_unsigned_cast($2));
 }
-| T_load_ref
+| T_load_ref T_int
 {
-	$$ = new Instruction(Operation::LoadReference, { });
+	$$ = new Instruction(Operation::LoadReference, safe_unsigned_cast($2));
 }
-| T_store_ref
+| T_store_ref T_int
 {
-	$$ = new Instruction(Operation::StoreReference, { });
+	$$ = new Instruction(Operation::StoreReference, safe_unsigned_cast($2));
 }
 | T_alloc_record
 {

@@ -393,9 +393,10 @@ namespace VM {
               break;
 
               // Description: allocate a closure
-              // Operand 0:       the number of free variable references passed to the closure
+              // Operand 0:       N/A
               // Operand 1:       function
-              // Operand 2:  - N: references to the function's free variables
+              // Operand 2:       the number of free variable references passed to the closure
+              // Operand 3:  - N: references to the function's free variables
               // Mnemonic:   alloc_closure
               // Stack:      S :: operand n :: ... :: operand 3 :: operand 2 :: operand 1 => S :: closure
               case Operation::AllocClosure: {
@@ -403,9 +404,12 @@ namespace VM {
                   if (!function) {
                       throw RuntimeException("Top of stack wasn't a bare function");
                   }
-                  int32_t num_vars = instruction.operand0.value();
+                  IntegerValue* num_vars = dynamic_cast<IntegerValue*>(safe_pop(stack));
+                  if (!num_vars) {
+                      throw RuntimeException("Number of variables wasn't an integer");
+                  }
                   ClosureFunctionValue* closure = heap.allocate<ClosureFunctionValue>(function->value);
-                  for (int i = 0; i < num_vars; i++) {
+                  for (int i = 0; i < num_vars->value; i++) {
                       ReferenceValue* reference_value = dynamic_cast<ReferenceValue*>(safe_pop(stack));
                       if (!reference_value) {
                           throw RuntimeException("Error creating closure - value on stack wasn't a reference value");
@@ -428,9 +432,12 @@ namespace VM {
                   if (!function) {
                       throw IllegalCastException(value->toString());
                   }
-                  int32_t num_args = instruction.operand0.value();
+                  IntegerValue* num_args = instruction.operand0.value();
+                  if (!num_args) {
+                      throw RuntimeException("Number of arguments wasn't an integer");
+                  }
                   std::vector<Value*> arguments;
-                  for (int i = 0; i < num_args; i++) {
+                  for (int i = 0; i < num_args->value; i++) {
                       Value* value = safe_pop(stack);
                       ReferenceValue* reference_value = dynamic_cast<ReferenceValue*>(value);
                       if (reference_value) {
@@ -638,26 +645,4 @@ namespace VM {
 
               // Description: pops and discards the top of the stack
               // Operand 0: N/A
-              // Operand 1: a value
-              // Mnemonic:  swap
-              // Stack:     S :: operand 1 => S
-              case Operation::Pop:
-                  safe_pop(stack);
-              break;
-
-              default:
-                  throw RuntimeException("Found an unknown opcode.");
-              break;
-          };
-          potentially_garbage_collect();
-          #if DEBUG
-          std::cout << "Stack:" << std::endl;
-          print_stack(stack);
-          std::cout << "----------" << std::endl;
-          #endif
-          ip += ip_increment;
-      }
-      pop_frame();
-      return heap.allocate<NoneValue>();
-  }
-}
+              // Operand 1: a
