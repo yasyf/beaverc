@@ -82,15 +82,29 @@ namespace IR {
     virtual string toString() { return "$" + to_string(val); }
   };
 
-  // TODO: Is this necessary?
   enum class Operation {
     Assign,
     Store,
     AllocVar,
     Add,
+    Sub,
+    Mul,
+    Div,
+    Gt,
+    Geq,
+    And,
+    Or,
+    Not,
+    Neg,
     Call,
     Return,
     OutputLabel,
+    CallHelper,
+  };
+
+  enum class Helper {
+    AssertInt,
+    AssertBool,
   };
 
   struct Instruction {
@@ -128,14 +142,87 @@ namespace IR {
     virtual string toString() { return dest.toString() + " = " + src.toString(); }
   };
 
-  struct Add : Instruction {
+  template<Helper H>
+  struct CallHelper : Instruction {
+    Temp arg;
+
+    CallHelper(Temp arg) : arg(arg) {}
+    static Helper helper() { return H; }
+    virtual Operation op() { return Operation::CallHelper; }
+    virtual string toString() { return "call_helper " + to_string(static_cast<int>(H)); }
+  };
+
+  template<Operation Op>
+  struct BinOp : Instruction {
     Temp dest;
     Temp src1;
     Temp src2;
 
-    Add(Temp dest, Temp src1, Temp src2) : dest(dest), src1(src1), src2(src2) {}
-    virtual Operation op() { return Operation::Add; }
-    virtual string toString() { return dest.toString() + " = " + src1.toString() + " + " + src2.toString(); }
+    BinOp(Temp dest, Temp src1, Temp src2) : dest(dest), src1(src1), src2(src2) {}
+    virtual Operation op() { return Op; }
+    virtual string opString() = 0;
+    virtual string toString() { return dest.toString() + " = " + src1.toString() + " " + opString() + " " + src2.toString(); }
+  };
+
+  struct Add : BinOp<Operation::Add> {
+    using BinOp::BinOp;
+    virtual string opString() { return "+"; }
+  };
+
+  struct Sub : BinOp<Operation::Sub> {
+    using BinOp::BinOp;
+    virtual string opString() { return "-"; }
+  };
+
+  struct Mul : BinOp<Operation::Mul> {
+    using BinOp::BinOp;
+    virtual string opString() { return "*"; }
+  };
+
+  struct Div : BinOp<Operation::Div> {
+    using BinOp::BinOp;
+    virtual string opString() { return "/"; }
+  };
+
+  struct Gt : BinOp<Operation::Gt> {
+    using BinOp::BinOp;
+    virtual string opString() { return "<"; }
+  };
+
+  struct Geq : BinOp<Operation::Geq> {
+    using BinOp::BinOp;
+    virtual string opString() { return "<="; }
+  };
+
+  struct And : BinOp<Operation::And> {
+    using BinOp::BinOp;
+    virtual string opString() { return "&"; }
+  };
+
+  struct Or : BinOp<Operation::Or> {
+    using BinOp::BinOp;
+    virtual string opString() { return "|"; }
+  };
+
+  template<Operation Op>
+  struct UnOp : Instruction {
+    Temp dest;
+    Temp src;
+
+    UnOp(Temp dest, Temp src) : dest(dest), src(src) {}
+    virtual Operation op() { return Op; }
+    virtual string opString() = 0;
+    virtual string toString() { return dest.toString() + " = " + opString() + src.toString(); }
+  };
+
+  struct Neg : UnOp<Operation::Neg> {
+    using UnOp::UnOp;
+    virtual string opString() { return "-"; }
+  };
+
+  struct Not : UnOp<Operation::Not> {
+    using UnOp::UnOp;
+    virtual string opString() { return "!"; }
   };
 
   struct Call : Instruction {

@@ -36,6 +36,42 @@ namespace IR {
       instructions.push_back(new Store<T>{t, popTemp()});
     }
 
+    template<typename T, Helper H>
+    void helper_binop() {
+      Temp arg1 = popTemp();
+      Temp arg2 = popTemp();
+      instructions.push_back(new CallHelper<H>{arg1});
+      instructions.push_back(new CallHelper<H>{arg2});
+      instructions.push_back(new T{nextTemp(), arg1, arg2});
+    }
+
+    template<typename T, Helper H>
+    void helper_unop() {
+      Temp arg = popTemp();
+      instructions.push_back(new CallHelper<H>{arg});
+      instructions.push_back(new T{nextTemp(), arg});
+    }
+
+    template<typename T>
+    void int_binop() {
+      helper_binop<T, Helper::AssertInt>();
+    }
+
+    template<typename T>
+    void bool_binop() {
+      helper_binop<T, Helper::AssertBool>();
+    }
+
+    template<typename T>
+    void int_unop() {
+      helper_unop<T, Helper::AssertInt>();
+    }
+
+    template<typename T>
+    void bool_unop() {
+      helper_unop<T, Helper::AssertBool>();
+    }
+
     void compile(BC::Function& func) {
       for (size_t i = func.parameter_count_; i < func.local_vars_.size(); ++i) {
         instructions.push_back(new AllocVar{Var{i}, sizeof(int64_t)});
@@ -80,13 +116,38 @@ namespace IR {
           case BC::Operation::StoreGlobal:
             store(Glob{func.names_[instruction.operand0.value()]});
             break;
-          case BC::Operation::Add: {
+          case BC::Operation::Add:
             // TODO: handle non-ints
-            Temp arg1 = popTemp();
-            Temp arg2 = popTemp();
-            instructions.push_back(new Add{nextTemp(), arg1, arg2});
+            int_binop<Add>();
             break;
-          }
+          case BC::Operation::Sub:
+            int_binop<Sub>();
+            break;
+          case BC::Operation::Mul:
+            int_binop<Mul>();
+            break;
+          case BC::Operation::Div:
+            // TODO: check for 0
+            int_binop<Div>();
+            break;
+          case BC::Operation::Gt:
+            int_binop<Gt>();
+            break;
+          case BC::Operation::Geq:
+            int_binop<Geq>();
+            break;
+          case BC::Operation::And:
+            bool_binop<And>();
+            break;
+          case BC::Operation::Or:
+            bool_binop<Or>();
+            break;
+          case BC::Operation::Neg:
+            int_unop<Neg>();
+            break;
+          case BC::Operation::Not:
+            bool_unop<Not>();
+            break;
           case BC::Operation::Return:
             instructions.push_back(new Return{popTemp()});
             break;
