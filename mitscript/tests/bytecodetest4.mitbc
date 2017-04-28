@@ -119,7 +119,7 @@ function
 					]
 				}
 			],
-			constants = [2, 1, "this x should be ", " is ", 4, 0, None],
+			constants = [0, 2, 1, "this x should be ", " is ", 4, None],
 			parameter_count = 1,
 			local_vars = [t, bad, f, moo],
 			local_ref_vars = [],
@@ -128,38 +128,40 @@ function
 			instructions = 
 			[
 				load_local	0
-				load_const	4
+				load_const	5
 				gt
 				if	2
-				goto	27
+				goto	29
 				load_local	0
 				store_global	0
-				load_func	0
-				store_local	3
 				load_const	0
+				load_func	0
+				alloc_closure
+				store_local	3
 				load_const	1
+				load_const	2
 				load_local	3
 				call
 				store_local	2
-				load_const	0
 				load_const	1
+				load_const	2
 				load_local	2
 				call
 				pop
-				load_const	2
+				load_const	3
 				load_local	0
 				add
-				load_const	3
+				load_const	4
 				add
 				load_global	0
 				add
-				load_const	1
+				load_const	2
 				load_global	1
 				call
 				pop
 				goto	5
-				load_const	4
 				load_const	5
+				load_const	0
 				div
 				store_local	1
 				load_const	6
@@ -167,7 +169,7 @@ function
 			]
 		}
 	],
-	constants = [5, 15, 1, 0],
+	constants = [5, 0, 15, 1],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
@@ -183,14 +185,16 @@ function
 		store_global	2
 		load_const	0
 		store_global	3
-		load_func	3
-		store_global	4
 		load_const	1
+		load_func	3
+		alloc_closure
+		store_global	4
 		load_const	2
+		load_const	3
 		load_global	4
 		call
 		pop
-		load_const	3
+		load_const	1
 		return
 	]
 }

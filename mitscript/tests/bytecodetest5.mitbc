@@ -124,7 +124,7 @@ function
 			]
 		}
 	],
-	constants = [5, 4, 1, 0, None, "yep", "nes", "ted"],
+	constants = [0, 5, 4, 1, None, "yep", "nes", "ted"],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
@@ -138,23 +138,25 @@ function
 		store_global	1
 		load_func	2
 		store_global	2
+		load_const	0
 		load_func	3
+		alloc_closure
 		store_global	3
-		load_const	0
-		load_const	0
+		load_const	1
 		load_const	1
 		load_const	2
-		load_const	1
+		load_const	3
+		load_const	2
 		load_global	3
 		call
 		store_global	4
-		load_const	3
+		load_const	0
 		load_global	4
 		field_load	0
 		call
 		pop
 		load_global	4
-		load_const	2
+		load_const	3
 		load_global	0
 		call
 		pop
@@ -200,11 +202,11 @@ function
 		field_load	5
 		load_global	11
 		eq
-		load_const	2
+		load_const	3
 		load_global	0
 		call
 		pop
-		load_const	3
+		load_const	0
 		return
 	]
 }

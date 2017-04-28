@@ -137,7 +137,7 @@ function
 					]
 				}
 			],
-			constants = [1, "This is getting confusing.", None],
+			constants = [1, 0, "This is getting confusing.", None],
 			parameter_count = 1,
 			local_vars = [x, f, getprint, oldprint],
 			local_ref_vars = [oldprint],
@@ -150,9 +150,13 @@ function
 				load_global	0
 				call
 				pop
+				load_const	1
 				load_func	0
+				alloc_closure
 				store_local	2
+				load_const	1
 				load_func	1
+				alloc_closure
 				store_local	1
 				load_global	0
 				push_ref	0
@@ -163,17 +167,17 @@ function
 				load_func	2
 				alloc_closure
 				store_global	0
-				load_const	1
+				load_const	2
 				load_const	0
 				load_local	1
 				call
 				pop
-				load_const	2
+				load_const	3
 				return
 			]
 		}
 	],
-	constants = ["TEST1", 1, 0],
+	constants = [0, "TEST1", 1],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
@@ -191,16 +195,20 @@ function
 		store_global	3
 		load_global	0
 		store_global	4
-		load_func	3
-		store_global	0
-		load_func	4
-		store_global	5
 		load_const	0
+		load_func	3
+		alloc_closure
+		store_global	0
+		load_const	0
+		load_func	4
+		alloc_closure
+		store_global	5
 		load_const	1
+		load_const	2
 		load_global	5
 		call
 		pop
-		load_const	2
+		load_const	0
 		return
 	]
 }
