@@ -12,9 +12,9 @@ namespace VM {
   }
 
   int Interpreter::interpret() {
-    Value* val = run_function(*main_function, std::vector<Value*>(), std::vector<ReferenceValue*>());
-    if (IntegerValue* i = dynamic_cast<IntegerValue*>(val)) {
-      return i->value;
+    Value val = run_function(*main_function, std::vector<Value>(), std::vector<ReferenceValue*>());
+    if (val.isInteger()) {
+      return val.get<int64_t>();
     } else {
       return -1;
     }
@@ -22,7 +22,7 @@ namespace VM {
 
   void Interpreter::push_frame(ValueMap* local,
                                std::map<std::string, ReferenceValue*>* local_reference,
-                               std::stack<Value*>* local_stack) {
+                               std::stack<Value>* local_stack) {
     local_variable_stack.push_back(local);
     local_reference_variable_stack.push_back(local_reference);
     operand_stack_stack.push_back(local_stack);
@@ -51,7 +51,7 @@ namespace VM {
       #ifdef DEBUG
       std::cout << "$$$$$ Building roots..." << std::endl;
       #endif
-      std::vector<Value*> roots;
+      std::vector<Value> roots;
       for (auto local_variables : local_variable_stack) {
         for (auto keyvalue : *local_variables) {
           roots.push_back(keyvalue.second);
@@ -63,7 +63,7 @@ namespace VM {
         }
       }
       for (auto local_stack : operand_stack_stack) {
-        std::vector<Value*> stack_holder;
+        std::vector<Value> stack_holder;
         while (!local_stack->empty()) {
             auto v = local_stack->top();
             roots.push_back(v);
@@ -84,33 +84,20 @@ namespace VM {
     }
   };
 
-  static Value* constant_to_value(CollectedHeap& heap, std::shared_ptr<Constant> constant) {
+  static Value constant_to_value(CollectedHeap& heap, std::shared_ptr<Constant> constant) {
       if (std::shared_ptr<None> c = std::dynamic_pointer_cast<None>(constant)) {
-          return heap.allocate<NoneValue>();
+          return Value::makeNone();
       }
       if (std::shared_ptr<Integer> c = std::dynamic_pointer_cast<Integer>(constant)) {
-          return heap.allocate<IntegerValue>(c->value);
+          return Value::makeInteger(c->value);
       }
       if (std::shared_ptr<String> c = std::dynamic_pointer_cast<String>(constant)) {
-          return heap.allocate<StringValue>(c->value);
+          return Value::makeString(heap.allocate<StringValue>(c->value));
       }
       if (std::shared_ptr<Boolean> c = std::dynamic_pointer_cast<Boolean>(constant)) {
-          return heap.allocate<BooleanValue>(c->value);
+          return Value::makeBoolean(c->value);
       }
       throw RuntimeException("Tried to convert a Function to a Value in constant_to_value (usually called from LoadConst) - should be done in LoadFunc");
-  }
-
-  template<typename Input, typename Output, typename F>
-  static Value* binary_op(CollectedHeap& heap, Value* _a, Value* _b, F func) {
-      Input* a = force_cast<Input>(_a);
-      Input* b = force_cast<Input>(_b);
-      return heap.allocate<Output>(func(a->value, b->value));
-  }
-
-  template<typename T, typename F>
-  static Value* unary_op(CollectedHeap& heap, Value* _a, F func) {
-      T* a = force_cast<T>(_a);
-      return heap.allocate<T>(func(a->value));
   }
 
   template<typename T>
@@ -139,8 +126,8 @@ namespace VM {
       throw InsufficentStackException("Can't peek off an empty stack!");
   }
 
-  static void print_stack(std::stack<Value*> & stack) {
-      std::vector<Value*> stack_holder;
+  static void print_stack(std::stack<Value> & stack) {
+      std::vector<Value> stack_holder;
       while (!stack.empty()) {
           auto v = stack.top();
           std::cout << v->toString() << std::endl;
@@ -162,12 +149,12 @@ namespace VM {
     }
   }
 
-  Value* Interpreter::run_function(
+  Value Interpreter::run_function(
       Function const & func,
-      std::vector<Value*> const & arguments,
+      std::vector<Value> const & arguments,
       std::vector<ReferenceValue*> const & references
   ) {
-      std::stack<Value*> stack;
+      std::stack<Value> stack;
       ValueMap local_variables;
       std::map<std::string, ReferenceValue*> local_reference_vars;
       push_frame(&local_variables, &local_reference_vars, &stack);
@@ -177,11 +164,11 @@ namespace VM {
       }
 
       for (auto var : func.local_reference_vars_) {
-          local_reference_vars[var] = heap.allocate<ReferenceValue>(var, heap.allocate<NoneValue>());
+          local_reference_vars[var] = heap.allocate<ReferenceValue>(var, Value::makeNone());
       }
       for (auto var : func.local_vars_) {
           if (local_reference_vars.count(var) == 0) {
-              local_variables[var] = heap.allocate<NoneValue>();
+              local_variables[var] = Value::makeNone();
           }
       }
       for (auto reference_value : references) {
@@ -190,7 +177,7 @@ namespace VM {
       for (int i = 0; i < arguments.size(); i++) {
           std::string var_name = func.local_vars_[i];
           #if DEBUG
-          std::cout << var_name << " = " << arguments[i]->toString() << std::endl;
+          std::cout << var_name << " = " << arguments[i].toString() << std::endl;
           #endif
           if (local_reference_vars.count(var_name) == 0) {
               local_variables[var_name] = arguments[i];
@@ -225,9 +212,9 @@ namespace VM {
                   int index = instruction.operand0.value();
                   std::shared_ptr<Function> function = safe_index(func.functions_, instruction.operand0.value());
                   if (is_top_level() && index >= 0 && index < static_cast<int>(BuiltInFunctionType::MAX)) {
-                      stack.push(heap.allocate<BuiltInFunctionValue>(index));
+                      stack.push(Value::makePointer(heap.allocate<BuiltInFunctionValue>(index)));
                   } else {
-                      stack.push(heap.allocate<BareFunctionValue>(function));
+                      stack.push(Value::makePointer(heap.allocate<BareFunctionValue>(function)));
                   }
               }
               break;
@@ -306,7 +293,7 @@ namespace VM {
               // Mnemonic:  load_ref
               // Stack:     S :: operand 2 :: operand 1 => S
               case Operation::StoreReference: {
-                  Value* value = safe_pop(stack);
+                  Value value = safe_pop(stack);
                   int index = instruction.operand0.value();
                   ReferenceValue* rv = local_reference_vars[getVarFromRefIndex(func, index)];
                   rv->value = value;
@@ -318,7 +305,7 @@ namespace VM {
               // Mnemonic:  alloc_record
               // Stack:     S => S :: record
               case Operation::AllocRecord: {
-                  stack.push(heap.allocate<RecordValue>());
+                  stack.push(Value::makePointer(heap.allocate<RecordValue>()));
               }
               break;
 
@@ -329,10 +316,7 @@ namespace VM {
               // Stack:     S :: operand 1 => S :: record_value_of(operand, f.names[i])
               case Operation::FieldLoad: {
                   std::string var_name = safe_index(func.names_, instruction.operand0.value());
-                  RecordValue* rv = dynamic_cast<RecordValue*>(safe_pop(stack));
-                  if (!rv) {
-                      throw IllegalCastException("Couldn't cast the top of the stack to a record");
-                  }
+                  RecordValue* rv = safe_pop(stack).getPointer<RecordValue>();
                   stack.push(rv->get(var_name));
               }
               break;
@@ -345,11 +329,8 @@ namespace VM {
               // Stack:    S :: operand 2 :: operand 1 => S
               case Operation::FieldStore: {
                   std::string var_name = safe_index(func.names_, instruction.operand0.value());
-                  Value* stored_value = safe_pop(stack);
-                  RecordValue* rv = dynamic_cast<RecordValue*>(safe_pop(stack));
-                  if (!rv) {
-                      throw IllegalCastException("Couldn't cast the top of the stack to a record");
-                  }
+                  Value stored_value = safe_pop(stack);
+                  RecordValue* rv = safe_pop(stack).getPointer<RecordValue>();
                   rv->insert(var_name, stored_value);
               }
               break;
@@ -360,12 +341,9 @@ namespace VM {
               // Operand 2: the record to read from
               // Stack:     S :: operand 2 :: operand 1 => S
               case Operation::IndexLoad: {
-                  Value* index_value = safe_pop(stack);
-                  std::string var_name = index_value->toString();
-                  RecordValue* rv = dynamic_cast<RecordValue*>(safe_pop(stack));
-                  if (!rv) {
-                      throw IllegalCastException("Couldn't cast the top of the stack to a record");
-                  }
+                  Value index_value = safe_pop(stack);
+                  std::string var_name = index_value.toString();
+                  RecordValue* rv = safe_pop(stack).getPointer<RecordValue>();
                   stack.push(rv->get(var_name));
               }
               break;
@@ -377,13 +355,10 @@ namespace VM {
               // Operand 3: the record to store into
               // Stack:     S :: operand 3 :: operand 2 :: operand 1 => S
               case Operation::IndexStore: {
-                  Value* stored_value = safe_pop(stack);
-                  Value* index_value = safe_pop(stack);
-                  std::string var_name = index_value->toString();
-                  RecordValue* rv = dynamic_cast<RecordValue*>(safe_pop(stack));
-                  if (!rv) {
-                      throw IllegalCastException("Couldn't cast the top of the stack to a record");
-                  }
+                  Value stored_value = safe_pop(stack);
+                  Value index_value = safe_pop(stack);
+                  std::string var_name = index_value.toString();
+                  RecordValue* rv = safe_pop(stack).getPointer<RecordValue>();
                   rv->insert(var_name, stored_value);
               }
               break;
@@ -395,20 +370,14 @@ namespace VM {
               // Mnemonic:   alloc_closure
               // Stack:      S :: operand n :: ... :: operand 3 :: operand 2 :: operand 1 => S :: closure
               case Operation::AllocClosure: {
-                  BareFunctionValue* function = dynamic_cast<BareFunctionValue*>(safe_pop(stack));
-                  if (!function) {
-                      throw RuntimeException("Top of stack wasn't a bare function");
-                  }
+                  BareFunctionValue* function = safe_pop(stack).getPointer<BareFunctionValue>();
                   int32_t num_vars = instruction.operand0.value();
                   ClosureFunctionValue* closure = heap.allocate<ClosureFunctionValue>(function->value);
                   for (int i = 0; i < num_vars; i++) {
-                      ReferenceValue* reference_value = dynamic_cast<ReferenceValue*>(safe_pop(stack));
-                      if (!reference_value) {
-                          throw RuntimeException("Error creating closure - value on stack wasn't a reference value");
-                      }
+                      ReferenceValue* reference_value = safe_pop(stack).getPointer<ReferenceValue>();
                       closure->add_reference(reference_value);
                   }
-                  stack.push(closure);
+                  stack.push(Value::makePointer(closure));
               }
               break;
 
@@ -419,20 +388,12 @@ namespace VM {
               // Mnemonic:      call
               // Stack:         S::operand n :: .. :: operand 3 :: operand 2 :: operand 1 => S :: value
               case Operation::Call: {
-                  auto value = safe_pop(stack);
-                  AbstractFunctionValue* function = dynamic_cast<AbstractFunctionValue*>(value);
-                  if (!function) {
-                      throw IllegalCastException(value->toString());
-                  }
+                  AbstractFunctionValue* function = safe_pop(stack).getPointer<AbstractFunctionValue>();
                   int32_t num_args = instruction.operand0.value();
-                  std::vector<Value*> arguments;
+                  std::vector<Value> arguments;
                   for (int i = 0; i < num_args; i++) {
-                      Value* value = safe_pop(stack);
-                      ReferenceValue* reference_value = dynamic_cast<ReferenceValue*>(value);
-                      if (reference_value) {
-                          throw RuntimeException("Error calling function - value on stack was a reference value");
-                      }
-                      arguments.push_back(value);
+                      ReferenceValue* reference_value = safe_pop(stack).getPointer<ReferenceValue>();
+                      arguments.push_back(Value::makePointer(value));
                   }
                   std::reverse(arguments.begin(), arguments.end());
                   stack.push(function->call(*this, arguments));
@@ -459,17 +420,14 @@ namespace VM {
               // Stack:     S:: operand 2 :: operand 1 => S :: op(operand 2, operand 1)
 
               case Operation::Add: {
-                  Value* operand_1 = safe_pop(stack);
-                  Value* operand_2 = safe_pop(stack);
-                  if (can_cast<StringValue>(operand_1) || can_cast<StringValue>(operand_2)) {
-                      stack.push(heap.allocate<StringValue>(operand_2->toString() + operand_1->toString()));
+                  Value operand_1 = safe_pop(stack);
+                  Value operand_2 = safe_pop(stack);
+                  if (operand_1.isString() || operand_2.isString()) {
+                      stack.push(Value::makeString(heap.allocate<StringValue>(operand_2.toString() + operand_1.toString())));
+                  } else if (operand_1.isInteger() && operand_2.isInteger()) {
+                      stack.push(Value::makeInteger(operand_1.get<int64_t>() + operand_2.get<int64_t>()));
                   } else {
-                      IntegerValue* operand_1_integer = dynamic_cast<IntegerValue*>(operand_1);
-                      IntegerValue* operand_2_integer = dynamic_cast<IntegerValue*>(operand_2);
-                      if (operand_1_integer == nullptr || operand_2_integer == nullptr) {
-                          throw IllegalCastException("Can't perform addition");
-                      }
-                      stack.push(heap.allocate<IntegerValue>(operand_2_integer->value + operand_1_integer->value));
+                      throw IllegalCastException("Can't perform addition");
                   }
               }
               break;
@@ -489,42 +447,40 @@ namespace VM {
               // Mnemonic:  gt/geq
               // Stack:     S :: operand 2 :: operand 1 => S:: op(operand 2, operand 1)
               case Operation::Gt: {
-                  Value* operand_1 = safe_pop(stack);
-                  Value* operand_2 = safe_pop(stack);
-                  stack.push(binary_op<IntegerValue, BooleanValue>(heap, operand_2, operand_1, [] (int a, int b) { return a > b; }));
+                  Value operand_1 = safe_pop(stack);
+                  Value operand_2 = safe_pop(stack);
+                  stack.push(Value::makeBoolean(operand_2.get<int64_t>() > operand_1.get<int64_t>()));
               }
               break;
 
               case Operation::Geq: {
-                  Value* operand_1 = safe_pop(stack);
-                  Value* operand_2 = safe_pop(stack);
-                  stack.push(binary_op<IntegerValue, BooleanValue>(heap, operand_2, operand_1, [] (int a, int b) { return a >= b; }));
+                  Value operand_1 = safe_pop(stack);
+                  Value operand_2 = safe_pop(stack);
+                  stack.push(Value::makeBoolean(operand_2.get<int64_t>() >= operand_1.get<int64_t>()));
               }
               break;
 
               case Operation::Sub: {
-                  Value* operand_1 = safe_pop(stack);
-                  Value* operand_2 = safe_pop(stack);
-                  stack.push(binary_op<IntegerValue, IntegerValue>(heap, operand_2, operand_1, [] (int a, int b) { return a - b; }));
+                  Value operand_1 = safe_pop(stack);
+                  Value operand_2 = safe_pop(stack);
+                  stack.push(Value::makeInteger(operand_2.get<int64_t>() - operand_1.get<int64_t>()));
               }
               break;
 
               case Operation::Mul: {
-                  Value* operand_1 = safe_pop(stack);
-                  Value* operand_2 = safe_pop(stack);
-                  stack.push(binary_op<IntegerValue, IntegerValue>(heap, operand_2, operand_1, [] (int a, int b) { return a * b; }));
+                  Value operand_1 = safe_pop(stack);
+                  Value operand_2 = safe_pop(stack);
+                  stack.push(Value::makeInteger(operand_2.get<int64_t>() * operand_1.get<int64_t>()));
               }
               break;
 
               case Operation::Div: {
-                  Value* operand_1 = safe_pop(stack);
-                  Value* operand_2 = safe_pop(stack);
-                  stack.push(binary_op<IntegerValue, IntegerValue>(heap, operand_2, operand_1, [] (int a, int b) {
-                      if (b == 0) {
-                          throw IllegalArithmeticException("divide by zero");
-                      }
-                      return a / b;
-                  }));
+                  Value operand_1 = safe_pop(stack);
+                  Value operand_2 = safe_pop(stack);
+                  if (operand_1.get<int64_t>() == 0) {
+                      throw IllegalArithmeticException("divide by zero");
+                  }
+                  stack.push(Value::makeInteger(operand_2.get<int64_t>() / operand_1.get<int64_t>()));
               }
               break;
 
@@ -534,7 +490,7 @@ namespace VM {
               // Mnemonic:  neg
               // Stack:     S :: operand 1 => S:: - operand 1
               case Operation::Neg: {
-                  stack.push(unary_op<IntegerValue>(heap, safe_pop(stack), [] (int a) { return -a; }));
+                  stack.push(Value::makeInteger(-safe_pop(stack).get<int64_t>());
               }
               break;
 
@@ -546,9 +502,9 @@ namespace VM {
               // Mnemonic:  gt/geq
               // Stack:     S :: operand 2 :: operand 1 => S:: eq(operand 2, operand 1)
               case Operation::Eq: {
-                  Value* operand_1 = safe_pop(stack);
-                  Value* operand_2 = safe_pop(stack);
-                  stack.push(heap.allocate<BooleanValue>(*operand_2 == *operand_1));
+                  Value operand_1 = safe_pop(stack);
+                  Value operand_2 = safe_pop(stack);
+                  stack.push(Value::makeBoolean(operand_2 == operand_1));
               }
               break;
 
@@ -559,16 +515,16 @@ namespace VM {
               // Mnemonic:  and/or
               // Stack:     S :: operand 2 :: operand 1 => S:: op(operand 2, operand 1)
               case Operation::And: {
-                  Value* operand_1 = safe_pop(stack);
-                  Value* operand_2 = safe_pop(stack);
-                  stack.push(binary_op<BooleanValue, BooleanValue>(heap, operand_2, operand_1, [] (bool a, bool b) { return a && b; }));
+                  Value operand_1 = safe_pop(stack);
+                  Value operand_2 = safe_pop(stack);
+                  stack.push(Value::makeBoolean(operand_2.get<bool>() && operand_1.get<bool>()));
               }
               break;
 
               case Operation::Or: {
-                  Value* operand_1 = safe_pop(stack);
-                  Value* operand_2 = safe_pop(stack);
-                  stack.push(binary_op<BooleanValue, BooleanValue>(heap, operand_2, operand_1, [] (bool a, bool b) { return a || b; }));
+                  Value operand_1 = safe_pop(stack);
+                  Value operand_2 = safe_pop(stack);
+                  stack.push(Value::makeBoolean(operand_2.get<bool>() || operand_1.get<bool>()));
               }
               break;
 
@@ -578,7 +534,7 @@ namespace VM {
               // Mnemonic:  and/or
               // Stack:     S :: operand 1 => S:: op(operand 1)
               case Operation::Not: {
-                  stack.push(unary_op<BooleanValue>(heap, safe_pop(stack), [] (bool a) { return !a; }));
+                  stack.push(Value::makeInteger(!safe_pop(stack).get<bool>());
               }
               break;
 
@@ -598,11 +554,7 @@ namespace VM {
               // Mnemonic:  if i
               // Stack:     S :: operand 1 => S
               case Operation::If: {
-                  BooleanValue* operand_1 = dynamic_cast<BooleanValue*>(safe_pop(stack));
-                  if (!operand_1) {
-                      throw IllegalCastException("Can't cast value to boolean for if condition");
-                  }
-                  if (operand_1->value) {
+                  if (safe_pop(stack).get<bool>()) {
                       ip_increment = instruction.operand0.value();
                   }
               }
@@ -635,25 +587,25 @@ namespace VM {
               // Description: pops and discards the top of the stack
               // Operand 0: N/A
               // Operand 1: a value
-              // Mnemonic:  swap
-              // Stack:     S :: operand 1 => S
-              case Operation::Pop:
-                  safe_pop(stack);
-              break;
-
-              default:
-                  throw RuntimeException("Found an unknown opcode.");
-              break;
-          };
-          potentially_garbage_collect();
-          #if DEBUG
-          std::cout << "Stack:" << std::endl;
-          print_stack(stack);
-          std::cout << "----------" << std::endl;
-          #endif
-          ip += ip_increment;
-      }
-      pop_frame();
-      return heap.allocate<NoneValue>();
-  }
+              // Mnemonic:  swap      
+              // Stack:     S :: operand 1 => S       
+              case Operation::Pop:        
+                  safe_pop(stack);        
+              break;      
+      
+              default:        
+                  throw RuntimeException("Found an unknown opcode.");     
+              break;      
+          };      
+          potentially_garbage_collect();      
+          #if DEBUG       
+          std::cout << "Stack:" << std::endl;     
+          print_stack(stack);     
+          std::cout << "----------" << std::endl;     
+          #endif      
+          ip += ip_increment;     
+      }       
+      pop_frame();        
+      return Value::makeNone();   
+  }       
 }

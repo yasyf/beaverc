@@ -2,9 +2,7 @@
 
 namespace VM {
   struct Value;
-  struct NoneValue;
-  struct BooleanValue;
-  struct IntegerValue;
+  struct PointerValue;
   struct StringValue;
   struct RecordValue;
   struct ReferenceValue;

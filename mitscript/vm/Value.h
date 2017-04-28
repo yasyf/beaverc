@@ -15,39 +15,126 @@
 namespace VM {
   struct Interpreter;
 
-  template<typename T>
-  T* force_cast(Value* value) {
-    if (T* other = dynamic_cast<T*>(value)) {
-      return other;
-    }
-    throw IllegalCastException("Can't convert to needed type");
-  }
+  #define unlikely(x)     __builtin_expect((x),0)
 
-  template<typename T>
-  bool can_cast(Value* value) {
-    if (T* other = dynamic_cast<T*>(value)) {
-      return true;
-    }
-    return false;
-  }
+  #define _VALUE_MASK 0x3
+  #define _POINTER_MASK 0x7
 
-  struct Value : public GC::Collectable {
-    Value(GC::CollectedHeap& heap) : GC::Collectable(heap) {}
+  #define _INTEGER_TAG 0x0
+  #define _NONE_TAG 0x1
+  #define _BOOLEAN_TAG 0x2
+  #define _POINTER_TAG 0x3
+  #define _STRING_TAG 0x7
+
+  #define __IS_INTEGER_VALUE(value) ((value & _VALUE_MASK) == _INTEGER_TAG)
+  #define __IS_NONE_VALUE(value) ((value & _VALUE_MASK) == _NONE_TAG)
+  #define __IS_BOOLEAN_VALUE(value) ((value & _VALUE_MASK) == _BOOLEAN_TAG)
+  #define __IS_POINTER_VALUE(value) ((value & _VALUE_MASK) == _POINTER_TAG)
+  #define __IS_STRING_VALUE(value) ((value & _POINTER_MASK) == _STRING_TAG)
+
+  struct PointerValue : GC::Collectable {
+    PointerValue(GC::CollectedHeap& heap) : GC::Collectable(heap) {};
     virtual std::string toString() = 0;
-    bool operator==(const Value& other) {
-      return typeid(*this) == typeid(other) && equals(other);
-    }
-  protected:
-
-  private:
-    virtual bool equals(const Value& other) = 0;
   };
 
-  struct StringValue : public Value {
+  struct Value {
+    uint64_t value;
+
+    Value(uint64_t value) : value(value) {};
+
+
+    bool isInteger() {
+      return __IS_INTEGER_VALUE(value);
+    }
+
+    bool isString() {
+      return __IS_STRING_VALUE(value);
+    }
+
+    bool isPointer() {
+      return __IS_POINTER_VALUE(value);
+    }
+
+
+    bool getBoolean() {
+      if (unlikely(!__IS_BOOLEAN_VALUE(value))) {
+        throw IllegalCastException("Value is not a boolean");
+      }
+      return static_cast<bool>(value & ~_VALUE_MASK);
+    };
+
+    int64_t getInteger() {
+      if (unlikely(!__IS_INTEGER_VALUE(value))) {
+        throw IllegalCastException("Value is not a integer");
+      }
+      return static_cast<int64_t>(value & ~_VALUE_MASK) / 8;
+    }
+
+    PointerValue* getPointerValue() {
+      if (unlikely(!__IS_POINTER_VALUE(value))) {
+        throw IllegalCastException("Can't cast this value to a pointer type.");
+      }
+      return reinterpret_cast<PointerValue*>(value & ~_POINTER_MASK);
+    }
+
+    template<typename T>
+    T* getPointer<T>() {
+      if (T* t = dynamic_cast<T*>(getPointerValue())) {
+        return t;
+      }
+      throw IllegalCastException("Can't cast the pointer to the needed type");
+    }
+
+    std::string toString() {
+      switch (value & _VALUE_MASK) {
+        case _INTEGER_TAG: {
+          return std::to_string(getInteger());
+        }
+        case _NONE_TAG: {
+          return "None";
+        }
+        case _BOOLEAN_TAG: {
+          return (getBoolean()) ? "True" : "False";
+        }
+        case _POINTER_TAG: {
+          return getPointerValue()->toString();
+        }
+      }
+    };
+
+    bool operator==(Value other) {
+      if (__IS_STRING_VALUE(value) && __IS_STRING_VALUE(other.value)) {
+        return toString() == other.toString(); // TODO: Make this faster
+      }
+      return value == other.value;
+    }
+
+    static Value makeNone() {
+      return Value(_NONE_TAG);
+    }
+
+    static Value makeBoolean(bool value) {
+      return Value(_BOOLEAN_TAG | (static_cast<uint64_t>(value) << 3));
+    }
+
+    static Value makeInteger(int64_t value) {
+      return Value(static_cast<uint64_t>(value * 8));
+    }
+
+    static Value makePointer(PointerValue* value) {
+      return Value(reinterpret_cast<uint64_t>(value) | _POINTER_TAG);
+    }
+
+    static Value makeString(StringValue* value) {
+      return Value(reinterpret_cast<uint64_t>(value) | _STRING_TAG);
+    }
+  };
+
+  struct StringValue : public PointerValue {
     char* memory;
     size_t length;
 
-    StringValue(GC::CollectedHeap& heap, const std::string& value) : Value(heap) {
+    StringValue(GC::CollectedHeap& heap, const std::string& value) : PointerValue(heap) {
       length = value.size();
       memory = static_cast<char*>(malloc(length * sizeof(char)));
       strncpy(memory, value.c_str(), length);
@@ -69,96 +156,12 @@ namespace VM {
     }
 
     virtual void markChildren() {}
-
-    bool equals(const Value& other_) {
-      const StringValue& other = dynamic_cast<const StringValue &>(other_);
-      return length == other.length && strncmp(memory, other.memory, length) == 0;
-    }
   };
 
-  struct BooleanValue : public Value {
-    bool value;
+  struct RecordValue : public PointerValue {
+    std::unordered_map<std::string, Value> values;
 
-    BooleanValue(GC::CollectedHeap& heap, bool value) : Value(heap), value(value) {
-      heap.increaseSize(size());
-    }
-
-    ~BooleanValue() {
-      #ifdef DEBUG
-      cout << "DELETING BooleanValue: " << toString() << endl;
-      #endif
-      heap.decreaseSize(size());
-    }
-
-    std::string toString() { return (value) ? "True" : "False"; }
-
-    virtual size_t _size() {
-      return sizeof(BooleanValue);
-    }
-
-    virtual void markChildren() {}
-
-    bool equals(const Value& other) {
-      return value == dynamic_cast<const BooleanValue &>(other).value;
-    }
-  };
-
-  struct NoneValue : public Value {
-    NoneValue(GC::CollectedHeap& heap): Value(heap) {
-      heap.increaseSize(size());
-    }
-
-    ~NoneValue() {
-      #ifdef DEBUG
-      cout << "DELETING NoneValue: " << toString() << endl;
-      #endif
-      heap.decreaseSize(size());
-    }
-
-    std::string toString() { return "None"; }
-
-    virtual size_t _size() {
-      return sizeof(NoneValue);
-    }
-
-    virtual void markChildren() {}
-
-    bool equals(const Value& other) {
-      return true;
-    }
-  };
-
-  struct IntegerValue : public Value {
-    int value;
-
-    IntegerValue(GC::CollectedHeap& heap, int value) : Value(heap), value(value) {
-      heap.increaseSize(size());
-    }
-
-    ~IntegerValue() {
-      #ifdef DEBUG
-      cout << "DELETING IntegerValue: " << toString() << endl;
-      #endif
-      heap.decreaseSize(size());
-    }
-
-    std::string toString() { return std::to_string(value); }
-
-    virtual size_t _size() {
-      return sizeof(IntegerValue);
-    }
-
-    virtual void markChildren() { }
-
-    bool equals(const Value& other) {
-      return value == dynamic_cast<const IntegerValue &>(other).value;
-    }
-  };
-
-  struct RecordValue : public Value {
-    std::unordered_map<std::string, Value*> values;
-
-    RecordValue(GC::CollectedHeap& heap) : Value(heap) {
+    RecordValue(GC::CollectedHeap& heap) : PointerValue(heap) {
       heap.increaseSize(size());
     }
 
@@ -169,18 +172,18 @@ namespace VM {
       heap.decreaseSize(size());
     }
 
-    void insert(std::string key, Value* inserted) {
+    Value get(std::string key);
+
+    void insert(std::string key, Value inserted) {
       if (values.count(key) == 0)
-        heap.increaseSize(sizeof(std::string) + key.capacity() * sizeof(char) + sizeof(Value*));
+        heap.increaseSize(sizeof(std::string) + key.capacity() * sizeof(char) + sizeof(Value));
       values[key] = inserted;
     }
-
-    Value* get(std::string key);
 
     std::string toString() {
       std::string result = "{";
       for (auto keyvalue : values) {
-          result += keyvalue.first + ":" + keyvalue.second->toString() + " ";
+          result += keyvalue.first + ":" + keyvalue.second.toString() + " ";
       };
       result += "}";
       return result;
@@ -189,26 +192,25 @@ namespace VM {
     virtual size_t _size() {
       size_t s = sizeof(RecordValue);
       for (auto pair : values) {
-        s += sizeof(std::string) + pair.first.capacity() * sizeof(char) + sizeof(Value*);
+        s += sizeof(std::string) + pair.first.capacity() * sizeof(char) + sizeof(Value);
       }
       return s;
     }
 
     virtual void markChildren() {
-      for (auto pair : values)
-        pair.second->mark();
-    }
-
-    bool equals(const Value& other) {
-      return this == &other;
+      for (auto pair : values) {
+        if (pair.second.isPointer()) {
+          pair.second.getPointerValue()->mark();
+        }
+      }
     }
   };
 
-  struct ReferenceValue : public Value {
+  struct ReferenceValue : public PointerValue {
     std::string name;
-    Value* value;
+    Value value;
 
-    ReferenceValue(GC::CollectedHeap& heap, std::string n, Value* v) : Value(heap), name(n), value(v) {
+    ReferenceValue(GC::CollectedHeap& heap, std::string n, Value v) : Value(heap), name(n), value(v) {
       heap.increaseSize(size());
     }
 
@@ -232,23 +234,17 @@ namespace VM {
     }
 
     virtual void markChildren() {
-      value->mark();
-    }
-
-    bool equals(const Value& other) {
-      throw RuntimeException("Can't check equality with a ReferenceValue");
+      if (value.isPointer()) {
+        value.getPointerValue()->mark();
+      }
     }
   };
 
-  struct AbstractFunctionValue : public Value {
+  struct AbstractFunctionValue : public PointerValue {
     AbstractFunctionValue(GC::CollectedHeap& heap) : Value(heap) {}
 
     std::string toString() { return "FUNCTION"; };
-    virtual Value* call(Interpreter & interpreter, std::vector<Value*> & arguments) = 0;
-
-    bool equals(const Value& o) {
-      return this == &o;
-    }
+    virtual Value call(Interpreter & interpreter, std::vector<Value> & arguments) = 0;
   };
 
   struct BareFunctionValue : public AbstractFunctionValue {
@@ -265,7 +261,7 @@ namespace VM {
       heap.decreaseSize(size());
     }
 
-    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments);
+    Value call(Interpreter & interpreter, std::vector<Value> & arguments);
 
     virtual size_t _size() {
       return sizeof(BareFunctionValue);
@@ -295,7 +291,7 @@ namespace VM {
       references.push_back(reference);
     };
 
-    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments);
+    Value call(Interpreter & interpreter, std::vector<Value> & arguments);
     virtual size_t _size() {
       return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
     }
@@ -338,17 +334,6 @@ namespace VM {
 
     virtual void markChildren() {}
 
-    Value* call(Interpreter & interpreter, std::vector<Value*> & arguments);
+    Value call(Interpreter & interpreter, std::vector<Value> & arguments);
   };
-}
-
-namespace GC {
-  template<>
-  VM::NoneValue* CollectedHeap::allocate<VM::NoneValue>();
-
-  template<>
-  VM::BooleanValue* CollectedHeap::allocate<VM::BooleanValue>(bool value);
-
-  template<>
-  VM::IntegerValue* CollectedHeap::allocate<VM::IntegerValue>(int value);
 }

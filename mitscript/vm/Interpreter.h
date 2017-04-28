@@ -12,23 +12,23 @@ namespace VM {
   struct Value;
   struct ReferenceValue;
 
-  typedef std::map<std::string, Value*> ValueMap;
+  typedef std::map<std::string, Value> ValueMap;
 
   struct Interpreter {
       BC::Function* main_function;
       ValueMap global_variables;
       std::vector<ValueMap*> local_variable_stack;
       std::vector<std::map<std::string, ReferenceValue*>*> local_reference_variable_stack;
-      std::vector<std::stack<Value*>*> operand_stack_stack;
+      std::vector<std::stack<Value>*> operand_stack_stack;
       GC::CollectedHeap heap;
       Interpreter(BC::Function* const & main_func, size_t max_size);
       int interpret();
-      Value* run_function(BC::Function const & func,
-                          std::vector<Value*> const & arguments,
+      Value run_function(BC::Function const & func,
+                          std::vector<Value> const & arguments,
                           std::vector<ReferenceValue*> const & references);
       void push_frame(ValueMap* local,
                       std::map<std::string, ReferenceValue*>* local_reference,
-                      std::stack<Value*>* local_stack);
+                      std::stack<Value>* local_stack);
       void pop_frame();
       bool is_top_level();
 
