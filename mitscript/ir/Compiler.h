@@ -26,6 +26,16 @@ namespace IR {
       return t;
     }
 
+    template<typename T>
+    void assign(T t) {
+      instructions.push_back(new Assign<T>{nextTemp(), t});
+    }
+
+    template<typename T>
+    void store(T t) {
+      instructions.push_back(new Store<T>{t, popTemp()});
+    }
+
     void compile(BC::Function& func) {
       for (auto it = func.local_vars_.begin() + func.parameter_count_; it != func.local_vars_.end(); ++it) {
         instructions.push_back(new AllocVar{Var{*it}, sizeof(int64_t)});
@@ -44,31 +54,31 @@ namespace IR {
             break;
           }
           case BC::Operation::LoadReference:
-            instructions.push_back(new Assign<Deref>{nextTemp(), Deref{(size_t)instruction.operand0.value()}});
+            assign(Deref{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::PushReference:
-            instructions.push_back(new Assign<Ref>{nextTemp(), Ref{(size_t)instruction.operand0.value()}});
+            assign(Ref{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::LoadFunc:
-            instructions.push_back(new Assign<Function>{nextTemp(), Function{(size_t)instruction.operand0.value()}});
+            assign(Function{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::LoadGlobal:
-            instructions.push_back(new Assign<Glob>{nextTemp(), Glob{func.names_[instruction.operand0.value()]}});
+            assign(Glob{func.names_[instruction.operand0.value()]});
             break;
           case BC::Operation::LoadLocal:
-            instructions.push_back(new Assign<Var>{nextTemp(), Var{func.local_vars_[instruction.operand0.value()]}});
+            assign(Var{func.local_vars_[instruction.operand0.value()]});
             break;
           case BC::Operation::LoadConst:
-            instructions.push_back(new Assign<Const>{nextTemp(), Const{func.constants_[instruction.operand0.value()]}});
+            assign(Const{func.constants_[instruction.operand0.value()]});
             break;
           case BC::Operation::StoreReference:
-            instructions.push_back(new Store<Deref>{Deref{(size_t)instruction.operand0.value()}, popTemp()});
+            store(Deref{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::StoreLocal:
-            instructions.push_back(new Store<Var>{Var{func.local_vars_[instruction.operand0.value()]}, popTemp()});
+            store(Var{func.local_vars_[instruction.operand0.value()]});
             break;
           case BC::Operation::StoreGlobal:
-            instructions.push_back(new Store<Glob>{Glob{func.names_[instruction.operand0.value()]}, popTemp()});
+            store(Glob{func.names_[instruction.operand0.value()]});
             break;
           case BC::Operation::Add: {
             // TODO: handle non-ints
