@@ -22,7 +22,7 @@ namespace VM {
 
   void Interpreter::push_frame(Value* local,
                                int local_size,
-                               std::map<std::string, ReferenceValue*>* local_reference,
+                               std::vector<ReferenceValue*>* local_reference,
                                std::stack<Value>* local_stack) {
     local_variable_stack.push_back(local);
     local_variable_size_stack.push_back(local_size);
@@ -65,8 +65,8 @@ namespace VM {
         }
       }
       for (auto local_reference_variables : local_reference_variable_stack) {
-        for (auto keyvalue : *local_reference_variables) {
-          roots.push_back(keyvalue.second);
+        for (auto value : *local_reference_variables) {
+          roots.push_back(value);
         }
       }
       for (auto local_stack : operand_stack_stack) {
@@ -167,7 +167,7 @@ namespace VM {
   ) {
       std::stack<Value> stack;
       Value local_variables[func.local_vars_.size()];
-      std::map<std::string, ReferenceValue*> local_reference_vars;
+      std::vector<ReferenceValue*> local_reference_vars;
       push_frame(local_variables, func.local_vars_.size(), &local_reference_vars, &stack);
 
       if (func.parameter_count_ != arguments.size()) {
@@ -175,21 +175,27 @@ namespace VM {
       }
 
       for (auto var : func.local_reference_vars_) {
-          local_reference_vars[var] = heap.allocate<ReferenceValue>(var, Value::makeNone());
+          local_reference_vars.push_back(heap.allocate<ReferenceValue>(var, Value::makeNone()));
       }
-      for (auto reference_value : references) {
-          local_reference_vars[reference_value->name] = reference_value;
+      for (auto var : references) {
+          local_reference_vars.push_back(var);
       }
-      for (int i = 0; i < arguments.size(); i++) {
+      {
+        std::map<std::string, int> reverse_index;
+        for (int i = 0; i < func.local_reference_vars_.size(); i++) {
+          reverse_index[func.local_reference_vars_[i]] = i;
+        }
+        for (int i = 0; i < arguments.size(); i++) {
           std::string var_name = func.local_vars_[i];
           #if DEBUG
           std::cout << var_name << " = " << arguments[i].toString() << std::endl;
           #endif
-          if (local_reference_vars.count(var_name) == 0) {
+          if (reverse_index.count(var_name) == 0) {
               local_variables[i] = arguments[i];
           } else {
-              local_reference_vars[var_name]->value = arguments[i];
+              local_reference_vars[reverse_index[var_name]]->value = arguments[i];
           }
+        }
       }
 
       int ip = 0;
@@ -276,7 +282,7 @@ namespace VM {
               //                                                           :  f.free_vars[i - f.local_reference_vars.size()]
               case Operation::PushReference:{
                   int index = instruction.operand0.value();
-                  stack.push(Value::makePointer(local_reference_vars[getVarFromRefIndex(func, index)]));
+                  stack.push(Value::makePointer(local_reference_vars[index]));
               }
               break;
 
@@ -286,7 +292,7 @@ namespace VM {
               // Stack:     S :: operand 1 => S :: value_of(operand 1)
               case Operation::LoadReference: {
                   int index = instruction.operand0.value();
-                  ReferenceValue* rv = local_reference_vars[getVarFromRefIndex(func, index)];
+                  ReferenceValue* rv = local_reference_vars[index];
                   stack.push(rv->value);
               }
               break;
@@ -299,7 +305,7 @@ namespace VM {
               case Operation::StoreReference: {
                   Value value = safe_pop(stack);
                   int index = instruction.operand0.value();
-                  ReferenceValue* rv = local_reference_vars[getVarFromRefIndex(func, index)];
+                  ReferenceValue* rv = local_reference_vars[index];
                   rv->value = value;
               }
               break;

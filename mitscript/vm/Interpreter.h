@@ -19,7 +19,7 @@ namespace VM {
       ValueMap global_variables;
       std::vector<Value*> local_variable_stack;
       std::vector<int> local_variable_size_stack;
-      std::vector<std::map<std::string, ReferenceValue*>*> local_reference_variable_stack;
+      std::vector<std::vector<ReferenceValue*>*> local_reference_variable_stack;
       std::vector<std::stack<Value>*> operand_stack_stack;
       GC::CollectedHeap heap;
       Interpreter(BC::Function* const & main_func, size_t max_size);
@@ -29,7 +29,7 @@ namespace VM {
                           std::vector<ReferenceValue*> const & references);
       void push_frame(Value* local,
                       int local_size,
-                      std::map<std::string, ReferenceValue*>* local_reference,
+                      std::vector<ReferenceValue*>* local_reference,
                       std::stack<Value>* local_stack);
       void pop_frame();
       bool is_top_level();
