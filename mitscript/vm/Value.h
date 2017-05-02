@@ -211,10 +211,9 @@ namespace VM {
   };
 
   struct ReferenceValue : public PointerValue {
-    std::string name;
     Value value;
 
-    ReferenceValue(GC::CollectedHeap& heap, std::string n, Value v) : PointerValue(heap), name(n), value(v) {
+    ReferenceValue(GC::CollectedHeap& heap, Value v) : PointerValue(heap), value(v) {
       heap.increaseSize(size());
     }
 
@@ -234,7 +233,7 @@ namespace VM {
     }
 
     virtual size_t _size() {
-      return sizeof(ReferenceValue) + name.capacity() * sizeof(char);
+      return sizeof(ReferenceValue);
     }
 
     virtual void markChildren() {

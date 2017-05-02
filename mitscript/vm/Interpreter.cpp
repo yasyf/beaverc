@@ -175,7 +175,7 @@ namespace VM {
       }
 
       for (auto var : func.local_reference_vars_) {
-          local_reference_vars.push_back(heap.allocate<ReferenceValue>(var, Value::makeNone()));
+          local_reference_vars.push_back(heap.allocate<ReferenceValue>(Value::makeNone()));
       }
       for (auto var : references) {
           local_reference_vars.push_back(var);
