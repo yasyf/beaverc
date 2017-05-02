@@ -46,29 +46,14 @@ function
 				load_const	0
 				return
 			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 3,
-			local_vars = [a, b, c],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
 		}
 	],
-	constants = [1, 2, 3, 0],
+	constants = [5, 1, 2, "Should print: 5 0 -2 -10 25 1 -1", " ", 3, 0],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
 	free_vars = [],
-	names = [print, input, intcast, f, t],
+	names = [print, input, intcast, a, b, c],
 	instructions = 
 	[
 		load_func	0
@@ -77,20 +62,65 @@ function
 		store_global	1
 		load_func	2
 		store_global	2
-		load_func	3
-		alloc_closure	0
-		store_global	3
 		load_const	0
+		neg
+		store_global	3
 		load_const	1
-		load_const	2
-		load_global	3
-		call	3
+		neg
 		store_global	4
-		load_global	4
+		load_const	2
+		store_global	5
+		load_const	3
 		load_global	0
 		call	1
 		pop
-		load_const	3
+		load_global	3
+		load_global	4
+		div
+		load_const	4
+		add
+		load_global	4
+		load_global	3
+		div
+		add
+		load_const	4
+		add
+		load_global	3
+		load_global	5
+		div
+		add
+		load_const	4
+		add
+		load_global	3
+		load_global	5
+		mul
+		add
+		load_const	4
+		add
+		load_global	3
+		load_global	3
+		mul
+		add
+		load_const	4
+		add
+		load_global	3
+		load_const	5
+		load_global	5
+		mul
+		add
+		add
+		load_const	4
+		add
+		load_global	5
+		load_const	5
+		load_global	4
+		mul
+		add
+		add
+		load_global	0
+		call	1
+		pop
+		load_const	6
 		return
 	]
 }
