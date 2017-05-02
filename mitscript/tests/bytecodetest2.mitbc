@@ -89,8 +89,8 @@ function
 					names = [print],
 					instructions = 
 					[
-						push_ref	0
 						push_ref	1
+						push_ref	0
 						load_func	0
 						alloc_closure	2
 						store_local	1
