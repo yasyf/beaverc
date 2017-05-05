@@ -600,13 +600,16 @@ namespace VM {
               // Stack:     S :: operand 1 => S       
               case Operation::Pop:        
                   safe_pop(stack);        
-              break;      
+              break;
+
+              case Operation::GarbageCollect:
+                  potentially_garbage_collect();
+              break;
       
               default:        
                   throw RuntimeException("Found an unknown opcode.");     
               break;      
-          };      
-          potentially_garbage_collect();      
+          };         
           #if DEBUG       
           std::cout << "Stack:" << std::endl;     
           print_stack(stack);     

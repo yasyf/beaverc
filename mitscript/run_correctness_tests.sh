@@ -61,34 +61,39 @@ check_bad_parse() {
 
 make pprinter bccompiler vm
 
-for f in tests/good*.mit
-do
-  check_good_parse "$f"
-done
+# for f in tests/good*.mit
+# do
+#   check_good_parse "$f"
+# done
 
-for f in tests/test*.mit
-do
-  check_good_parse "$f"
-done
+# for f in tests/test*.mit
+# do
+#   check_good_parse "$f"
+# done
 
-for f in tests/bad*.mit
-do
-  check_bad_parse "$f"
-done
+# for f in tests/bad*.mit
+# do
+#   check_bad_parse "$f"
+# done
 
-for f in tests/interptest*.mit
-do
-  check_interpret_vm_s "$f"
-done
+# for f in tests/interptest*.mit
+# do
+#   check_interpret_vm_s "$f"
+# done
 
-for f in tests/bytecodetest*.mit
-do
-  check_compile "$f"
-  check_interpret_vm_s "$f"
-  check_interpret_vm_b "$f"
-done
+# for f in tests/bytecodetest*.mit
+# do
+#   check_compile "$f"
+#   check_interpret_vm_s "$f"
+#   check_interpret_vm_b "$f"
+# done
 
-for f in tests/staff/test*.mit
+# for f in tests/staff/test*.mit
+# do
+#   check_interpret_vm_s "$f"
+# done
+
+for f in tests/staff/test*.mit tests/interptest*.mit tests/bytecodetest*.mit
 do
   check_interpret_vm_s "$f"
 done
