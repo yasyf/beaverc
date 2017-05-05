@@ -33,7 +33,7 @@ BCPARSE_OBJECTS = bcparser/parser.o bcparser/lexer.o
 
 .PHONY: parser bcparser clean extraclean all
 
-default: vm bccompiler interpreter pprinter
+default: vm bccompiler interpreter pprinter ir
 
 BIOBJECTS = $(patsubst %.cpp, %.o, $(wildcard interpreter/*.cpp))
 interpreter: parser $(PARSE_OBJECTS) $(OBJECTS) $(BIOBJECTS)

@@ -50,7 +50,7 @@ function
 		function
 		{
 			functions = [],
-			constants = ["OUTPUT: ", 1, None],
+			constants = ["OUTPUT: ", None],
 			parameter_count = 1,
 			local_vars = [s],
 			local_ref_vars = [],
@@ -61,16 +61,15 @@ function
 				load_const	0
 				load_local	0
 				add
-				load_const	1
 				load_global	0
-				call
+				call	1
 				pop
-				load_const	2
+				load_const	1
 				return
 			]
 		}
 	],
-	constants = ["Hello", 1, 7, 0],
+	constants = ["Hello", 7, 0],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
@@ -85,27 +84,25 @@ function
 		load_func	2
 		store_global	2
 		load_const	0
-		load_const	1
 		load_global	0
-		call
+		call	1
 		pop
 		load_global	0
 		store_global	3
 		load_func	3
+		alloc_closure	0
 		store_global	0
 		load_const	0
-		load_const	1
 		load_global	0
-		call
+		call	1
+		pop
+		load_const	1
+		load_const	2
+		div
+		load_global	0
+		call	1
 		pop
 		load_const	2
-		load_const	3
-		div
-		load_const	1
-		load_global	0
-		call
-		pop
-		load_const	3
 		return
 	]
 }

@@ -103,9 +103,9 @@ function
 				load_local	3
 				field_store	3
 				dup
-				push_ref	0
-				push_ref	1
 				push_ref	2
+				push_ref	1
+				push_ref	0
 				load_func	0
 				alloc_closure	3
 				field_store	4

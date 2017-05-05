@@ -14,7 +14,7 @@ compile() {
 
 make bccompiler
 
-for f in tests/bytecodetest*.mit
+for f in tests/bytecodetest*.mit tests/interptest*.mit
 do
   compile "$f"
 done

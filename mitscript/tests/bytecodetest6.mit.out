@@ -1,1 +1,1 @@
-IllegalCastException: None
+IllegalCastException: Can't cast this value to a pointer type.

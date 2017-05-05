@@ -328,15 +328,19 @@ namespace BC {
     // Restore parent function's context
     parents = parent();
 
-    for (string& var : localRef0sScanner.getRefs()) {
-      size_t i = index(current().local_reference_vars_, var).value();
-      output(Operation::PushReference, i);
-    }
-
+    vector<string> localRefs = localRef0sScanner.getRefs();
+    vector<string> freeRefs = freeRef0sScanner.getRefs();
     size_t num_local_ref_vars = current().local_reference_vars_.size();
-    for (string& var : freeRef0sScanner.getRefs()) {
+    for (int j = freeRefs.size(); j > 0; j--) { // Push everything backwards
+      string& var = freeRefs[j-1];
       size_t i = index(current().free_vars_, var).value();
       output(Operation::PushReference, num_local_ref_vars + i);
+    }
+
+    for (int j = localRefs.size(); j > 0; j--) {
+      string& var = localRefs[j-1];
+      size_t i = index(current().local_reference_vars_, var).value();
+      output(Operation::PushReference, i);
     }
 
     // Push function
