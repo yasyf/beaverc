@@ -271,6 +271,17 @@ namespace ASM {
             assm.je(Rel32{cjump->delta});
             break;
           }
+          case IR::Operation::Call: {
+            auto call = dynamic_cast<IR::Call*>(instruction);
+            for (int i = call->args.size() - 1; i >= 0; --i) {
+              read_temp(call->args[i], r10);
+              assm.push(r10);
+            }
+            assm.mov(r10, Imm32{(uint32_t)call->args.size()});
+            read_temp(call->closure, r11);
+            call_helper((void *)(&helper_call_function), r11, rsp, r10);
+            break;
+          }
           case IR::Operation::Return: {
             auto ret = dynamic_cast<IR::Return*>(instruction);
             read_temp(ret->val, rbx);

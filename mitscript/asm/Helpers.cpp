@@ -13,6 +13,15 @@ namespace ASM {
     return Value::makePointer(interpreter->heap.allocate<RecordValue>()).value;
   }
 
+  uint64_t helper_call_function(uint64_t closure_p, Value* args, int argc) {
+    AbstractFunctionValue* closure = Value(closure_p).getPointer<AbstractFunctionValue>();
+    std::vector<Value> values;
+    for (size_t i = 0; i < argc; ++i) {
+      values.push_back(args[i]);
+    }
+    return closure->call(values).value;
+  }
+
   uint64_t helper_read_global(uint64_t closure_p, int index) {
     ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
     std::string name = closure->value->names_[index];
