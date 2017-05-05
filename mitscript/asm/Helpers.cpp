@@ -16,15 +16,13 @@ namespace ASM {
   uint64_t helper_read_global(uint64_t closure_p, int index) {
     ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
     std::string name = closure->value->names_[index];
-    #warning read global
-    return 0;
+    return interpreter->global_variables[name].value;
   }
 
-  uint64_t helper_write_global(uint64_t closure_p, int index, uint64_t value) {
+  void helper_write_global(uint64_t closure_p, int index, uint64_t value) {
     ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
     std::string name = closure->value->names_[index];
-    #warning write global
-    return 0;
+    interpreter->global_variables[name].value = value;
   }
 
   uint64_t helper_read_reference(uint64_t reference_p) {
