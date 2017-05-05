@@ -18,6 +18,7 @@ namespace ASM {
     x64asm::Function function;
     Assembler assm;
     size_t num_locals;
+    size_t num_temps;
 
     M64 current_refs() {
       #warning fill this in
@@ -80,7 +81,6 @@ namespace ASM {
     }
 
     void preamble() {
-      void helper_setup_function(Value* arguments, ReferenceValue* refs, Value* base_pointer, uint64_t closure_p, ) 
       // preconditions:
       // rdi contains a pointer to the list of arguments
       // rsi contains a pointer to the list of references (local references and free vars)
@@ -94,7 +94,16 @@ namespace ASM {
         // Takes the arguments and assigns them correctly on the stack
         // Adds the local variables (but not local reference variables) to the set of roots
 
-      assm.sub(rsp, Imm64{(num_locals + num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
+      assm.push(rbp);
+      assm.mov(rbp, rsp);
+
+      assm.push(rbx);
+      assm.push(r12);
+      assm.push(r13);
+      assm.push(r14);
+      assm.push(r15);
+
+      assm.sub(rsp, Imm32{((uint32_t)num_locals + (uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
       assm.mov(current_refs(), rsi);
       assm.mov(rdx, rbp);
       uint64_t addr = VM::Value::makePointer(&closure).value;
@@ -103,9 +112,16 @@ namespace ASM {
       assm.call(r10);
     }
 
-    void postamble() {
-      assm.add(rsp, Imm64{(num_locals + num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
+    void postamble(const R64& retval) {
+      assm.add(rsp, Imm32{((uint32_t)num_locals + (uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
       #warning clean up garbage collection here but not yet.
+      assm.mov(rax, retval);
+      assm.pop(r15);
+      assm.pop(r14);
+      assm.pop(r13);
+      assm.pop(r12);
+      assm.pop(rbx);
+      assm.pop(rbp);
     }
 
     void compile(IR::InstructionList& ir) {
@@ -255,6 +271,13 @@ namespace ASM {
             assm.je(Rel32{cjump->delta});
             break;
           }
+          case IR::Operation::Return: {
+            auto ret = dynamic_cast<IR::Return*>(instruction);
+            read_temp(ret->val, rbx);
+            postamble(rbx);
+            assm.ret();
+            break;
+          }
         }
       }
       assm.finish();
@@ -263,8 +286,8 @@ namespace ASM {
   public:
     Compiler(IR::InstructionList& ir, VM::ClosureFunctionValue& closure) : ir(ir), closure(closure) {
       this->num_locals = closure.value->local_vars_.size();
-      IR::Return& return_instruction = dynamic_cast<IR::Return&>(ir.back());
-      this->num_temps = return_instruction.val.num + 1;
+      IR::Return* return_instruction = dynamic_cast<IR::Return*>(ir.back());
+      this->num_temps = return_instruction->val.num + 1;
     }
 
     x64asm::Function compile() {

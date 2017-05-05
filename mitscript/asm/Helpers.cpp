@@ -1,6 +1,6 @@
+#include "Helpers.h"
 #include "../vm/globals.h"
 #include "../vm/operations.h"
-#include "../vm/Value.h"
 
 using namespace VM;
 
