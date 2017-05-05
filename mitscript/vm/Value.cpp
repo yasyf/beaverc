@@ -1,6 +1,8 @@
 #include "Value.h"
 #include "Interpreter.h"
 #include "globals.h"
+#include "../ir/Compiler.h"
+#include "../asm/Compiler.h"
 #include <list>
 
 #define LRU_SIZE 2
@@ -12,7 +14,17 @@ namespace VM {
   }
 
   Value ClosureFunctionValue::call(std::vector<Value> & arguments) {
-    return interpreter->run_function(*value, arguments, references);
+    if (has_option(OPTION_MACHINE_CODE_ONLY)) {
+      if (!is_compiled) {
+        InstructionList ir = IR::Compiler(value).compile();
+        compiled_func = ASM::Compiler(ir, *this).compile();
+        is_compiled = true;
+      }
+      uint64_t result = compiled_func.call<uint64_t, void*, int, void*, int>(&arguments[0], arguments.size(), &references[0], references.size());
+      return Value(result);
+    } else {
+      return interpreter->run_function(*value, arguments, references);
+    }
   }
 
   Value BuiltInFunctionValue::call(std::vector<Value> & arguments) {
