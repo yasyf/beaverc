@@ -227,7 +227,7 @@ namespace VM {
 
     std::string toString() {
       #if DEBUG
-        return "ref: " + name;
+        return "ref";
       #else
         throw RuntimeException("You have uncovered a bug :(");
       #endif
