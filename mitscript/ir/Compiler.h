@@ -151,6 +151,8 @@ namespace IR {
           case BC::Operation::Return:
             instructions.push_back(new Return{popTemp()});
             break;
+          case BC::Operation::GarbageCollect:
+            instructions.push_back(new CallHelper<Helper::GarbageCollect>{});
         }
       }
     }

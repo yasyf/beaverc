@@ -222,7 +222,9 @@ namespace BC {
         // Operand 1: a value
         // Mnemonic:  swap
         // Stack:     S :: operand 1 => S
-        Pop
+        Pop,
+
+        GarbageCollect,
     };
 
 

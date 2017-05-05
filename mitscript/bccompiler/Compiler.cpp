@@ -216,6 +216,7 @@ namespace BC {
 
     transpile(call.target);
     output(Operation::Call, call.arguments.size());
+    output(Operation::GarbageCollect);
   }
 
   void Compiler::visit(CallStatement& cs) {
@@ -249,6 +250,7 @@ namespace BC {
 
     size_t loop_start = count();
 
+    output(Operation::GarbageCollect);
     drain(condInst); // cond-block
     output(Operation::If, 2); // skip past end-goto
     output(Operation::Goto, bodyInst.size() + 2); // end-goto: skip past body-block and loop-goto

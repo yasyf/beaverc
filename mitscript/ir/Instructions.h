@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../bccompiler/Types.h"
+#include <experimental/optional>
 #include <vector>
 
 using namespace std;
@@ -103,6 +104,7 @@ namespace IR {
   };
 
   enum class Helper {
+    GarbageCollect,
     AssertInt,
     AssertBool,
   };
@@ -144,8 +146,9 @@ namespace IR {
 
   template<Helper H>
   struct CallHelper : Instruction {
-    Temp arg;
+    experimental::optional<Temp> arg;
 
+    CallHelper() {}
     CallHelper(Temp arg) : arg(arg) {}
     static Helper helper() { return H; }
     virtual Operation op() { return Operation::CallHelper; }
