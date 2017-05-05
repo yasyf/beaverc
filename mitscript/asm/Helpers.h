@@ -17,4 +17,5 @@ namespace ASM {
   void helper_assert_bool(uint64_t value);
   uint64_t helper_add(uint64_t left, uint64_t right);
   uint64_t helper_equals(uint64_t left, uint64_t right);
+  void helper_setup_function(Value* arguments, ReferenceValue* refs, Value* base_pointer, uint64_t closure_p);
 }

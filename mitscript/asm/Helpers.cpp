@@ -85,4 +85,34 @@ namespace ASM {
   uint64_t helper_equals(uint64_t left, uint64_t right) {
     return equals(Value(left), Value(right)).value;
   }
+
+  void helper_setup_function(Value* arguments, ReferenceValue** refs, Value* base_pointer, uint64_t closure_p) {
+    ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
+
+    #warning Make sure to add locals and temps to the set of roots
+
+    // Assign everything to none
+    for (int i = 0; i < closure->value->local_vars_.size(); i++) {
+      base_pointer[-i-1] = Value::makeNone();
+    }
+
+    // Assign the variables
+    std::map<std::string, int> reverse_index;
+    for (int i = 0; i < closure->value->local_reference_vars_.size(); i++) {
+      reverse_index[closure->value->local_reference_vars_[i]] = i;
+    }
+
+    for (int i = 0; i < closure->value->parameter_count_; i++) {
+      std::string var_name = closure->value->local_vars_[i];
+      #if DEBUG
+      std::cout << "Assembly: ";
+      std::cout << var_name << " = " << arguments[i].toString() << std::endl;
+      #endif
+      if (reverse_index.count(var_name) == 0) {
+        base_pointer[-i-1] = arguments[i];
+      } else {
+        refs[reverse_index[var_name]]->value = arguments[i];
+      }
+    }
+  }
 }
