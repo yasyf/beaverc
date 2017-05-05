@@ -24,7 +24,8 @@ namespace VM {
       Interpreter(std::shared_ptr<BC::Function> main_func, size_t max_size);
       int interpret();
       Value run_function(ClosureFunctionValue* closure,
-                          std::vector<Value> const & arguments);
+                          std::vector<Value> const & arguments,
+                          std::vector<ReferenceValue*>& local_reference_vars);
       void push_frame(Value* local,
                       int local_size,
                       std::vector<ReferenceValue*>* local_reference,

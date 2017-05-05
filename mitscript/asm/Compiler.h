@@ -80,10 +80,15 @@ namespace ASM {
     }
 
     void write_preamble() {
+      // preconditions:
+      // rdi contains a pointer to the list of arguments
+      // rsi contains a pointer to the list of references (local references and free vars)
+
+
       // Stuff that needs to happen:
       // Extend the stack RESERVED_STACK_SPACE + num_locals*8 + num_temps*8 downward
       // Call the setup_function helper. It is called with:
-        // The closure, the list of arguments and the length of arguments, the list of references
+        // The closure, the list of arguments, the list of references
       // It does the following:
         // Takes the arguments and assigns them correctly on the stack
         // Adds the local variables (but not local reference variables) to the set of roots

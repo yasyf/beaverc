@@ -14,16 +14,25 @@ namespace VM {
   }
 
   Value ClosureFunctionValue::call(std::vector<Value> & arguments) {
+    std::vector<ReferenceValue*> local_reference_vars;
+    for (auto var : value->local_reference_vars_) {
+      local_reference_vars.push_back(heap.allocate<ReferenceValue>(Value::makeNone()));
+    }
+    for (auto var : references) {
+      local_reference_vars.push_back(var);
+    }
+      
     if (has_option(OPTION_MACHINE_CODE_ONLY)) {
       if (!is_compiled) {
         InstructionList ir = IR::Compiler(value).compile();
         compiled_func = ASM::Compiler(ir, *this).compile();
         is_compiled = true;
       }
-      // uint64_t result = compiled_func.call<uint64_t, void*, int, void*, int>(&arguments[0], arguments.size(), &references[0], references.size());
+
+      // uint64_t result = compiled_func.call<uint64_t, void*, void*>(&arguments[0], &local_reference_vars[0]);
       // return Value(result);
     } //else {
-      return interpreter->run_function(this, arguments);
+      return interpreter->run_function(this, arguments, local_reference_vars);
     // }
   }
 

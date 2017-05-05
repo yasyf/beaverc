@@ -165,24 +165,18 @@ namespace VM {
 
   Value Interpreter::run_function(
       ClosureFunctionValue* closure,
-      std::vector<Value> const & arguments
+      std::vector<Value> const & arguments,
+      std::vector<ReferenceValue*>& local_reference_vars
   ) {
       BC::Function& func = *closure->value;
       std::stack<Value> stack;
       Value local_variables[func.local_vars_.size()];
-      std::vector<ReferenceValue*> local_reference_vars;
       push_frame(local_variables, func.local_vars_.size(), &local_reference_vars, &stack);
 
       if (func.parameter_count_ != arguments.size()) {
           throw RuntimeException("An incorrect number of parameters was passed to the function");
       }
 
-      for (auto var : func.local_reference_vars_) {
-          local_reference_vars.push_back(heap.allocate<ReferenceValue>(Value::makeNone()));
-      }
-      for (auto var : closure->references) {
-          local_reference_vars.push_back(var);
-      }
       {
         std::map<std::string, int> reverse_index;
         for (int i = 0; i < func.local_reference_vars_.size(); i++) {
