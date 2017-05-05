@@ -1,4 +1,5 @@
 #include "Interpreter.h"
+#include "operations.h"
 #include <algorithm>
 
 using namespace BC;
@@ -431,13 +432,7 @@ namespace VM {
               case Operation::Add: {
                   Value operand_1 = safe_pop(stack);
                   Value operand_2 = safe_pop(stack);
-                  if (operand_1.isString() || operand_2.isString()) {
-                      stack.push(Value::makeString(heap.allocate<StringValue>(operand_2.toString() + operand_1.toString())));
-                  } else if (operand_1.isInteger() && operand_2.isInteger()) {
-                      stack.push(Value::makeInteger(operand_1.getInteger() + operand_2.getInteger()));
-                  } else {
-                      throw IllegalCastException("Can't perform addition");
-                  }
+                  stack.push(add(operand_2, operand_1));
               }
               break;
 
@@ -513,7 +508,7 @@ namespace VM {
               case Operation::Eq: {
                   Value operand_1 = safe_pop(stack);
                   Value operand_2 = safe_pop(stack);
-                  stack.push(Value::makeBoolean(operand_2 == operand_1));
+                  stack.push(equals(operand_2, operand_1));
               }
               break;
 
