@@ -115,14 +115,6 @@ namespace VM {
   }
 
   template<typename T>
-  static T safe_index(const std::vector<T> &v, int i) {
-      if (i >= 0 && i < v.size()) {
-          return v[i];
-      }
-      throw RuntimeException("Tried to access an index out of bounds.");
-  }
-
-  template<typename T>
   static T safe_pop(std::stack<T> &s) {
       if (!s.empty()) {
           T result = s.top();
@@ -219,12 +211,7 @@ namespace VM {
               // Stack:      S => f.functions()[i] :: S
               case Operation::LoadFunc: {
                   int index = instruction.operand0.value();
-                  if (index < 0 && (-index - 1) < static_cast<int>(BuiltInFunctionType::MAX)) {
-                      stack.push(Value::makePointer(heap.allocate<BuiltInFunctionValue>(-index - 1)));
-                  } else {
-                      std::shared_ptr<Function> function = safe_index(func.functions_, instruction.operand0.value());
-                      stack.push(Value::makePointer(heap.allocate<BareFunctionValue>(function)));
-                  }
+                  stack.push(allocateFunction(closure, index));
               }
               break;
 

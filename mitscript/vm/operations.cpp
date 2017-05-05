@@ -15,4 +15,12 @@ namespace VM {
     Value equals(Value left, Value right) {
         return Value::makeBoolean(left == right);
     }
+
+    Value allocateFunction(ClosureFunctionValue* closure, int index) {
+      if (index < 0 && (-index - 1) < static_cast<int>(BuiltInFunctionType::MAX)) {
+        return Value::makePointer(interpreter->heap.allocate<BuiltInFunctionValue>(-index - 1));
+      } else {
+        return Value::makePointer(interpreter->heap.allocate<BareFunctionValue>(safe_index(closure->value->functions_, index)));
+      }
+    }
 }

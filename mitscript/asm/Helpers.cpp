@@ -36,10 +36,7 @@ namespace ASM {
 
   uint64_t helper_read_function(uint64_t closure_p, int index) {
     ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
-    auto function = closure->value->functions_[index];
-    // allocate BareFunctionValue?
-    #warning read function
-    return 0;
+    return allocateFunction(closure, index).value;
   }
 
   uint64_t helper_field_load(uint64_t closure_p, uint64_t record_p, int index) {
