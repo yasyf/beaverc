@@ -1,6 +1,7 @@
 #pragma once
 #include "../bccompiler/Instructions.h"
 #include "Instructions.h"
+#include "Exception.h"
 #include <algorithm>
 #include <vector>
 #include <stack>
@@ -18,6 +19,20 @@ namespace IR {
       Temp t = operands.top();
       operands.pop();
       return t;
+    }
+
+    void swapTemp() {
+      Temp t1 = operands.top();
+      operands.pop();
+      Temp t2 = operands.top();
+      operands.pop();
+
+      operands.push(t1);
+      operands.push(t2);
+    }
+
+    Temp peekTemp() {
+      return operands.top();
     }
 
     Temp nextTemp() {
@@ -87,6 +102,7 @@ namespace IR {
               args.push_back(popTemp());
             reverse(args.begin(), args.end());
             instructions.push_back(new Call{closure, args});
+            assign(RetVal{});
             break;
           }
           case BC::Operation::LoadReference:
@@ -117,8 +133,8 @@ namespace IR {
             store(Glob{func.names_[instruction.operand0.value()]});
             break;
           case BC::Operation::Add:
-            // TODO: handle non-ints
-            int_binop<Add>();
+            instructions.push_back(new CallHelper<Helper::Add>{popTemp(), popTemp()});
+            assign(RetVal{});
             break;
           case BC::Operation::Sub:
             int_binop<Sub>();
@@ -126,10 +142,15 @@ namespace IR {
           case BC::Operation::Mul:
             int_binop<Mul>();
             break;
-          case BC::Operation::Div:
-            // TODO: check for 0
-            int_binop<Div>();
+          case BC::Operation::Div: {
+            Temp arg1 = popTemp();
+            Temp arg2 = popTemp();
+            instructions.push_back(new CallHelper<Helper::AssertInt>{arg1});
+            instructions.push_back(new CallHelper<Helper::AssertInt>{arg2});
+            instructions.push_back(new CallHelper<Helper::AssertNotZero>{arg2});
+            instructions.push_back(new Div{nextTemp(), arg1, arg2});
             break;
+          }
           case BC::Operation::Gt:
             int_binop<Gt>();
             break;
@@ -153,6 +174,68 @@ namespace IR {
             break;
           case BC::Operation::GarbageCollect:
             instructions.push_back(new CallHelper<Helper::GarbageCollect>{});
+            break;
+          case BC::Operation::AllocRecord:
+            instructions.push_back(new CallHelper<Helper::AllocRecord>{});
+            assign(RetVal{});
+            break;
+          case BC::Operation::FieldLoad:
+            instructions.push_back(new CallHelper<Helper::FieldLoad>{(size_t)instruction.operand0.value(), popTemp()});
+            assign(RetVal{});
+            break;
+          case BC::Operation::FieldStore: {
+            Temp value = popTemp();
+            Temp record = popTemp();
+            instructions.push_back(new CallHelper<Helper::FieldStore>{(size_t)instruction.operand0.value(), record, value});
+            break;
+          }
+          case BC::Operation::IndexLoad: {
+            Temp index = popTemp();
+            Temp record = popTemp();
+            instructions.push_back(new CallHelper<Helper::IndexLoad>{record, index});
+            assign(RetVal{});
+            break;
+          }
+          case BC::Operation::IndexStore: {
+            Temp value = popTemp();
+            Temp index = popTemp();
+            Temp record = popTemp();
+            instructions.push_back(new CallHelper<Helper::IndexStore>{record, index, value});
+            break;
+          }
+          case BC::Operation::AllocClosure: {
+            size_t ref_count = instruction.operand0.value();
+            Temp function = popTemp();
+            vector<Temp> refs;
+            for (size_t i = 0; i < ref_count; ++i)
+              refs.push_back(popTemp());
+            reverse(refs.begin(), refs.end());
+            instructions.push_back(new AllocClosure{function, refs});
+            assign(RetVal{});
+            break;
+          }
+          case BC::Operation::Goto:
+            instructions.push_back(new Jump{instruction.operand0.value()});
+            break;
+          case BC::Operation::If: {
+            int delta = instruction.operand0.value();
+            Temp cond = popTemp();
+            instructions.push_back(new CallHelper<Helper::AssertBool>{cond});
+            instructions.push_back(new CondJump{cond, delta});
+            break;
+          }
+          case BC::Operation::Dup:
+            assign(peekTemp());
+            break;
+          case BC::Operation::Swap:
+            swapTemp();
+            break;
+          case BC::Operation::Pop:
+            popTemp();
+            break;
+          default:
+            throw InvalidOperationException(to_string(static_cast<int>(instruction.operation)));
+            break;
         }
       }
     }

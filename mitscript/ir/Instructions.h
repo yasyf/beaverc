@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../bccompiler/Types.h"
-#include <experimental/optional>
 #include <vector>
 
 using namespace std;
@@ -25,7 +24,9 @@ namespace IR {
     virtual string toString() { return "t" + to_string(num); }
   };
 
-  struct Ret : Operand {};
+  struct RetVal : Operand {
+    virtual string toString() { return "retval"; }
+  };
 
   struct Var : Operand {
     size_t num;
@@ -98,15 +99,25 @@ namespace IR {
     Not,
     Neg,
     Call,
+    AllocClosure,
     Return,
     OutputLabel,
+    Jump,
+    CondJump,
     CallHelper,
   };
 
   enum class Helper {
     GarbageCollect,
+    AllocRecord,
+    FieldLoad,
+    FieldStore,
+    IndexLoad,
+    IndexStore,
     AssertInt,
+    AssertNotZero,
     AssertBool,
+    Add,
   };
 
   struct Instruction {
@@ -142,17 +153,6 @@ namespace IR {
     Store(D dest, Temp src) : dest(dest), src(src) {}
     virtual Operation op() { return Operation::Store; }
     virtual string toString() { return dest.toString() + " = " + src.toString(); }
-  };
-
-  template<Helper H>
-  struct CallHelper : Instruction {
-    experimental::optional<Temp> arg;
-
-    CallHelper() {}
-    CallHelper(Temp arg) : arg(arg) {}
-    static Helper helper() { return H; }
-    virtual Operation op() { return Operation::CallHelper; }
-    virtual string toString() { return "call_helper " + to_string(static_cast<int>(H)); }
   };
 
   template<Operation Op>
@@ -237,6 +237,54 @@ namespace IR {
     virtual string toString() { return "call " + closure.toString(); }
   };
 
+  struct AllocClosure : Instruction {
+    Temp function;
+    vector<Temp> refs;
+
+    AllocClosure(Temp function, vector<Temp> refs) : function(function), refs(refs) {}
+    virtual Operation op() { return Operation::AllocClosure; }
+    virtual string toString() { return "alloc_closure " + function.toString(); }
+  };
+
+  template<Helper H>
+  struct CallHelper : Instruction {
+    size_t arg0;
+    vector<Temp> args;
+
+    CallHelper() {}
+
+    CallHelper(Temp arg) {
+      this->args = {arg};
+    }
+
+    CallHelper(size_t arg0) {
+      this->arg0 = arg0;
+    }
+
+    CallHelper(size_t arg0, Temp arg) {
+      this->arg0 = arg0;
+      this->args = {arg};
+    }
+
+    CallHelper(Temp arg1, Temp arg2) {
+      this->args = {arg1, arg2};
+    }
+
+    CallHelper(size_t arg0, Temp arg1, Temp arg2) {
+      this->arg0 = arg0;
+      this->args = {arg1, arg2};
+    }
+
+    CallHelper(Temp arg1, Temp arg2, Temp arg3) {
+      this->args = {arg1, arg2, arg3};
+    }
+
+    static Helper helper() { return H; }
+    virtual Operation op() { return Operation::CallHelper; }
+    virtual string toString() { return "call_helper " + to_string(static_cast<int>(H)); }
+  };
+
+
   struct Return : Instruction {
     Temp val;
 
@@ -251,6 +299,23 @@ namespace IR {
     OutputLabel(Label label) : label(label) {}
     virtual Operation op() { return Operation::OutputLabel; }
     virtual string toString() { return label.toString() + ":"; }
+  };
+
+  struct Jump : Instruction {
+    int delta;
+
+    Jump(int delta) : delta(delta) {}
+    virtual Operation op() { return Operation::Jump; }
+    virtual string toString() { return "jmp " + to_string(delta); }
+  };
+
+  struct CondJump : Instruction {
+    Temp cond;
+    int delta;
+
+    CondJump(Temp cond, int delta) : cond(cond), delta(delta) {}
+    virtual Operation op() { return Operation::CondJump; }
+    virtual string toString() { return "cjmp " + cond.toString() + ", " + to_string(delta); }
   };
 
   typedef vector<Instruction*> InstructionList;
