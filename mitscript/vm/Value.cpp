@@ -20,11 +20,11 @@ namespace VM {
         compiled_func = ASM::Compiler(ir, *this).compile();
         is_compiled = true;
       }
-      uint64_t result = compiled_func.call<uint64_t, void*, int, void*, int>(&arguments[0], arguments.size(), &references[0], references.size());
-      return Value(result);
-    } else {
+      // uint64_t result = compiled_func.call<uint64_t, void*, int, void*, int>(&arguments[0], arguments.size(), &references[0], references.size());
+      // return Value(result);
+    } //else {
       return interpreter->run_function(this, arguments);
-    }
+    // }
   }
 
   Value BuiltInFunctionValue::call(std::vector<Value> & arguments) {

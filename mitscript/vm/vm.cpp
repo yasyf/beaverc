@@ -7,6 +7,9 @@
 #include "globals.h"
 #include "mem.h"
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
 
 using namespace std;
 
@@ -15,42 +18,64 @@ using namespace std;
 
 enum Mode {SOURCE, BYTECODE};
 
-void usage() {
-  cout << "Usage: vm -mem <MEM> <-s|-b> <filename>" << endl;
-}
-
 int main(int argc, char** argv)
 {
   void* scanner;
   FILE* infile;
-  Mode mode;
+  Mode mode = SOURCE;
   shared_ptr<BC::Function> function;
 
-  if (argc == 4) {
-    infile = stdin;
-  } else if (argc == 5) {
-    infile = fopen(argv[4], "r");
+  const char* max_mem = "4";
+
+  while (true) {
+    static struct option long_options[] =
+      {
+        /* These options don’t set a flag.
+           We distinguish them by their indices. */
+        {"mem",      required_argument, 0, 'm'},
+        {"source",   no_argument,       0, 's'},
+        {"bytecode", no_argument,       0, 'b'},
+        {"opt",      required_argument, 0, 'o'},
+        {0, 0, 0, 0}
+      };
+    int option_index = 0;
+    int c = getopt_long (argc, argv, "m:sbo:",
+                     long_options, &option_index);
+
+    if (c == -1) {
+      break;
+    }
+
+    switch (c) {
+      case 'm':
+        max_mem = optarg;
+        break;
+      case 's':
+        mode = SOURCE;
+        break;
+      case 'b':
+        mode = BYTECODE;
+        break;
+      case 'o':
+        if (strcmp(optarg, "machine-code-only") == 0) {
+          set_option(OPTION_MACHINE_CODE_ONLY);
+        }
+        break;
+      case '?':
+        break;
+      default:
+        abort();
+    }
+  }
+
+  if (optind < argc) {
+    infile = fopen(argv[optind], "r");
     if (!infile) {
-      cout << "error: cannot open " << argv[4] << endl;
+      cout << "error: cannot open " << argv[optind] << endl;
       return 1;
     }
   } else {
-    usage();
-    return 1;
-  }
-
-  if (strcmp(argv[1], "-mem") != 0) {
-    usage();
-    return 1;
-  }
-
-  if (strcmp(argv[3], "-s") == 0) {
-    mode = SOURCE;
-  } else if (strcmp(argv[3], "-b") == 0) {
-    mode = BYTECODE;
-  } else {
-    usage();
-    return 1;
+    infile = stdin;
   }
 
   if (mode == SOURCE) {
@@ -80,7 +105,7 @@ int main(int argc, char** argv)
     function = std::shared_ptr<BC::Function>(funcptr);
   }
 
-  size_t max_memory = std::stoi(argv[2]) * MB_TO_B;
+  size_t max_memory = std::stoi(max_mem) * MB_TO_B;
   size_t current_memory = rss();
   size_t usable_memory = (max_memory > current_memory) ? max_memory - current_memory : 0;
 
