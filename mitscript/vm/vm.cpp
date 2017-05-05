@@ -95,7 +95,7 @@ int main(int argc, char** argv)
     ;
   #endif
 
-  interpreter = new VM::Interpreter(function.get(), usable_memory);
+  interpreter = new VM::Interpreter(function, usable_memory);
   try {
     return interpreter->interpret();
   } catch (SystemException& ex) {

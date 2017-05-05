@@ -23,7 +23,7 @@ namespace VM {
       uint64_t result = compiled_func.call<uint64_t, void*, int, void*, int>(&arguments[0], arguments.size(), &references[0], references.size());
       return Value(result);
     } else {
-      return interpreter->run_function(*value, arguments, references);
+      return interpreter->run_function(this, arguments);
     }
   }
 
