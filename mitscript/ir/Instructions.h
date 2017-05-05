@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../bccompiler/Types.h"
+#include "../vm/Value.h"
 #include <vector>
 
 using namespace std;
@@ -69,12 +70,13 @@ namespace IR {
     Const(int64_t val) : val(val) {}
 
     Const(std::shared_ptr<BC::Constant> constant) {
+      #warning TODO STRING
       if (auto val = dynamic_pointer_cast<BC::Integer>(constant))
-        this->val = val->value;
+        this->val = VM::Value::makeInteger(val->value).value;
       else if (auto val = dynamic_pointer_cast<BC::None>(constant))
-        this->val = 0;
+        this->val = VM::Value::makeNone().value;
       else if (auto val = dynamic_pointer_cast<BC::Boolean>(constant))
-        this->val = val->value ? 1 : 0;
+        this->val = VM::Value::makeBoolean(val->value).value;
       else if (auto val = dynamic_pointer_cast<BC::String>(constant))
         this->val = 0; // TODO
       else
