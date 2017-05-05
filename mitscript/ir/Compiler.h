@@ -115,7 +115,7 @@ namespace IR {
             assign(Function{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::LoadGlobal:
-            assign(Glob{func.names_[instruction.operand0.value()]});
+            assign(Glob{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::LoadLocal:
             assign(Var{(size_t)instruction.operand0.value()});
@@ -130,7 +130,7 @@ namespace IR {
             store(Var{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::StoreGlobal:
-            store(Glob{func.names_[instruction.operand0.value()]});
+            store(Glob{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::Eq:
             instructions.push_back(new CallHelper<Helper::Equals>{popTemp(), popTemp()});

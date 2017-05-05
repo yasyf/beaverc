@@ -38,11 +38,11 @@ namespace VM {
   };
 
   struct Value {
-    uintptr_t value;
+    uint64_t value;
 
     Value() : value(_NONE_TAG) {};
 
-    Value(uintptr_t value) : value(value) {};
+    Value(uint64_t value) : value(value) {};
 
 
     bool isInteger() const {
@@ -116,19 +116,19 @@ namespace VM {
     }
 
     static Value makeBoolean(bool value) {
-      return Value(_BOOLEAN_TAG | (static_cast<uintptr_t>(value) << 3));
+      return Value(_BOOLEAN_TAG | (static_cast<uint64_t>(value) << 3));
     }
 
     static Value makeInteger(int64_t value) {
-      return Value(static_cast<uintptr_t>(value * 8));
+      return Value(static_cast<uint64_t>(value * 8));
     }
 
     static Value makePointer(PointerValue* value) {
-      return Value(reinterpret_cast<uintptr_t>(value) | _POINTER_TAG);
+      return Value(reinterpret_cast<uint64_t>(value) | _POINTER_TAG);
     }
 
     static Value makeString(StringValue* value) {
-      return Value(reinterpret_cast<uintptr_t>(value) | _STRING_TAG);
+      return Value(reinterpret_cast<uint64_t>(value) | _STRING_TAG);
     }
   };
 

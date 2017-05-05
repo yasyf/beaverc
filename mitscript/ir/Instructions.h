@@ -37,10 +37,10 @@ namespace IR {
   };
 
   struct Glob : Operand {
-    string name;
+    size_t num;
 
-    Glob(string name) : name(name) {}
-    virtual string toString() { return "%%" + name; }
+    Glob(size_t num) : num(num) {}
+    virtual string toString() { return "%%" + to_string(num); }
   };
 
   struct Function : Operand {
@@ -65,9 +65,9 @@ namespace IR {
   };
 
   struct Const : Operand {
-    int64_t val;
+    uint64_t val;
 
-    Const(int64_t val) : val(val) {}
+    Const(uint64_t val) : val(val) {}
 
     Const(std::shared_ptr<BC::Constant> constant) {
       #warning TODO STRING
