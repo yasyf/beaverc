@@ -79,25 +79,34 @@ namespace ASM {
       assm.call(r10);
     }
 
-    void write_preamble() {
+    void preamble() {
+      void helper_setup_function(Value* arguments, ReferenceValue* refs, Value* base_pointer, uint64_t closure_p, ) 
       // preconditions:
       // rdi contains a pointer to the list of arguments
       // rsi contains a pointer to the list of references (local references and free vars)
-
-
       // Stuff that needs to happen:
       // Extend the stack RESERVED_STACK_SPACE + num_locals*8 + num_temps*8 downward
+      // Store references list into the special place
       // Call the setup_function helper. It is called with:
-        // The closure, the list of arguments, the list of references
+        // The closure, the list of arguments, the list of references, the base pointer
       // It does the following:
+        // Writes none to every variable
         // Takes the arguments and assigns them correctly on the stack
         // Adds the local variables (but not local reference variables) to the set of roots
+
+      assm.sub(rsp, Imm64{(num_locals + num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
+      assm.mov(current_refs(), rsi);
+      assm.mov(rdx, rbp);
+      uint64_t addr = VM::Value::makePointer(&closure).value;
+      assm.mov(rcx, Imm64{addr});
+      assm.mov(r10, Imm64{(uint64_t)&helper_setup_function});
+      assm.call(r10);
     }
 
     void compile(IR::InstructionList& ir) {
       assm.start(function);
 
-      write_preamble();
+      preamble();
 
       for (auto instruction : ir) {
         switch (instruction->op()) {
@@ -225,6 +234,8 @@ namespace ASM {
   public:
     Compiler(IR::InstructionList& ir, VM::ClosureFunctionValue& closure) : ir(ir), closure(closure) {
       this->num_locals = closure.value->local_vars_.size();
+      IR::Return& return_instruction = dynamic_cast<IR::Return&>(ir.back());
+      this->num_temps = return_instruction.val.num + 1;
     }
 
     x64asm::Function compile() {
