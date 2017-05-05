@@ -27,6 +27,15 @@ namespace ASM {
     return 0;
   }
 
+  uint64_t helper_read_reference(uint64_t reference_p) {
+    ReferenceValue* reference = (ReferenceValue*) reference_p;
+    return reference->value.value;
+  }
+
+  void helper_write_reference(uint64_t reference_p, uint64_t value) {
+    ((ReferenceValue*) reference_p)->value.value = value;
+  }
+
   uint64_t helper_read_function(uint64_t closure_p, int index) {
     ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
     auto function = closure->value->functions_[index];

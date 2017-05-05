@@ -11,6 +11,7 @@
 #include "../gc/Collectable.h"
 #include "InterpreterException.h"
 #include "Value.fwd.h"
+#include "include/x64asm.h"
 
 namespace VM {
   struct Interpreter;
@@ -274,10 +275,13 @@ namespace VM {
   };
 
   struct ClosureFunctionValue : public AbstractFunctionValue {
+    bool is_compiled;
     std::shared_ptr<BC::Function> value;
     std::vector<ReferenceValue*> references;
+    x64asm::Function compiled_func;
 
     ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {
+      is_compiled = false;
       heap.increaseSize(size());
     }
 

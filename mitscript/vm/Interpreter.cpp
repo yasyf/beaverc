@@ -8,12 +8,13 @@ using namespace GC;
 #define COLLECTION_RATIO 0.5
 
 namespace VM {
-  Interpreter::Interpreter(Function* const & main_func, size_t max_size) : heap(max_size) {
-      main_function = main_func;
+  Interpreter::Interpreter(std::shared_ptr<BC::Function> main_func, size_t max_size) : heap(max_size) {
+    main_closure = heap.allocate<ClosureFunctionValue>(main_func);
   }
 
   int Interpreter::interpret() {
-    Value val = run_function(*main_function, std::vector<Value>(), std::vector<ReferenceValue*>());
+    std::vector<Value> args;
+    Value val = main_closure->call(args);
     if (val.isInteger()) {
       return val.getInteger();
     } else {
@@ -56,6 +57,7 @@ namespace VM {
       std::cout << "$$$$$ Building roots..." << std::endl;
       #endif
       std::vector<PointerValue*> roots;
+      roots.push_back(main_closure);
       for (int i = 0; i < local_variable_stack.size(); i++) {
         auto local_variables = local_variable_stack[i];
         auto size = local_variable_size_stack[i];
@@ -162,10 +164,10 @@ namespace VM {
   }
 
   Value Interpreter::run_function(
-      Function const & func,
-      std::vector<Value> const & arguments,
-      std::vector<ReferenceValue*> const & references
+      ClosureFunctionValue* closure,
+      std::vector<Value> const & arguments
   ) {
+      BC::Function& func = *closure->value;
       std::stack<Value> stack;
       Value local_variables[func.local_vars_.size()];
       std::vector<ReferenceValue*> local_reference_vars;
@@ -178,7 +180,7 @@ namespace VM {
       for (auto var : func.local_reference_vars_) {
           local_reference_vars.push_back(heap.allocate<ReferenceValue>(Value::makeNone()));
       }
-      for (auto var : references) {
+      for (auto var : closure->references) {
           local_reference_vars.push_back(var);
       }
       {
