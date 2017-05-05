@@ -129,6 +129,21 @@ namespace ASM {
             }
             break;
           }
+          case IR::Operation::Add: {
+            auto add = dynamic_cast<Add*>(instruction);
+            read_temp(add->src1.num, r10);
+            read_temp(add->src2.num, r11);
+            call_helper((void *)(&helper_add), r10, r11);
+            write_temp(add->dest.num, rax);
+            break;
+          }
+          case IR::Operation::Sub: {
+            auto sub = dynamic_cast<Sub*>(instruction);
+            read_temp(sub->src1.num, r10);
+            read_temp(sub->src2.num, r11);
+            assm.sub(r10, r11);
+            write_temp(sub->dest.num, r10);
+          }
         }
       }
       assm.finish();
