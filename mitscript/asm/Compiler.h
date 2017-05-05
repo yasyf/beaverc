@@ -103,6 +103,11 @@ namespace ASM {
       assm.call(r10);
     }
 
+    void postamble() {
+      assm.add(rsp, Imm64{(num_locals + num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
+      #warning clean up garbage collection here but not yet.
+    }
+
     void compile(IR::InstructionList& ir) {
       assm.start(function);
 
