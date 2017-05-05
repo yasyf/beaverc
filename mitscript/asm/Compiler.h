@@ -163,7 +163,6 @@ namespace ASM {
             break;
           }
           case IR::Operation::Sub: {
-            #warning account for tag bits
             auto sub = dynamic_cast<Sub*>(instruction);
             read_temp(sub->src1, r10);
             read_temp(sub->src2, r11);
@@ -172,20 +171,26 @@ namespace ASM {
             break;
           }
           case IR::Operation::Mul: {
-            #warning account for tag bits
             auto mul = dynamic_cast<Mul*>(instruction);
             read_temp(mul->src1, r10);
             read_temp(mul->src2, r11);
             assm.imul(r10, r11);
+            assm.sar(r10, Imm8{3});
             write_temp(mul->dest, r10);
             break;
           }
           case IR::Operation::Neg: {
-            #warning account for tag bits
             auto neg = dynamic_cast<Neg*>(instruction);
             read_temp(neg->src, r10);
             assm.neg(r10);
             write_temp(neg->dest, r10);
+            break;
+          }
+          case IR::Operation::Not: {
+            auto nott = dynamic_cast<Not*>(instruction);
+            read_temp(nott->src, r10);
+            assm.xor_(r10, Imm16{0b1000});
+            write_temp(nott->dest, r10);
             break;
           }
           case IR::Operation::Jump: {
