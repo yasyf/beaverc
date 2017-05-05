@@ -144,6 +144,7 @@ namespace ASM {
             read_temp(sub->src2, r11);
             assm.sub(r10, r11);
             write_temp(sub->dest, r10);
+            break;
           }
           case IR::Operation::Mul: {
             #warning account for tag bits
@@ -152,6 +153,7 @@ namespace ASM {
             read_temp(mul->src2, r11);
             assm.imul(r10, r11);
             write_temp(mul->dest, r10);
+            break;
           }
           case IR::Operation::Neg: {
             #warning account for tag bits
@@ -159,10 +161,12 @@ namespace ASM {
             read_temp(neg->src, r10);
             assm.neg(r10);
             write_temp(neg->dest, r10);
+            break;
           }
           case IR::Operation::Jump: {
             auto jump = dynamic_cast<Jump*>(instruction);
             assm.jmp(Rel32{jump->delta});
+            break;
           }
           case IR::Operation::CondJump: {
             auto cjump = dynamic_cast<CondJump*>(instruction);
@@ -170,6 +174,7 @@ namespace ASM {
             read_temp(cjump->cond, r10);
             assm.cmp(r10, Imm32{(uint32_t)true_val});
             assm.je(Rel32{cjump->delta});
+            break;
           }
         }
       }
