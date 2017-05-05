@@ -62,6 +62,11 @@ IROBJECTS = $(patsubst %.cpp, %.o, $(wildcard ir/*.cpp))
 ir: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) -o bin/$@
 
+ASMOBJECTS = $(patsubst %.cpp, %.o, $(wildcard asm/*.cpp))
+VMASMOBJECTS = $(patsubst %.cpp, %.o, $(filter-out vm/vm.cpp,$(wildcard vm/*.cpp)))
+asm: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(VMASMOBJECTS) $(GCOBJECTS) $(ASMOBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(VMASMOBJECTS) $(GCOBJECTS) $(ASMOBJECTS) $(LIBS) -o bin/$@
+
 CGOBJECTS = $(patsubst %.cpp, %.o, $(wildcard codegen/*.cpp))
 codegen: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(CGOBJECTS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(CGOBJECTS) $(LIBS) -o bin/$@
