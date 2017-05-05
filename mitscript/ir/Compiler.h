@@ -136,10 +136,12 @@ namespace IR {
             instructions.push_back(new CallHelper<Helper::Equals>{popTemp(), popTemp()});
             assign(RetVal{});
             break;
-          case BC::Operation::Add:
-            instructions.push_back(new CallHelper<Helper::Add>{popTemp(), popTemp()});
-            assign(RetVal{});
+          case BC::Operation::Add: {
+            Temp arg1 = popTemp();
+            Temp arg2 = popTemp();
+            instructions.push_back(new Add{nextTemp(), arg1, arg2});
             break;
+          }
           case BC::Operation::Sub:
             int_binop<Sub>();
             break;

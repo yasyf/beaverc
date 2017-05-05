@@ -119,7 +119,6 @@ namespace IR {
     AssertInt,
     AssertNotZero,
     AssertBool,
-    Add,
     Equals,
   };
 
