@@ -179,6 +179,17 @@ namespace ASM {
             write_temp(mul->dest, r10);
             break;
           }
+          case IR::Operation::Div: {
+            auto div = dynamic_cast<Div*>(instruction);
+            read_temp(div->src1, r10);
+            read_temp(div->src2, r11);
+            assm.xor_(rdx, rdx);
+            assm.mov(rax, r10);
+            assm.idiv(r11);
+            assm.sal(rax, Imm8{3});
+            write_temp(div->dest, rax);
+            break;
+          }
           case IR::Operation::Neg: {
             auto neg = dynamic_cast<Neg*>(instruction);
             read_temp(neg->src, r10);
