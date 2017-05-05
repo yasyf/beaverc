@@ -29,11 +29,11 @@ namespace VM {
         is_compiled = true;
       }
 
-      // uint64_t result = compiled_func.call<uint64_t, void*, void*>(&arguments[0], &local_reference_vars[0]);
-      // return Value(result);
-    } //else {
+      uint64_t result = compiled_func.call<uint64_t, void*, void*>(&arguments[0], &local_reference_vars[0]);
+      return Value(result);
+    } else {
       return interpreter->run_function(this, arguments, local_reference_vars);
-    // }
+    }
   }
 
   Value BuiltInFunctionValue::call(std::vector<Value> & arguments) {
