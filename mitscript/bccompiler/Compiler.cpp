@@ -216,12 +216,12 @@ namespace BC {
 
     transpile(call.target);
     output(Operation::Call, call.arguments.size());
-    output(Operation::GarbageCollect);
   }
 
   void Compiler::visit(CallStatement& cs) {
     transpile(cs.call);
     output(Operation::Pop);
+    output(Operation::GarbageCollect);
   }
 
   void Compiler::visit(Global& global) {
