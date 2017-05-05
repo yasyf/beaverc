@@ -33,15 +33,8 @@ namespace BC {
   }
 
   void Compiler::addNativeFunction(string name, size_t argc) {
-    shared_ptr<Function> function(new Function());
-    function->parameter_count_ = argc;
-    current().functions_.push_back(function);
-    this->parents = parents->extend(function);
-    loadNone();
-    outputReturn();
-    this->parents = parent();
-
-    output(Operation::LoadFunc, current().functions_.size() - 1);
+    static size_t n_native_funcs = 1;
+    output(Operation::LoadFunc, -(n_native_funcs++));
     output(Operation::StoreGlobal, insert(current().names_, name));
   }
 

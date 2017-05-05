@@ -225,10 +225,10 @@ namespace VM {
               // Stack:      S => f.functions()[i] :: S
               case Operation::LoadFunc: {
                   int index = instruction.operand0.value();
-                  std::shared_ptr<Function> function = safe_index(func.functions_, instruction.operand0.value());
-                  if (is_top_level() && index >= 0 && index < static_cast<int>(BuiltInFunctionType::MAX)) {
-                      stack.push(Value::makePointer(heap.allocate<BuiltInFunctionValue>(index)));
+                  if (index < 0 && (-index - 1) < static_cast<int>(BuiltInFunctionType::MAX)) {
+                      stack.push(Value::makePointer(heap.allocate<BuiltInFunctionValue>(-index - 1)));
                   } else {
+                      std::shared_ptr<Function> function = safe_index(func.functions_, instruction.operand0.value());
                       stack.push(Value::makePointer(heap.allocate<BareFunctionValue>(function)));
                   }
               }
@@ -593,28 +593,28 @@ namespace VM {
               // Description: pops and discards the top of the stack
               // Operand 0: N/A
               // Operand 1: a value
-              // Mnemonic:  swap      
-              // Stack:     S :: operand 1 => S       
-              case Operation::Pop:        
-                  safe_pop(stack);        
+              // Mnemonic:  swap
+              // Stack:     S :: operand 1 => S
+              case Operation::Pop:
+                  safe_pop(stack);
               break;
 
               case Operation::GarbageCollect:
                   potentially_garbage_collect();
               break;
-      
-              default:        
-                  throw RuntimeException("Found an unknown opcode.");     
-              break;      
-          };         
-          #if DEBUG       
-          std::cout << "Stack:" << std::endl;     
-          print_stack(stack);     
-          std::cout << "----------" << std::endl;     
-          #endif      
-          ip += ip_increment;     
-      }       
-      pop_frame();        
-      return Value::makeNone();   
-  }       
+
+              default:
+                  throw RuntimeException("Found an unknown opcode.");
+              break;
+          };
+          #if DEBUG
+          std::cout << "Stack:" << std::endl;
+          print_stack(stack);
+          std::cout << "----------" << std::endl;
+          #endif
+          ip += ip_increment;
+      }
+      pop_frame();
+      return Value::makeNone();
+  }
 }
