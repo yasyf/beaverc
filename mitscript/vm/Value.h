@@ -13,6 +13,12 @@
 #include "Value.fwd.h"
 #include "include/x64asm.h"
 
+#define _INTEGER_TAG 0x0
+#define _NONE_TAG 0x1
+#define _BOOLEAN_TAG 0x2
+#define _POINTER_TAG 0x3
+#define _STRING_TAG 0x7
+
 namespace VM {
   struct Interpreter;
 
@@ -20,12 +26,6 @@ namespace VM {
 
   #define _VALUE_MASK 0x3
   #define _POINTER_MASK 0x7
-
-  #define _INTEGER_TAG 0x0
-  #define _NONE_TAG 0x1
-  #define _BOOLEAN_TAG 0x2
-  #define _POINTER_TAG 0x3
-  #define _STRING_TAG 0x7
 
   #define __IS_INTEGER_VALUE(value) ((value & _VALUE_MASK) == _INTEGER_TAG)
   #define __IS_NONE_VALUE(value) ((value & _VALUE_MASK) == _NONE_TAG)

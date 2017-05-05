@@ -190,6 +190,30 @@ namespace ASM {
             write_temp(div->dest, rax);
             break;
           }
+          case IR::Operation::Gt: {
+            auto gt = dynamic_cast<Gt*>(instruction);
+            read_temp(gt->src1, r10);
+            read_temp(gt->src2, r11);
+            assm.xor_(rax, rax);
+            assm.cmp(r11, r10);
+            assm.setg(rax);
+            assm.sal(rax, Imm8{3});
+            assm.or_(rax, Imm16{_BOOLEAN_TAG});
+            write_temp(gt->dest, rax);
+            break;
+          }
+          case IR::Operation::Geq: {
+            auto gte = dynamic_cast<Geq*>(instruction);
+            read_temp(gte->src1, r10);
+            read_temp(gte->src2, r11);
+            assm.xor_(rax, rax);
+            assm.cmp(r11, r10);
+            assm.setge(rax);
+            assm.sal(rax, Imm8{3});
+            assm.or_(rax, Imm16{_BOOLEAN_TAG});
+            write_temp(gte->dest, rax);
+            break;
+          }
           case IR::Operation::Neg: {
             auto neg = dynamic_cast<Neg*>(instruction);
             read_temp(neg->src, r10);
