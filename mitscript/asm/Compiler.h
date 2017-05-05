@@ -58,6 +58,12 @@ namespace ASM {
       assm.mov(temp(t.num), r10);
     }
 
+    void call_helper(void* fn, const R64& arg1) {
+      assm.mov(rdi, arg1);
+      assm.mov(r10, Imm64{(uint64_t)fn});
+      assm.call(r10);
+    }
+
     void call_helper(void* fn, const R64& arg1, const R64& arg2) {
       assm.mov(rdi, arg1);
       assm.mov(rsi, arg2);
@@ -73,8 +79,21 @@ namespace ASM {
       assm.call(r10);
     }
 
+    void write_preamble() {
+      // Stuff that needs to happen:
+      // Extend the stack RESERVED_STACK_SPACE + num_locals*8 + num_temps*8 downward
+      // Call the setup_function helper. It is called with:
+        // The closure, the list of arguments and the length of arguments, the list of references
+      // It does the following:
+        // Takes the arguments and assigns them correctly on the stack
+        // Adds the local variables (but not local reference variables) to the set of roots
+    }
+
     void compile(IR::InstructionList& ir) {
       assm.start(function);
+
+      write_preamble();
+
       for (auto instruction : ir) {
         switch (instruction->op()) {
           case IR::Operation::Assign: {
@@ -95,7 +114,8 @@ namespace ASM {
             } else if (auto assign = dynamic_cast<Assign<Deref>*>(instruction)) {
               assm.mov(r10, current_refs());
               assm.mov(r10, M64{r10, (uint32_t)assign->src.num * STACK_VALUE_SIZE});
-              write_temp(assign->dest, M64{r10});
+              call_helper((void*) &helper_read_reference, r10);
+              write_temp(assign->dest, rax);
             } else if (auto assign = dynamic_cast<Assign<Glob>*>(instruction)) {
               uint64_t addr = VM::Value::makePointer(&closure).value;
               assm.mov(r10, Imm64{addr});

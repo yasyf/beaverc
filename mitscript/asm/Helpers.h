@@ -5,6 +5,8 @@ namespace ASM {
   uint64_t helper_alloc_record();
   uint64_t helper_read_global(uint64_t closure_p, int index);
   uint64_t helper_write_global(uint64_t closure_p, int index, uint64_t value);
+  uint64_t helper_read_reference(uint64_t reference_p);
+  void helper_write_reference(uint64_t reference_p, uint64_t value);
   uint64_t helper_read_function(uint64_t closure_p, int index);
   uint64_t helper_field_load(uint64_t closure, uint64_t record, int index);
   void helper_field_store(uint64_t closure, uint64_t record, int index, uint64_t value);
