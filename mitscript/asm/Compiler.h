@@ -196,8 +196,8 @@ namespace ASM {
             auto sub = dynamic_cast<Sub*>(instruction);
             read_temp(sub->src1, r10);
             read_temp(sub->src2, r11);
-            assm.sub(r10, r11);
-            write_temp(sub->dest, r10);
+            assm.sub(r11, r10);
+            write_temp(sub->dest, r11);
             break;
           }
           case IR::Operation::Mul: {
