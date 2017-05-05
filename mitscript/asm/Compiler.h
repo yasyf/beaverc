@@ -280,6 +280,7 @@ namespace ASM {
             assm.mov(r10, Imm32{(uint32_t)call->args.size()});
             read_temp(call->closure, r11);
             call_helper((void *)(&helper_call_function), r11, rsp, r10);
+            assm.add(rsp, Imm32{call->args.size()*STACK_VALUE_SIZE});
             break;
           }
           case IR::Operation::Return: {
