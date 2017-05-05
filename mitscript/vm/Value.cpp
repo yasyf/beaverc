@@ -1,20 +1,21 @@
 #include "Value.h"
 #include "Interpreter.h"
+#include "globals.h"
 #include <list>
 
 #define LRU_SIZE 2
 
 namespace VM {
 
-  Value BareFunctionValue::call(Interpreter & interpreter, std::vector<Value> & arguments) {
+  Value BareFunctionValue::call(std::vector<Value> & arguments) {
     throw RuntimeException("call on a BareFunctionValue");
   }
 
-  Value ClosureFunctionValue::call(Interpreter & interpreter, std::vector<Value> & arguments) {
-    return interpreter.run_function(*value, arguments, references);
+  Value ClosureFunctionValue::call(std::vector<Value> & arguments) {
+    return interpreter->run_function(*value, arguments, references);
   }
 
-  Value BuiltInFunctionValue::call(Interpreter & interpreter, std::vector<Value> & arguments) {
+  Value BuiltInFunctionValue::call(std::vector<Value> & arguments) {
     switch (type) {
         case BuiltInFunctionType::Print: {
           if (arguments.size() != 1) {

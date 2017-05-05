@@ -247,7 +247,7 @@ namespace VM {
     AbstractFunctionValue(GC::CollectedHeap& heap) : PointerValue(heap) {}
 
     std::string toString() { return "FUNCTION"; };
-    virtual Value call(Interpreter & interpreter, std::vector<Value> & arguments) = 0;
+    virtual Value call(std::vector<Value> & arguments) = 0;
   };
 
   struct BareFunctionValue : public AbstractFunctionValue {
@@ -264,7 +264,7 @@ namespace VM {
       heap.decreaseSize(size());
     }
 
-    Value call(Interpreter & interpreter, std::vector<Value> & arguments);
+    Value call(std::vector<Value> & arguments);
 
     virtual size_t _size() {
       return sizeof(BareFunctionValue);
@@ -294,7 +294,7 @@ namespace VM {
       references.push_back(reference);
     };
 
-    Value call(Interpreter & interpreter, std::vector<Value> & arguments);
+    Value call(std::vector<Value> & arguments);
     virtual size_t _size() {
       return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
     }
@@ -337,6 +337,6 @@ namespace VM {
 
     virtual void markChildren() {}
 
-    Value call(Interpreter & interpreter, std::vector<Value> & arguments);
+    Value call(std::vector<Value> & arguments);
   };
 }
