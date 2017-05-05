@@ -118,6 +118,7 @@ namespace IR {
     AssertNotZero,
     AssertBool,
     Add,
+    Equals,
   };
 
   struct Instruction {

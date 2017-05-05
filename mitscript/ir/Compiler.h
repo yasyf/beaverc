@@ -132,6 +132,10 @@ namespace IR {
           case BC::Operation::StoreGlobal:
             store(Glob{func.names_[instruction.operand0.value()]});
             break;
+          case BC::Operation::Eq:
+            instructions.push_back(new CallHelper<Helper::Equals>{popTemp(), popTemp()});
+            assign(RetVal{});
+            break;
           case BC::Operation::Add:
             instructions.push_back(new CallHelper<Helper::Add>{popTemp(), popTemp()});
             assign(RetVal{});
