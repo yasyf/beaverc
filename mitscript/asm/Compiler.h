@@ -65,6 +65,14 @@ namespace ASM {
       assm.call(r10);
     }
 
+    void call_helper(void* fn, const R64& arg1, const R64& arg2, const R64& arg3) {
+      assm.mov(rdi, arg1);
+      assm.mov(rsi, arg2);
+      assm.mov(rdx, arg3);
+      assm.mov(r10, Imm64{(uint64_t)fn});
+      assm.call(r10);
+    }
+
     void compile(IR::InstructionList& ir) {
       assm.start(function);
       for (auto instruction : ir) {
@@ -82,7 +90,11 @@ namespace ASM {
               write_temp(assign->dest.num, r10);
             } else if (auto assign = dynamic_cast<Assign<Ref>*>(instruction)) {
               assm.mov(r10, current_refs());
-              assm.mov(r10, M8{r10, (uint32_t)assign->src.num * STACK_VALUE_SIZE});
+              assm.mov(r10, M64{r10, (uint32_t)assign->src.num * STACK_VALUE_SIZE});
+              write_temp(assign->dest.num, r10);
+            } else if (auto assign = dynamic_cast<Assign<Deref>*>(instruction)) {
+              assm.mov(r10, current_refs());
+              assm.mov(r10, M64{r10, (uint32_t)assign->src.num * STACK_VALUE_SIZE});
               write_temp(assign->dest.num, M64{r10});
             } else if (auto assign = dynamic_cast<Assign<Glob>*>(instruction)) {
               uint64_t addr = VM::Value::makePointer(&closure).value;
@@ -96,6 +108,24 @@ namespace ASM {
               assm.mov(r11, Imm64{(uint32_t)assign->src.num});
               call_helper((void *)(&helper_read_function), r10, r11);
               write_temp(assign->dest.num, rax);
+            }
+            break;
+          }
+          case IR::Operation::Store: {
+            if (auto store = dynamic_cast<Store<Var>*>(instruction)) {
+              read_temp(store->src.num, r10);
+              write_local(store->dest.num, r10);
+            } else if (auto store = dynamic_cast<Store<Deref>*>(instruction)) {
+              assm.mov(r10, current_refs());
+              assm.mov(r10, M64{r10, (uint32_t)store->dest.num * STACK_VALUE_SIZE});
+              read_temp(store->src.num, r11);
+              assm.mov(M64{r10}, r11);
+            } else if (auto store = dynamic_cast<Store<Glob>*>(instruction)) {
+              uint64_t addr = VM::Value::makePointer(&closure).value;
+              assm.mov(r10, Imm64{addr});
+              assm.mov(r11, Imm64{(uint32_t)store->dest.num});
+              read_temp(store->src.num, rax);
+              call_helper((void *)(&helper_write_global), r10, r11, rax);
             }
             break;
           }
