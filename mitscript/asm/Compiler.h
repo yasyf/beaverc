@@ -144,6 +144,13 @@ namespace ASM {
             assm.sub(r10, r11);
             write_temp(sub->dest.num, r10);
           }
+          case IR::Operation::Mul: {
+            auto mul = dynamic_cast<Mul*>(instruction);
+            read_temp(mul->src1.num, r10);
+            read_temp(mul->src2.num, r11);
+            assm.imul(r10, r11);
+            write_temp(mul->dest.num, r10);
+          }
         }
       }
       assm.finish();
