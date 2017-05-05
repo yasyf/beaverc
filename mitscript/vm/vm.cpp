@@ -4,6 +4,7 @@
 #include "../bcparser/lexer.h"
 #include "../bccompiler/Compiler.h"
 #include "Interpreter.h"
+#include "globals.h"
 #include "mem.h"
 #include <iostream>
 
@@ -94,9 +95,9 @@ int main(int argc, char** argv)
     ;
   #endif
 
-  VM::Interpreter interpreter(function.get(), usable_memory);
+  interpreter = new VM::Interpreter(function.get(), usable_memory);
   try {
-    return interpreter.interpret();
+    return interpreter->interpret();
   } catch (SystemException& ex) {
     cout << ex.what() << endl;
     return 1;

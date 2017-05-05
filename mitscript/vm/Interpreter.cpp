@@ -405,7 +405,7 @@ namespace VM {
                       arguments.push_back(safe_pop(stack));
                   }
                   std::reverse(arguments.begin(), arguments.end());
-                  stack.push(function->call(*this, arguments));
+                  stack.push(function->call(arguments));
               }
               break;
 
