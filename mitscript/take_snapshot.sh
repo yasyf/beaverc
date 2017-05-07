@@ -4,6 +4,6 @@ make clean vm
 
 NAME=$(git rev-parse HEAD)
 
-cp bin/vm snapshots/$NAME
+cp bin/vm speedtest/$NAME
 
-echo "$NAME,--mem 0 -s" >> snapshots/snapshots.txt
+echo "$NAME,--mem 0 -s" >> speedtest/snapshots.txt
