@@ -32,7 +32,7 @@ check_compile() {
 }
 
 check_interpret_vm_s() {
-  output=$(diff "$1.out" <(./bin/vm --mem 0 -s "$1"))
+  output=$(diff "$1.out" <(./bin/vm --mem 0 -s "$1" "${@:2}"))
   if [[ -z $output ]]; then
     good "$1" "interpret_vm_s"
   else
@@ -95,5 +95,5 @@ make pprinter bccompiler vm
 
 for f in tests/staff/test*.mit tests/interptest*.mit tests/bytecodetest*.mit
 do
-  check_interpret_vm_s "$f"
+  check_interpret_vm_s "$f" "$@"
 done
