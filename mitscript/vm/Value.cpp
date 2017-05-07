@@ -24,7 +24,7 @@ namespace VM {
       
     if (has_option(OPTION_MACHINE_CODE_ONLY)) {
       if (!is_compiled) {
-        InstructionList ir = IR::Compiler(value).compile();
+        InstructionList ir = IR::Compiler(heap, value).compile();
         compiled_func = ASM::Compiler(ir, *this).compile();
         is_compiled = true;
       }

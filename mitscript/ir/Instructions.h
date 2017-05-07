@@ -69,8 +69,7 @@ namespace IR {
 
     Const(uint64_t val) : val(val) {}
 
-    Const(std::shared_ptr<BC::Constant> constant) {
-      #warning TODO STRING
+    Const(GC::CollectedHeap& heap, std::shared_ptr<BC::Constant> constant) {
       if (auto val = dynamic_pointer_cast<BC::Integer>(constant))
         this->val = VM::Value::makeInteger(val->value).value;
       else if (auto val = dynamic_pointer_cast<BC::None>(constant))
@@ -78,7 +77,7 @@ namespace IR {
       else if (auto val = dynamic_pointer_cast<BC::Boolean>(constant))
         this->val = VM::Value::makeBoolean(val->value).value;
       else if (auto val = dynamic_pointer_cast<BC::String>(constant))
-        this->val = 0; // TODO
+        this->val = VM::Value::makeString(heap.allocateUncollectable<VM::StringValue>(val->value)).value;
       else
         throw "invalid Constant!";
     }

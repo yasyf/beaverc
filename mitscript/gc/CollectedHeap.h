@@ -65,6 +65,11 @@ namespace GC {
       return allocated.size();
     }
 
+    template<typename T, typename ARG>
+    T* allocateUncollectable(ARG a) {
+      return new T(*this, a);
+    }
+
     /*
     This method allocates an object of type T using the default constructor (with no parameters).
     T must be a subclass of Collectable. Before returning the object, it should be registered so that
