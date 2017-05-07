@@ -4,7 +4,11 @@
 namespace VM {
     Value add(Value left, Value right) {
         if (right.isString() || left.isString()) {
-            return Value::makeString(interpreter->heap.allocate<StringValue>(left.toString() + right.toString()));
+            if (has_option(OPTION_STRING_TREES)) {
+                return Value::makeString(interpreter->heap.allocate<StringValue>(left, right));
+            } else {
+                return Value::makeString(interpreter->heap.allocate<StringValue>(left.toString() + right.toString()));
+            }
         } else if (right.isInteger() && left.isInteger()) {
             return Value::makeInteger(right.getInteger() + left.getInteger());
         } else {

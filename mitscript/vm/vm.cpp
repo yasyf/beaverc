@@ -60,6 +60,9 @@ int main(int argc, char** argv)
         if (strcmp(optarg, "machine-code-only") == 0) {
           set_option(OPTION_MACHINE_CODE_ONLY);
         }
+        if (strcmp(optarg, "string-trees") == 0) {
+          set_option(OPTION_STRING_TREES);
+        }
         break;
       case '?':
         break;

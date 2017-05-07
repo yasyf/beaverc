@@ -134,31 +134,78 @@ namespace VM {
   };
 
   struct StringValue : public PointerValue {
+    size_t height;
     char* memory;
     size_t length;
+    Value left;
+    Value right;
 
     StringValue(GC::CollectedHeap& heap, const std::string& value) : PointerValue(heap) {
+      height = 0;
       length = value.size();
       memory = static_cast<char*>(malloc(length * sizeof(char)));
       strncpy(memory, value.c_str(), length);
       heap.increaseSize(size());
     }
 
+    StringValue(GC::CollectedHeap& heap, const Value l, const Value r) : PointerValue(heap) {
+      if (l.isPointer() && !l.isString()) {
+        // Must be a record or function
+        left = Value::makeString(heap.allocate<StringValue>(l.toString()));
+      } else {
+        left = l;
+      }
+      if (r.isPointer() && !r.isString()) {
+        // Must be a record or function
+        right = Value::makeString(heap.allocate<StringValue>(r.toString()));
+      } else {
+        right = r;
+      }
+      height = 1;
+      if (left.isPointer()) {
+        // Must be a string now
+        StringValue* ll = left.getPointer<StringValue>();
+        height = max(height, ll->height + 1);
+      }
+      if (right.isPointer()) {
+        StringValue* rr = right.getPointer<StringValue>();
+        height = max(height, rr->height + 1);
+      }
+    }
+
     ~StringValue() {
       #ifdef DEBUG
       cout << "DELETING StringValue: " << toString() << endl;
       #endif
-      free(memory);
+      if (height == 0) {
+        free(memory);
+      }
       heap.decreaseSize(size());
     }
 
-    std::string toString() { return std::string(memory, length); };
+    std::string toString() {
+      if (height == 0) {
+        return std::string(memory, length);
+      }
+      return left.toString() + right.toString();
+    };
 
     virtual size_t _size() {
-      return sizeof(StringValue) + length * sizeof(char);
+      if (height == 0) {
+        return sizeof(StringValue) + length * sizeof(char);
+      } else {
+        return sizeof(StringValue);
+      }
     }
 
-    virtual void markChildren() {}
+    virtual void markChildren() {
+      if (left.isPointer()) {
+        left.getPointerValue()->mark();
+      }
+      if (right.isPointer()) {
+        right.getPointerValue()->mark();
+      }
+    }
   };
 
   struct RecordValue : public PointerValue {
