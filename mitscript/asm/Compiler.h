@@ -59,6 +59,11 @@ namespace ASM {
       assm.mov(temp(t.num), r10);
     }
 
+    void call_helper(void* fn) {
+      assm.mov(r10, Imm64{(uint64_t)fn});
+      assm.call(r10);
+    }
+
     void call_helper(void* fn, const R64& arg1) {
       assm.mov(rdi, arg1);
       assm.mov(r10, Imm64{(uint64_t)fn});
@@ -76,6 +81,15 @@ namespace ASM {
       assm.mov(rdi, arg1);
       assm.mov(rsi, arg2);
       assm.mov(rdx, arg3);
+      assm.mov(r10, Imm64{(uint64_t)fn});
+      assm.call(r10);
+    }
+
+    void call_helper(void* fn, const R64& arg1, const R64& arg2, const R64& arg3, const R64& arg4) {
+      assm.mov(rdi, arg1);
+      assm.mov(rsi, arg2);
+      assm.mov(rdx, arg3);
+      assm.mov(rcx, arg4);
       assm.mov(r10, Imm64{(uint64_t)fn});
       assm.call(r10);
     }
@@ -244,6 +258,14 @@ namespace ASM {
             write_temp(gte->dest, rax);
             break;
           }
+          case IR::Operation::Eq: {
+            auto eq = dynamic_cast<Eq*>(instruction);
+            read_temp(eq->src1, r10);
+            read_temp(eq->src2, r11);
+            call_helper((void *)(&helper_equals), r10, r11);
+            write_temp(eq->dest, rax);
+            break;
+          }
           case IR::Operation::Neg: {
             auto neg = dynamic_cast<Neg*>(instruction);
             read_temp(neg->src, r10);
@@ -289,6 +311,66 @@ namespace ASM {
             postamble(rbx);
             assm.ret();
             break;
+          }
+          case IR::Operation::CallHelper: {
+            if (auto op = dynamic_cast<CallHelper<Helper::GarbageCollect>*>(instruction)) {
+              call_helper((void *)(&helper_garbage_collect));
+            } else if (auto op = dynamic_cast<CallHelper<Helper::AllocRecord>*>(instruction)) {
+              call_helper((void *)(&helper_alloc_record));
+            } else if (auto op = dynamic_cast<CallHelper<Helper::FieldLoad>*>(instruction)) {
+              uint64_t addr = VM::Value::makePointer(&closure).value;
+              assm.mov(r10, Imm64{addr});
+              read_temp(op->args[0], r11);
+              assm.mov(r12, Imm64{op->arg0});
+              call_helper((void *)(&helper_field_load), r10, r11, r12);
+            } else if (auto op = dynamic_cast<CallHelper<Helper::FieldStore>*>(instruction)) {
+              uint64_t addr = VM::Value::makePointer(&closure).value;
+              assm.mov(r10, Imm64{addr});
+              read_temp(op->args[0], r11);
+              assm.mov(r12, Imm64{op->arg0});
+              read_temp(op->args[1], r13);
+              call_helper((void *)(&helper_field_load), r10, r11, r12, r13);
+            } else if (auto op = dynamic_cast<CallHelper<Helper::IndexLoad>*>(instruction)) {
+              read_temp(op->args[0], r10);
+              read_temp(op->args[1], r11);
+              call_helper((void *)(&helper_index_load), r10, r11);
+            } else if (auto op = dynamic_cast<CallHelper<Helper::IndexStore>*>(instruction)) {
+              read_temp(op->args[0], r10);
+              read_temp(op->args[1], r11);
+              read_temp(op->args[2], r12);
+              call_helper((void *)(&helper_index_store), r10, r11, r12);
+            } else if (auto op = dynamic_cast<CallHelper<Helper::AssertInt>*>(instruction)) {
+              read_temp(op->args[0], r10);
+              call_helper((void *)(&helper_assert_int), r10);
+            } else if (auto op = dynamic_cast<CallHelper<Helper::AssertNotZero>*>(instruction)) {
+              read_temp(op->args[0], r10);
+              call_helper((void *)(&helper_assert_not_zero), r10);
+            } else if (auto op = dynamic_cast<CallHelper<Helper::AssertBool>*>(instruction)) {
+              read_temp(op->args[0], r10);
+              call_helper((void *)(&helper_assert_bool), r10);
+            }
+          }
+          case IR::Operation::AllocClosure: {
+            break; // TODO
+          }
+          case IR::Operation::And: {
+            auto andd = dynamic_cast<And*>(instruction);
+            read_temp(andd->src1, r10);
+            read_temp(andd->src2, r11);
+            assm.and_(r10, r11);
+            write_temp(andd->dest, r10);
+            break;
+          }
+          case IR::Operation::Or: {
+            auto orr = dynamic_cast<Or*>(instruction);
+            read_temp(orr->src1, r10);
+            read_temp(orr->src2, r11);
+            assm.or_(r10, r11);
+            write_temp(orr->dest, r10);
+            break;
+          }
+          default: {
+            throw VM::RuntimeException("Oops we forgot to implement something\n");
           }
         }
       }

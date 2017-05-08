@@ -88,13 +88,13 @@ namespace IR {
   enum class Operation {
     Assign,
     Store,
-    AllocVar,
     Add,
     Sub,
     Mul,
     Div,
     Gt,
     Geq,
+    Eq,
     And,
     Or,
     Not,
@@ -118,23 +118,12 @@ namespace IR {
     AssertInt,
     AssertNotZero,
     AssertBool,
-    Equals,
   };
 
   struct Instruction {
     virtual string toString() = 0;
     virtual Operation op() = 0;
   };
-
-  struct AllocVar : Instruction {
-    Var var;
-    size_t size;
-
-    AllocVar(Var var, size_t size) : var(var), size(size) {}
-    virtual Operation op() { return Operation::AllocVar; }
-    virtual string toString() { return var.toString() + " = alloc(" + to_string(size) + ")"; }
-  };
-
 
   template<typename S>
   struct Assign : Instruction {
@@ -196,6 +185,11 @@ namespace IR {
   struct Geq : BinOp<Operation::Geq> {
     using BinOp::BinOp;
     virtual string opString() { return "<="; }
+  };
+
+  struct Eq : BinOp<Operation::Eq> {
+    using BinOp::BinOp;
+    virtual string opString() { return "=="; }
   };
 
   struct And : BinOp<Operation::And> {

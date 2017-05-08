@@ -88,10 +88,6 @@ namespace IR {
     }
 
     void compile(BC::Function& func) {
-      for (size_t i = func.parameter_count_; i < func.local_vars_.size(); ++i) {
-        instructions.push_back(new AllocVar{Var{i}, sizeof(int64_t)});
-      }
-
       for (auto instruction : func.instructions) {
         switch(instruction.operation) {
           case BC::Operation::Call: {
@@ -132,14 +128,16 @@ namespace IR {
           case BC::Operation::StoreGlobal:
             store(Glob{(size_t)instruction.operand0.value()});
             break;
-          case BC::Operation::Eq:
-            instructions.push_back(new CallHelper<Helper::Equals>{popTemp(), popTemp()});
-            assign(RetVal{});
+          case BC::Operation::Eq: {
+            Temp arg1 = popTemp();
+            Temp arg2 = popTemp();
+            instructions.push_back(new Eq{nextTemp(), arg2, arg1});
             break;
+          }
           case BC::Operation::Add: {
             Temp arg1 = popTemp();
             Temp arg2 = popTemp();
-            instructions.push_back(new Add{nextTemp(), arg1, arg2});
+            instructions.push_back(new Add{nextTemp(), arg2, arg1});
             break;
           }
           case BC::Operation::Sub:
@@ -154,7 +152,7 @@ namespace IR {
             instructions.push_back(new CallHelper<Helper::AssertInt>{arg1});
             instructions.push_back(new CallHelper<Helper::AssertInt>{arg2});
             instructions.push_back(new CallHelper<Helper::AssertNotZero>{arg2});
-            instructions.push_back(new Div{nextTemp(), arg1, arg2});
+            instructions.push_back(new Div{nextTemp(), arg2, arg1});
             break;
           }
           case BC::Operation::Gt:
