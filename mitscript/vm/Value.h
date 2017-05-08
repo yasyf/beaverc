@@ -16,22 +16,29 @@
 #define _INTEGER_TAG 0x0
 #define _NONE_TAG 0x1
 #define _BOOLEAN_TAG 0x2
-#define _POINTER_TAG 0x3
-#define _STRING_TAG 0x7
+
+#define _STRING_TAG 0x3
+#define _POINTER_TAG 0x4
+
+#define _STRING_CONSTANT_TAG _STRING_TAG
+#define _STRING_VALUE_TAG (_POINTER_TAG | _STRING_TAG)
 
 namespace VM {
   struct Interpreter;
 
   #define unlikely(x)     __builtin_expect((x),0)
 
-  #define _VALUE_MASK 0x3
-  #define _POINTER_MASK 0x7
+  #define _VALUE_MASK 0x7
+  #define _STRING_MASK 0x3
 
   #define __IS_INTEGER_VALUE(value) ((value & _VALUE_MASK) == _INTEGER_TAG)
   #define __IS_NONE_VALUE(value) ((value & _VALUE_MASK) == _NONE_TAG)
   #define __IS_BOOLEAN_VALUE(value) ((value & _VALUE_MASK) == _BOOLEAN_TAG)
-  #define __IS_POINTER_VALUE(value) ((value & _VALUE_MASK) == _POINTER_TAG)
-  #define __IS_STRING_VALUE(value) ((value & _POINTER_MASK) == _STRING_TAG)
+  #define __IS_STRING_CONSTANT_VALUE(value) ((value & _VALUE_MASK) == _STRING_CONSTANT_TAG)
+  #define __IS_STRING_VALUE(value) ((value & _VALUE_MASK) == _STRING_VALUE_TAG)
+
+  #define __IS_POINTER_VALUE(value) ((value & _POINTER_TAG) == _POINTER_TAG)
+  #define __IS_STRING(value) ((value & _STRING_TAG) == _STRING_TAG)
 
   struct PointerValue : GC::Collectable {
     PointerValue(GC::CollectedHeap& heap) : GC::Collectable(heap) {};
@@ -50,14 +57,17 @@ namespace VM {
       return __IS_INTEGER_VALUE(value);
     }
 
-    bool isString() const {
-      return __IS_STRING_VALUE(value);
-    }
-
     bool isPointer() const {
       return __IS_POINTER_VALUE(value);
     }
 
+    bool isStringValue() const {
+      return __IS_STRING_VALUE(value);
+    }
+
+    bool isString() const {
+      return __IS_STRING(value);
+    }
 
     bool getBoolean() const {
       if (unlikely(!__IS_BOOLEAN_VALUE(value))) {
@@ -73,11 +83,18 @@ namespace VM {
       return static_cast<int64_t>(value & ~_VALUE_MASK) / 8;
     };
 
+    const char* getStringConstant() const {
+      if (unlikely(!__IS_STRING_CONSTANT_VALUE(value))) {
+        throw IllegalCastException("Value is not a string constant");
+      }
+      return reinterpret_cast<const char*>(value & ~_VALUE_MASK);
+    }
+
     PointerValue* getPointerValue() const {
       if (unlikely(!__IS_POINTER_VALUE(value))) {
         throw IllegalCastException("Can't cast this value to a pointer type.");
       }
-      return reinterpret_cast<PointerValue*>(value & ~_POINTER_MASK);
+      return reinterpret_cast<PointerValue*>(value & ~_VALUE_MASK);
     };
 
     template<typename T>
@@ -99,6 +116,10 @@ namespace VM {
         case _BOOLEAN_TAG: {
           return (getBoolean()) ? "True" : "False";
         }
+        case _STRING_CONSTANT_TAG: {
+          return std::string(getStringConstant());
+        }
+        case _STRING_VALUE_TAG:
         case _POINTER_TAG: {
           return getPointerValue()->toString();
         }
@@ -106,7 +127,7 @@ namespace VM {
     };
 
     bool operator==(Value other) {
-      if (__IS_STRING_VALUE(value) && __IS_STRING_VALUE(other.value)) {
+      if (__IS_STRING(value) && __IS_STRING(other.value)) {
         return toString() == other.toString(); // TODO: Make this faster
       }
       return value == other.value;
@@ -129,7 +150,11 @@ namespace VM {
     }
 
     static Value makeString(StringValue* value) {
-      return Value(reinterpret_cast<uint64_t>(value) | _STRING_TAG);
+      return Value(reinterpret_cast<uint64_t>(value) | _STRING_VALUE_TAG);
+    }
+
+    static Value makeStringConstant(const char* value) {
+      return Value(reinterpret_cast<uint64_t>(value) | _STRING_CONSTANT_TAG);
     }
   };
 
@@ -149,13 +174,13 @@ namespace VM {
     }
 
     StringValue(GC::CollectedHeap& heap, const Value l, const Value r) : PointerValue(heap) {
-      if (l.isPointer() && !l.isString()) {
+      if (l.isPointer() && !l.isStringValue()) {
         // Must be a record or function
         left = Value::makeString(heap.allocate<StringValue>(l.toString()));
       } else {
         left = l;
       }
-      if (r.isPointer() && !r.isString()) {
+      if (r.isPointer() && !r.isStringValue()) {
         // Must be a record or function
         right = Value::makeString(heap.allocate<StringValue>(r.toString()));
       } else {

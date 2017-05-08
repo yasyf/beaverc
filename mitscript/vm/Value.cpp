@@ -24,7 +24,7 @@ namespace VM {
       
     if (has_option(OPTION_MACHINE_CODE_ONLY)) {
       if (!is_compiled) {
-        InstructionList ir = IR::Compiler(heap, value).compile();
+        InstructionList ir = IR::Compiler(value).compile();
         compiled_func = ASM::Compiler(ir, *this).compile();
         is_compiled = true;
       }
@@ -64,9 +64,11 @@ namespace VM {
           if (arguments.size() != 1) {
             throw RuntimeException("Wrong number of arguments to intcast");
           }
-          StringValue* string = arguments[0].getPointer<StringValue>();
+          if (!arguments[0].isString()) {
+            throw IllegalCastException("A string wasn't passed to intcast");
+          }
           try {
-            return Value::makeInteger(std::stoi(string->toString()));
+            return Value::makeInteger(std::stoi(arguments[0].toString()));
           } catch (std::invalid_argument& ex) {
             throw IllegalCastException("string passed to intcast doesn't represent int");
           } catch (std::out_of_range& ex) {

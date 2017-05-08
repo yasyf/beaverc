@@ -10,7 +10,6 @@ using namespace std;
 
 namespace IR {
   class Compiler {
-    GC::CollectedHeap& heap;
     stack<Temp> operands;
     shared_ptr<BC::Function> bytecode;
     InstructionList instructions;
@@ -122,7 +121,7 @@ namespace IR {
             assign(Var{(size_t)instruction.operand0.value()});
             break;
           case BC::Operation::LoadConst:
-            assign(Const{heap, func.constants_[instruction.operand0.value()]});
+            assign(Const{func.constants_[instruction.operand0.value()]});
             break;
           case BC::Operation::StoreReference:
             store(Deref{(size_t)instruction.operand0.value()});
@@ -248,7 +247,7 @@ namespace IR {
     }
 
   public:
-    Compiler(GC::CollectedHeap& heap, shared_ptr<BC::Function> bytecode) : heap(heap), bytecode(bytecode) {}
+    Compiler(shared_ptr<BC::Function> bytecode) : bytecode(bytecode) {}
 
     InstructionList compile() {
       compile(*bytecode);
