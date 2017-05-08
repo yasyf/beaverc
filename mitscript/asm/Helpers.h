@@ -20,4 +20,6 @@ namespace ASM {
   uint64_t helper_equals(uint64_t left, uint64_t right);
   void helper_setup_function(VM::Value* arguments, VM::ReferenceValue** refs, VM::Value* base_pointer, uint64_t closure_p);
   uint64_t helper_call_function(uint64_t closure_p, VM::Value* args, int argc);
+  uint64_t helper_convert_to_closure(uint64_t bare_function);
+  void helper_add_reference_to_closure(uint64_t closure, uint64_t reference);
 }

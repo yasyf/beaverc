@@ -214,8 +214,7 @@ namespace IR {
             for (size_t i = 0; i < ref_count; ++i)
               refs.push_back(popTemp());
             reverse(refs.begin(), refs.end());
-            instructions.push_back(new AllocClosure{function, refs});
-            assign(RetVal{});
+            instructions.push_back(new AllocClosure{nextTemp(), function, refs});
             break;
           }
           case BC::Operation::Goto:

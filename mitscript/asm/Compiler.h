@@ -351,7 +351,16 @@ namespace ASM {
             }
           }
           case IR::Operation::AllocClosure: {
-            break; // TODO
+            auto op = dynamic_cast<AllocClosure*>(instruction);
+            read_temp(op->function, r12);
+            call_helper((void*) &helper_convert_to_closure, r12);
+            assm.mov(r12, rax);
+            for (Temp t : op->refs) {
+              read_temp(t, r10);
+              call_helper((void*) &helper_add_reference_to_closure, r12, r10);
+            }
+            write_temp(op->dest, r12);
+            break;
           }
           case IR::Operation::And: {
             auto andd = dynamic_cast<And*>(instruction);

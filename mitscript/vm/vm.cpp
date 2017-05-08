@@ -63,6 +63,9 @@ int main(int argc, char** argv)
         if (strcmp(optarg, "string-trees") == 0) {
           set_option(OPTION_STRING_TREES);
         }
+        if (strcmp(optarg, "compile-only") == 0) {
+          set_option(OPTION_COMPILE_ONLY);
+        }
         break;
       case '?':
         break;

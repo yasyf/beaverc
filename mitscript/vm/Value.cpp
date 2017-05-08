@@ -21,14 +21,14 @@ namespace VM {
     for (auto var : references) {
       local_reference_vars.push_back(var);
     }
-      
-    if (has_option(OPTION_MACHINE_CODE_ONLY)) {
-      if (!is_compiled) {
-        InstructionList ir = IR::Compiler(value).compile();
-        compiled_func = ASM::Compiler(ir, *this).compile();
-        is_compiled = true;
-      }
 
+    if ((has_option(OPTION_MACHINE_CODE_ONLY) || has_option(OPTION_COMPILE_ONLY)) && !is_compiled) {
+      InstructionList ir = IR::Compiler(value).compile();
+      compiled_func = ASM::Compiler(ir, *this).compile();
+      is_compiled = !has_option(OPTION_COMPILE_ONLY);
+    }
+
+    if (is_compiled) {
       uint64_t result = compiled_func.call<uint64_t, void*, void*>(&arguments[0], &local_reference_vars[0]);
       return Value(result);
     } else {

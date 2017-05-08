@@ -184,4 +184,14 @@ namespace ASM {
       }
     }
   }
+
+  uint64_t helper_convert_to_closure(uint64_t bare_function) {
+    BareFunctionValue* func = Value(bare_function).getPointer<BareFunctionValue>();
+    return Value::makePointer(interpreter->heap.allocate<ClosureFunctionValue>(func->value)).value;
+  }
+
+  void helper_add_reference_to_closure(uint64_t closure, uint64_t reference) {
+    ClosureFunctionValue* c = Value(closure).getPointer<ClosureFunctionValue>();
+    c->add_reference(Value(reference).getPointer<ReferenceValue>());
+  }
 }

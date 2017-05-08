@@ -233,10 +233,11 @@ namespace IR {
   };
 
   struct AllocClosure : Instruction {
+    Temp dest;
     Temp function;
     vector<Temp> refs;
 
-    AllocClosure(Temp function, vector<Temp> refs) : function(function), refs(refs) {}
+    AllocClosure(Temp dest, Temp function, vector<Temp> refs) : dest(dest), function(function), refs(refs) {}
     virtual Operation op() { return Operation::AllocClosure; }
     virtual string toString() { return "alloc_closure " + function.toString(); }
   };
