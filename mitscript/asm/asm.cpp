@@ -14,7 +14,7 @@ using namespace std;
 enum Mode {SOURCE, BYTECODE};
 
 void usage() {
-  cout << "Usage: ir <-s|-b> <filename>" << endl;
+  cout << "Usage: asm <-s|-b> <filename>" << endl;
 }
 
 shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {

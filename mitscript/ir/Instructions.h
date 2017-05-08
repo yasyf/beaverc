@@ -297,20 +297,20 @@ namespace IR {
   };
 
   struct Jump : Instruction {
-    int delta;
+    Label label;
 
-    Jump(int delta) : delta(delta) {}
+    Jump(Label label) : label(label) {}
     virtual Operation op() { return Operation::Jump; }
-    virtual string toString() { return "jmp " + to_string(delta); }
+    virtual string toString() { return "jmp " + label.toString(); }
   };
 
   struct CondJump : Instruction {
     Temp cond;
-    int delta;
+    Label label;
 
-    CondJump(Temp cond, int delta) : cond(cond), delta(delta) {}
+    CondJump(Temp cond, Label label) : cond(cond), label(label) {}
     virtual Operation op() { return Operation::CondJump; }
-    virtual string toString() { return "cjmp " + cond.toString() + ", " + to_string(delta); }
+    virtual string toString() { return "cjmp " + cond.toString() + ", " + label.toString(); }
   };
 
   typedef vector<Instruction*> InstructionList;

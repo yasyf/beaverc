@@ -146,6 +146,11 @@ namespace ASM {
 
       for (auto instruction : ir) {
         switch (instruction->op()) {
+          case IR::Operation::OutputLabel: {
+            auto ol = dynamic_cast<OutputLabel*>(instruction);
+            assm.bind(x64asm::Label{ol->label.name});
+            break;
+          }
           case IR::Operation::Assign: {
             if (auto assign = dynamic_cast<Assign<Var>*>(instruction)) {
               read_local(assign->src, r10);
@@ -283,7 +288,7 @@ namespace ASM {
           }
           case IR::Operation::Jump: {
             auto jump = dynamic_cast<Jump*>(instruction);
-            assm.jmp(Rel32{jump->delta});
+            assm.jmp(x64asm::Label{jump->label.name});
             break;
           }
           case IR::Operation::CondJump: {
@@ -291,7 +296,7 @@ namespace ASM {
             uint64_t true_val = VM::Value::makeBoolean(true).value;
             read_temp(cjump->cond, r10);
             assm.cmp(r10, Imm32{(uint32_t)true_val});
-            assm.je(Rel32{cjump->delta});
+            assm.je(x64asm::Label{cjump->label.name});
             break;
           }
           case IR::Operation::Call: {

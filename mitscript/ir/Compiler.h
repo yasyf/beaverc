@@ -2,9 +2,11 @@
 #include "../bccompiler/Instructions.h"
 #include "Instructions.h"
 #include "Exception.h"
+#include <cstdlib>
 #include <algorithm>
 #include <vector>
 #include <stack>
+#include <map>
 
 using namespace std;
 
@@ -12,7 +14,9 @@ namespace IR {
   class Compiler {
     stack<Temp> operands;
     shared_ptr<BC::Function> bytecode;
+    map<size_t, Label> labels;
     InstructionList instructions;
+    InstructionList labelledInstructions;
     size_t temp_count = 0;
 
     Temp popTemp() {
@@ -39,6 +43,16 @@ namespace IR {
       Temp t = Temp{temp_count++};
       operands.push(t);
       return t;
+    }
+
+    Label nextLabel() {
+      #warning TODO: make this smarter
+      return Label{to_string(rand())};
+    }
+
+    void addLabel(Label label, size_t delta) {
+      size_t num = instructions.size() - 1 + delta;
+      labels.emplace(num, label);
     }
 
     template<typename T>
@@ -85,6 +99,18 @@ namespace IR {
     template<typename T>
     void bool_unop() {
       helper_unop<T, Helper::AssertBool>();
+    }
+
+    void outputLabels() {
+      size_t inst_count = 0;
+      for (auto inst : instructions) {
+        if (labels.count(inst_count)) {
+          auto label = labels.find(inst_count);
+          labelledInstructions.push_back(new OutputLabel{label->second});
+        }
+        labelledInstructions.push_back(inst);
+        ++inst_count;
+      }
     }
 
     void compile(BC::Function& func) {
@@ -218,14 +244,18 @@ namespace IR {
             assign(RetVal{});
             break;
           }
-          case BC::Operation::Goto:
-            instructions.push_back(new Jump{instruction.operand0.value()});
+          case BC::Operation::Goto: {
+            Label label = nextLabel();
+            addLabel(label, instruction.operand0.value());
+            instructions.push_back(new Jump{label});
             break;
+          }
           case BC::Operation::If: {
-            int delta = instruction.operand0.value();
+            Label label = nextLabel();
+            addLabel(label, instruction.operand0.value());
             Temp cond = popTemp();
             instructions.push_back(new CallHelper<Helper::AssertBool>{cond});
-            instructions.push_back(new CondJump{cond, delta});
+            instructions.push_back(new CondJump{cond, label});
             break;
           }
           case BC::Operation::Dup:
@@ -249,7 +279,8 @@ namespace IR {
 
     InstructionList compile() {
       compile(*bytecode);
-      return instructions;
+      outputLabels();
+      return labelledInstructions;
     }
   };
 }
