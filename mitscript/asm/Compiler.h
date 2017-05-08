@@ -350,6 +350,7 @@ namespace ASM {
               read_temp(op->args[0], r10);
               call_helper((void *)(&helper_assert_bool), r10);
             }
+            break;
           }
           case IR::Operation::AllocClosure: {
             auto op = dynamic_cast<AllocClosure*>(instruction);

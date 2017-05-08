@@ -74,7 +74,7 @@ shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
 
 int main(int argc, char** argv)
 {
-  auto bytecode = getBytecodeFunction(argc, argv)->functions_[3];
+  auto bytecode = getBytecodeFunction(argc, argv);
 
   IR::Compiler ir_compiler(bytecode);
   auto ir = ir_compiler.compile();
