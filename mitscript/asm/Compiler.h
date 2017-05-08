@@ -12,11 +12,12 @@ using namespace IR;
 #define RESERVED_STACK_SPACE 2
 #define STACK_VALUE_SIZE 8
 
+#define IR_INSTRUCTION_BYTE_UPPER_BOUND 64
+
 namespace ASM {
   class Compiler {
     IR::InstructionList& ir;
     VM::ClosureFunctionValue& closure;
-    x64asm::Function function;
     Assembler assm;
     size_t num_locals;
     size_t num_temps;
@@ -139,12 +140,13 @@ namespace ASM {
       assm.pop(rbp);
     }
 
-    void compile(IR::InstructionList& ir) {
+    void compile(IR::InstructionList& ir, x64asm::Function& function) {
       assm.start(function);
 
       preamble();
 
       for (auto instruction : ir) {
+        function.reserve(function.size() + IR_INSTRUCTION_BYTE_UPPER_BOUND);
         switch (instruction->op()) {
           case IR::Operation::OutputLabel: {
             auto ol = dynamic_cast<OutputLabel*>(instruction);
@@ -394,15 +396,12 @@ namespace ASM {
     }
 
   public:
-    Compiler(IR::InstructionList& ir, VM::ClosureFunctionValue& closure) : ir(ir), closure(closure) {
+    Compiler(IR::InstructionList& ir, VM::ClosureFunctionValue& closure, size_t num_temps) : ir(ir), closure(closure), num_temps(num_temps) {
       this->num_locals = closure.value->local_vars_.size();
-      IR::Return* return_instruction = dynamic_cast<IR::Return*>(ir.back());
-      this->num_temps = return_instruction->val.num + 1;
     }
 
-    x64asm::Function compile() {
-      compile(ir);
-      return function;
+    void compileInto(x64asm::Function& func) {
+      compile(ir, func);
     }
   };
 }

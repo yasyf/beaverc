@@ -101,7 +101,7 @@ namespace IR {
       helper_unop<T, Helper::AssertBool>();
     }
 
-    void outputLabels() {
+    void outputLabels(InstructionList& labelledInstructions) {
       size_t inst_count = 0;
       for (auto inst : instructions) {
         if (labels.count(inst_count)) {
@@ -277,10 +277,10 @@ namespace IR {
   public:
     Compiler(shared_ptr<BC::Function> bytecode) : bytecode(bytecode) {}
 
-    InstructionList compile() {
+    size_t compileInto(InstructionList& list) {
       compile(*bytecode);
-      outputLabels();
-      return labelledInstructions;
+      outputLabels(list);
+      return temp_count;
     }
   };
 }

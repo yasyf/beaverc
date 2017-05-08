@@ -75,7 +75,8 @@ int main(int argc, char** argv)
   auto bytecode = getBytecodeFunction(argc, argv);
 
   IR::Compiler compiler(bytecode);
-  auto instructions = compiler.compile();
+  IR::InstructionList instructions;
+  compiler.compileInto(instructions);
 
   IR::PrettyPrinter printer(instructions);
   printer.print();

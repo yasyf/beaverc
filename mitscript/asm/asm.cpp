@@ -77,13 +77,15 @@ int main(int argc, char** argv)
   auto bytecode = getBytecodeFunction(argc, argv);
 
   IR::Compiler ir_compiler(bytecode);
-  auto ir = ir_compiler.compile();
+  IR::InstructionList ir;
+  size_t temp_count = ir_compiler.compileInto(ir);
 
   GC::CollectedHeap heap(0);
   VM::ClosureFunctionValue closure(heap, bytecode);
 
-  ASM::Compiler asm_compiler(ir, closure);
-  auto assm = asm_compiler.compile();
+  ASM::Compiler asm_compiler(ir, closure, temp_count);
+  x64asm::Function assm;
+  asm_compiler.compileInto(assm);
 
   ASM::PrettyPrinter printer(assm);
   printer.print();
