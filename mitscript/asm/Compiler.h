@@ -360,7 +360,7 @@ namespace ASM {
               read_temp(t, r10);
               call_helper((void*) &helper_add_reference_to_closure, r12, r10);
             }
-            write_temp(op->dest, r12);
+            assm.mov(rax, r12);
             break;
           }
           case IR::Operation::And: {
