@@ -235,8 +235,8 @@ namespace ASM {
             auto div = dynamic_cast<Div*>(instruction);
             read_temp(div->src1, r10);
             read_temp(div->src2, r11);
-            assm.xor_(rdx, rdx);
             assm.mov(rax, r10);
+            assm.cqo();
             assm.idiv(r11);
             assm.sal(rax, Imm8{3});
             write_temp(div->dest, rax);
