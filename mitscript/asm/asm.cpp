@@ -82,7 +82,7 @@ int main(int argc, char** argv)
   GC::CollectedHeap heap(0);
   VM::ClosureFunctionValue closure(heap, bytecode);
 
-  ASM::Compiler asm_compiler(heap, ir, closure);
+  ASM::Compiler asm_compiler(ir, closure);
   auto assm = asm_compiler.compile();
 
   ASM::PrettyPrinter printer(assm);
