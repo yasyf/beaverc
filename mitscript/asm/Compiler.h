@@ -246,11 +246,10 @@ namespace ASM {
             auto gt = dynamic_cast<Gt*>(instruction);
             read_temp(gt->src1, r10);
             read_temp(gt->src2, r11);
-            assm.xor_(rax, rax);
+            assm.mov(rax, Imm64{_BOOLEAN_TAG});
+            assm.mov(rbx, Imm64{0b1000 | _BOOLEAN_TAG});
             assm.cmp(r11, r10);
-            assm.setg(rax);
-            assm.sal(rax, Imm8{3});
-            assm.or_(rax, Imm16{_BOOLEAN_TAG});
+            assm.cmovg(rax, rbx);
             write_temp(gt->dest, rax);
             break;
           }
@@ -258,11 +257,10 @@ namespace ASM {
             auto gte = dynamic_cast<Geq*>(instruction);
             read_temp(gte->src1, r10);
             read_temp(gte->src2, r11);
-            assm.xor_(rax, rax);
+            assm.mov(rax, Imm64{_BOOLEAN_TAG});
+            assm.mov(rbx, Imm64{0b1000 | _BOOLEAN_TAG});
             assm.cmp(r11, r10);
-            assm.setge(rax);
-            assm.sal(rax, Imm8{3});
-            assm.or_(rax, Imm16{_BOOLEAN_TAG});
+            assm.cmovge(rax, rbx);
             write_temp(gte->dest, rax);
             break;
           }
@@ -284,7 +282,7 @@ namespace ASM {
           case IR::Operation::Not: {
             auto nott = dynamic_cast<Not*>(instruction);
             read_temp(nott->src, r10);
-            assm.xor_(r10, Imm16{0b1000});
+            assm.xor_(r10, Imm32{0b1000});
             write_temp(nott->dest, r10);
             break;
           }

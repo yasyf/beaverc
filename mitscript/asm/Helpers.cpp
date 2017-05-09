@@ -117,6 +117,7 @@ namespace ASM {
   void helper_assert_int(uint64_t value) {
     #if DEBUG
       cout << "helper_assert_int" << endl;
+      cout << "Value: " << value << endl;
     #endif
     Value(value).getInteger();
   }
@@ -124,6 +125,7 @@ namespace ASM {
   void helper_assert_not_zero(uint64_t value) {
     #if DEBUG
       cout << "helper_assert_not_zero" << endl;
+      cout << "Value: " << value << endl;
     #endif
     if (value == 0) {
       throw IllegalArithmeticException("divide by zero");
@@ -133,6 +135,7 @@ namespace ASM {
   void helper_assert_bool(uint64_t value) {
     #if DEBUG
       cout << "helper_assert_bool" << endl;
+      cout << "Value: " << value << endl;
     #endif
     Value(value).getBoolean();
   }
