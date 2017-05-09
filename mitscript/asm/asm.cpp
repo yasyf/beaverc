@@ -76,9 +76,9 @@ int main(int argc, char** argv)
 {
   auto bytecode = getBytecodeFunction(argc, argv);
 
-  IR::Compiler ir_compiler(bytecode);
   IR::InstructionList ir;
-  size_t temp_count = ir_compiler.compileInto(ir);
+  IR::Compiler ir_compiler(bytecode, ir);
+  size_t temp_count = ir_compiler.compile();
 
   GC::CollectedHeap heap(0);
   VM::ClosureFunctionValue closure(heap, bytecode);

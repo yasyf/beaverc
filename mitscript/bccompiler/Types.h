@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <cstdint>
+#include <map>
 
 namespace BC {
   struct Constant {
@@ -85,6 +86,8 @@ namespace BC {
     std::vector<std::string> names_;
 
     InstructionList instructions;
+
+    std::map<size_t, size_t> labels;
   };
 
   class FunctionLinkedList : public std::enable_shared_from_this<FunctionLinkedList> {

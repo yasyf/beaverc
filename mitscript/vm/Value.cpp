@@ -23,9 +23,9 @@ namespace VM {
     }
 
     if ((has_option(OPTION_MACHINE_CODE_ONLY) || has_option(OPTION_COMPILE_ONLY)) && !is_compiled) {
-      IR::Compiler ir_compiler = IR::Compiler(value);
       InstructionList ir;
-      size_t temp_count = ir_compiler.compileInto(ir);
+      IR::Compiler ir_compiler = IR::Compiler(value, ir);
+      size_t temp_count = ir_compiler.compile();
       ASM::Compiler asm_compiler = ASM::Compiler(ir, *this, temp_count);
       asm_compiler.compileInto(compiled_func);
       is_compiled = !has_option(OPTION_COMPILE_ONLY);

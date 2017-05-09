@@ -12,10 +12,10 @@ namespace IR {
   };
 
   struct Label {
-    string name;
+    size_t num;
 
-    Label(string name) : name(name) {}
-    virtual string toString() { return name; }
+    Label(size_t num) : num(num) {}
+    virtual string toString() { return "l" + to_string(num); }
   };
 
   struct Temp : Operand {

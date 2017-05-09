@@ -40,7 +40,9 @@ namespace BC {
     void loadConst(string s);
     void loadBool(bool b);
     void loadNone();
+    void outputLabel(size_t label);
     void outputReturn();
+    size_t reserveLabel();
 
     template <BinOpSym op>
     void visitBinop(BinaryOp<op>& binop, Operation operation, bool reverse = false);

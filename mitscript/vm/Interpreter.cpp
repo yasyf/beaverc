@@ -190,7 +190,7 @@ namespace VM {
       int ip = 0;
       while (ip >= 0 && ip < func.instructions.size()) {
           Instruction instruction = func.instructions[ip];
-          int ip_increment = 1;
+          int new_ip = ip + 1;
           #if DEBUG
           std::cout << "ip: " << ip << std::endl;
           std::cout << "Instruction: " << instruction.toString() << std::endl;
@@ -532,7 +532,7 @@ namespace VM {
               // Mnemonic:  goto i
               // Stack:     S => S
               case Operation::Goto:
-                  ip_increment = instruction.operand0.value();
+                  new_ip = func.labels[instruction.operand0.value()];
               break;
 
               // Description: transfers execution of the function to a new instruction offset within the current function if the operand evaluates to true
@@ -542,7 +542,7 @@ namespace VM {
               // Stack:     S :: operand 1 => S
               case Operation::If: {
                   if (safe_pop(stack).getBoolean()) {
-                      ip_increment = instruction.operand0.value();
+                      new_ip = func.labels[instruction.operand0.value()];
                   }
               }
               break;
@@ -584,6 +584,9 @@ namespace VM {
                   potentially_garbage_collect();
               break;
 
+              case Operation::Label:
+              break;
+
               default:
                   throw RuntimeException("Found an unknown opcode.");
               break;
@@ -593,7 +596,7 @@ namespace VM {
           print_stack(stack);
           std::cout << "----------" << std::endl;
           #endif
-          ip += ip_increment;
+          ip = new_ip;
       }
       pop_frame();
       return Value::makeNone();

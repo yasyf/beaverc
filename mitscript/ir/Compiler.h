@@ -14,9 +14,7 @@ namespace IR {
   class Compiler {
     stack<Temp> operands;
     shared_ptr<BC::Function> bytecode;
-    map<size_t, Label> labels;
-    InstructionList instructions;
-    InstructionList labelledInstructions;
+    InstructionList& instructions;
     size_t temp_count = 0;
 
     Temp popTemp() {
@@ -43,16 +41,6 @@ namespace IR {
       Temp t = Temp{temp_count++};
       operands.push(t);
       return t;
-    }
-
-    Label nextLabel() {
-      #warning TODO: make this smarter
-      return Label{to_string(rand())};
-    }
-
-    void addLabel(Label label, size_t delta) {
-      size_t num = instructions.size() - 1 + delta;
-      labels.emplace(num, label);
     }
 
     template<typename T>
@@ -99,18 +87,6 @@ namespace IR {
     template<typename T>
     void bool_unop() {
       helper_unop<T, Helper::AssertBool>();
-    }
-
-    void outputLabels(InstructionList& labelledInstructions) {
-      size_t inst_count = 0;
-      for (auto inst : instructions) {
-        if (labels.count(inst_count)) {
-          auto label = labels.find(inst_count);
-          labelledInstructions.push_back(new OutputLabel{label->second});
-        }
-        labelledInstructions.push_back(inst);
-        ++inst_count;
-      }
     }
 
     void compile(BC::Function& func) {
@@ -244,15 +220,16 @@ namespace IR {
             assign(RetVal{});
             break;
           }
+          case BC::Operation::Label: {
+            instructions.push_back(new OutputLabel{Label{instruction.operand0.value()}});
+            break;
+          }
           case BC::Operation::Goto: {
-            Label label = nextLabel();
-            addLabel(label, instruction.operand0.value());
-            instructions.push_back(new Jump{label});
+            instructions.push_back(new Jump{Label{instruction.operand0.value()}});
             break;
           }
           case BC::Operation::If: {
-            Label label = nextLabel();
-            addLabel(label, instruction.operand0.value());
+            Label label{instruction.operand0.value()};
             Temp cond = popTemp();
             instructions.push_back(new CallHelper<Helper::AssertBool>{cond});
             instructions.push_back(new CondJump{cond, label});
@@ -275,11 +252,12 @@ namespace IR {
     }
 
   public:
-    Compiler(shared_ptr<BC::Function> bytecode) : bytecode(bytecode) {}
+    Compiler(shared_ptr<BC::Function> bytecode, InstructionList& instructions)
+      : bytecode(bytecode), instructions(instructions)
+      {}
 
-    size_t compileInto(InstructionList& list) {
+    size_t compile() {
       compile(*bytecode);
-      outputLabels(list);
       return temp_count;
     }
   };

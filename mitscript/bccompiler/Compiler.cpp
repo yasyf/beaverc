@@ -112,6 +112,16 @@ namespace BC {
     parents->returned = true;
   }
 
+  void Compiler::outputLabel(size_t label) {
+    current().labels[label] = count();
+    output(Operation::Label, label);
+  }
+
+  size_t Compiler::reserveLabel() {
+    static size_t label_num = 0;
+    return label_num++;
+  }
+
   void Compiler::visit(Program& prog) {
     transpile(prog.block);
     if (!parents->returned) {
@@ -227,13 +237,20 @@ namespace BC {
     transpileTo(is.thenBlock, &thenInst);
     transpileTo(is.elseBlock, &elseInst);
 
+    size_t then_label = reserveLabel();
+    size_t else_label = reserveLabel();
+    size_t skip_else_label = reserveLabel();
+
     // Execute if
     transpile(is.cond);
-    output(Operation::If, 2); // skip past else-goto
-    output(Operation::Goto, thenInst.size() + 2); // else-goto: skip past then-block and if-goto
+    output(Operation::If, then_label); // skip past else-goto
+    output(Operation::Goto, else_label); // else-goto: skip past then-block and if-goto
+    outputLabel(then_label);
     drain(thenInst); // then-block
-    output(Operation::Goto, elseInst.size() + 1); // if-goto: skip past else-block
+    output(Operation::Goto, skip_else_label); // if-goto: skip past else-block
+    outputLabel(else_label);
     drain(elseInst); // else-block
+    outputLabel(skip_else_label);
   }
 
   void Compiler::visit(WhileLoop& wl) {
@@ -241,14 +258,19 @@ namespace BC {
     transpileTo(wl.body, &bodyInst);
     transpileTo(wl.cond, &condInst);
 
-    size_t loop_start = count();
+    size_t loop_start_label = reserveLabel();
+    size_t body_label = reserveLabel();
+    size_t skip_body_label = reserveLabel();
 
     output(Operation::GarbageCollect);
+    outputLabel(loop_start_label);
     drain(condInst); // cond-block
-    output(Operation::If, 2); // skip past end-goto
-    output(Operation::Goto, bodyInst.size() + 2); // end-goto: skip past body-block and loop-goto
+    output(Operation::If, body_label); // skip past end-goto
+    output(Operation::Goto, skip_body_label); // end-goto: skip past body-block and loop-goto
+    outputLabel(body_label);
     drain(bodyInst); // body-block
-    output(Operation::Goto, loop_start - count()); // loop-goto: back up to cond-block
+    output(Operation::Goto, loop_start_label); // loop-goto: back up to cond-block
+    outputLabel(skip_body_label);
   }
 
   void Compiler::visit(Return& ret) {

@@ -225,6 +225,7 @@ namespace BC {
         Pop,
 
         GarbageCollect,
+        Label,
     };
 
 
