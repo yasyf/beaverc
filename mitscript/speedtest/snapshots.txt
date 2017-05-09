@@ -4,3 +4,4 @@ a11aa6fdbf64a34cc98efe9ba481c1dd211cc5fc,-mem 2 -s
 7d95ebf214dd2297f6b392e115f5bf7bbdd97d1d,-mem 2 -s
 bfaf036fabe407bf59d55f695c04b717d3ae45e6,-mem 2 -s
 58753e1a2292c90ded66458fcc648827f7222687,--opt=string-trees --mem 0 -s
+bbbf3e6a0dfa628ef56a0ce9d07aa5a2eadc97ab,--mem 0 -s
