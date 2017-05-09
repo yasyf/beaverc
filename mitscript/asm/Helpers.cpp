@@ -50,7 +50,7 @@ namespace ASM {
     ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
     std::string name = closure->value->names_[index];
     #if DEBUG
-      cout << "helper_read_global" << endl;
+      cout << "helper_write_global" << endl;
       cout << "Closure: " << (void*) closure_p << endl;
       cout << "name: " << name << endl;
     #endif

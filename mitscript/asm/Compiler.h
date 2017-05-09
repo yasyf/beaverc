@@ -288,7 +288,7 @@ namespace ASM {
           }
           case IR::Operation::Jump: {
             auto jump = dynamic_cast<Jump*>(instruction);
-            assm.jmp(x64asm::Label{jump->label.toString()});
+            assm.jmp_1(x64asm::Label{jump->label.toString()});
             break;
           }
           case IR::Operation::CondJump: {
@@ -296,7 +296,7 @@ namespace ASM {
             uint64_t true_val = VM::Value::makeBoolean(true).value;
             read_temp(cjump->cond, r10);
             assm.cmp(r10, Imm32{(uint32_t)true_val});
-            assm.je(x64asm::Label{cjump->label.toString()});
+            assm.je_1(x64asm::Label{cjump->label.toString()});
             break;
           }
           case IR::Operation::Call: {
