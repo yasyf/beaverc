@@ -142,6 +142,9 @@ namespace ASM {
       for (auto instruction : ir) {
         function.reserve(function.size() + IR_INSTRUCTION_BYTE_UPPER_BOUND);
         switch (instruction->op()) {
+          case IR::Operation::Noop: {
+            break;
+          }
           case IR::Operation::OutputLabel: {
             auto ol = dynamic_cast<OutputLabel*>(instruction);
             assm.bind(x64asm::Label{ol->label->toString()});
@@ -348,14 +351,18 @@ namespace ASM {
               read_temp(op->args[1], r11);
               read_temp(op->args[2], r12);
               call_helper((void *)(&helper_index_store), r10, r11, r12);
-            } else if (auto op = dynamic_cast<CallHelper<Helper::AssertInt>*>(instruction)) {
-              read_temp(op->args[0], r10);
+            }
+            break;
+          }
+          case IR::Operation::CallAssert: {
+            if (auto op = dynamic_cast<CallAssert<Assert::AssertInt>*>(instruction)) {
+              read_temp(op->arg, r10);
               call_helper((void *)(&helper_assert_int), r10);
-            } else if (auto op = dynamic_cast<CallHelper<Helper::AssertNotZero>*>(instruction)) {
-              read_temp(op->args[0], r10);
+            } else if (auto op = dynamic_cast<CallAssert<Assert::AssertNotZero>*>(instruction)) {
+              read_temp(op->arg, r10);
               call_helper((void *)(&helper_assert_not_zero), r10);
-            } else if (auto op = dynamic_cast<CallHelper<Helper::AssertBool>*>(instruction)) {
-              read_temp(op->args[0], r10);
+            } else if (auto op = dynamic_cast<CallAssert<Assert::AssertBool>*>(instruction)) {
+              read_temp(op->arg, r10);
               call_helper((void *)(&helper_assert_bool), r10);
             }
             break;

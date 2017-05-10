@@ -30,7 +30,6 @@ namespace VM {
   void Interpreter::pop_frame() {
     local_variable_stack.pop_back();
     local_reference_variable_stack.pop_back();
-    
   }
 
   void Interpreter::push_stack(std::stack<Value>* local_stack) {
@@ -106,7 +105,9 @@ namespace VM {
           return Value::makeInteger(c->value);
       }
       if (std::shared_ptr<String> c = std::dynamic_pointer_cast<String>(constant)) {
-          return Value::makeStringConstant(c->value.c_str());
+          char * cstr = new char [c->value.length()+1];
+          strcpy(cstr, c->value.c_str());
+          return Value::makeStringConstant(cstr);
       }
       if (std::shared_ptr<Boolean> c = std::dynamic_pointer_cast<Boolean>(constant)) {
           return Value::makeBoolean(c->value);

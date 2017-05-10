@@ -8,7 +8,7 @@ using namespace std;
 #define SHORT_JUMP_MAX 1
 
 namespace IR {
-  class ShortJumpOptimization : Optimization {
+  class ShortJumpOptimization : public Optimization {
   public:
     virtual void optimize(shared_ptr<BC::Function> func, InstructionList& ir) {
       size_t count = 0;

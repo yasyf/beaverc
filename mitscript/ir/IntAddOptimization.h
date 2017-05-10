@@ -5,7 +5,7 @@
 using namespace std;
 
 namespace IR {
-  class IntAddOptimization : Optimization {
+  class IntAddOptimization : public Optimization {
   public:
     virtual void optimize(shared_ptr<BC::Function> func, InstructionList& ir) {
       size_t count = 0;

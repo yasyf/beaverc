@@ -73,21 +73,21 @@ namespace IR {
       instructions.push_back(new Store<T>{t, popTemp()});
     }
 
-    template<typename T, Helper H>
+    template<typename T, Assert A>
     T* helper_binop() {
       auto arg1 = popTemp();
       auto arg2 = popTemp();
-      instructions.push_back(new CallHelper<H>{arg1});
-      instructions.push_back(new CallHelper<H>{arg2});
+      instructions.push_back(new CallAssert<A>{arg1});
+      instructions.push_back(new CallAssert<A>{arg2});
       T* op = new T{nextTemp(), arg1, arg2};
       instructions.push_back(op);
       return op;
     }
 
-    template<typename T, Helper H>
+    template<typename T, Assert A>
     T* helper_unop() {
       auto arg = popTemp();
-      instructions.push_back(new CallHelper<H>{arg});
+      instructions.push_back(new CallAssert<A>{arg});
       T* op = new T{nextTemp(), arg};
       instructions.push_back(op);
       return op;
@@ -95,25 +95,25 @@ namespace IR {
 
     template<typename T>
     void int_binop() {
-      auto op = helper_binop<T, Helper::AssertInt>();
+      auto op = helper_binop<T, Assert::AssertInt>();
       op->dest->hintInt();
     }
 
     template<typename T>
     void bool_binop() {
-      auto op = helper_binop<T, Helper::AssertBool>();
+      auto op = helper_binop<T, Assert::AssertBool>();
       op->dest->hintBool();
     }
 
     template<typename T>
     void int_unop() {
-      auto op = helper_unop<T, Helper::AssertInt>();
+      auto op = helper_unop<T, Assert::AssertInt>();
       op->dest->hintInt();
     }
 
     template<typename T>
     void bool_unop() {
-      auto op = helper_unop<T, Helper::AssertBool>();
+      auto op = helper_unop<T, Assert::AssertBool>();
       op->dest->hintBool();
     }
 
@@ -179,9 +179,9 @@ namespace IR {
           case BC::Operation::Div: {
             auto arg1 = popTemp();
             auto arg2 = popTemp();
-            instructions.push_back(new CallHelper<Helper::AssertInt>{arg1});
-            instructions.push_back(new CallHelper<Helper::AssertInt>{arg2});
-            instructions.push_back(new CallHelper<Helper::AssertNotZero>{arg1});
+            instructions.push_back(new CallAssert<Assert::AssertInt>{arg1});
+            instructions.push_back(new CallAssert<Assert::AssertInt>{arg2});
+            instructions.push_back(new CallAssert<Assert::AssertNotZero>{arg1});
             instructions.push_back(new Div{nextTemp(), arg2, arg1});
             break;
           }
@@ -261,7 +261,7 @@ namespace IR {
           case BC::Operation::If: {
             shared_ptr<Label> label(new Label{instruction.operand0.value()});
             auto cond = popTemp();
-            instructions.push_back(new CallHelper<Helper::AssertBool>{cond});
+            instructions.push_back(new CallAssert<Assert::AssertBool>{cond});
             instructions.push_back(new CondJump{cond, label});
             break;
           }

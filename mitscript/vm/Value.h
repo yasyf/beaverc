@@ -57,6 +57,14 @@ namespace VM {
       return __IS_INTEGER_VALUE(value);
     }
 
+    bool isBoolean() const {
+      return __IS_BOOLEAN_VALUE(value);
+    }
+
+    bool isNone() const {
+      return __IS_NONE_VALUE(value);
+    }
+
     bool isPointer() const {
       return __IS_POINTER_VALUE(value);
     }

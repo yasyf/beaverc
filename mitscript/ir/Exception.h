@@ -14,4 +14,20 @@ namespace IR {
       return "InvalidOperationException";
     }
   };
+
+  class IllegalCastException : public CompilerException {
+    using CompilerException::CompilerException;
+
+    string description() const override {
+      return "IllegalCastException";
+    }
+  };
+
+  class IllegalArithmeticException : public CompilerException {
+    using CompilerException::CompilerException;
+
+    string description() const override {
+      return "IllegalArithmeticException";
+    }
+  };
 }

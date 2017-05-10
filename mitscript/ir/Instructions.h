@@ -3,66 +3,106 @@
 #include "../bccompiler/Types.h"
 #include "../vm/Value.h"
 #include <vector>
+#include <cassert>
 
 using namespace std;
 
 namespace IR {
-  const int INT_TYPE_HINT    = (1 << 0);
-  const int BOOL_TYPE_HINT   = (1 << 1);
-  const int STRING_TYPE_HINT = (1 << 2);
-  const int NONE_TYPE_HINT   = (1 << 3);
+  const int CONST_TYPE_HINT  = (1 << 0);
+  const int INT_TYPE_HINT    = (1 << 1);
+  const int BOOL_TYPE_HINT   = (1 << 2);
+  const int STRING_TYPE_HINT = (1 << 3);
+  const int NONE_TYPE_HINT   = (1 << 4);
 
   struct Operand {
-    int type_hint = 0;
-
     virtual string toString() = 0;
 
+    void transferHint(shared_ptr<Operand> op) {
+      this->const_val = op->const_val;
+      this->type_hint = op->type_hint;
+    }
+
+    bool hasHint() {
+      return type_hint != 0;
+    }
+
+    void hintConst(uint64_t val) {
+      this->const_val = val;
+      hint(CONST_TYPE_HINT);
+    }
+
+    bool isConst() {
+      return canBe(CONST_TYPE_HINT);
+    }
+
+    VM::Value getConstValue() {
+      assert(isConst());
+      return VM::Value(const_val);
+    }
+
     void hintInt() {
-      this->type_hint |= INT_TYPE_HINT;
+      hint(INT_TYPE_HINT);
     }
 
     bool canBeInt() {
-      return type_hint & INT_TYPE_HINT;
+      return canBe(INT_TYPE_HINT);
     }
 
     bool isInt() {
-      return type_hint == INT_TYPE_HINT;
+      return is(INT_TYPE_HINT);
     }
 
     void hintBool() {
-      this->type_hint |= BOOL_TYPE_HINT;
+      hint(BOOL_TYPE_HINT);
     }
 
     bool canBeBool() {
-      return type_hint & BOOL_TYPE_HINT;
+      return canBe(BOOL_TYPE_HINT);
     }
 
     bool isBool() {
-      return type_hint == BOOL_TYPE_HINT;
+      return is(BOOL_TYPE_HINT);
     }
 
     void hintString() {
-      this->type_hint |= STRING_TYPE_HINT;
+      hint(STRING_TYPE_HINT);
     }
 
     bool canBeString() {
-      return type_hint & STRING_TYPE_HINT;
+      return canBe(STRING_TYPE_HINT);
     }
 
     bool isString() {
-      return type_hint == STRING_TYPE_HINT;
+      return is(STRING_TYPE_HINT);
     }
 
     void hintNone() {
-      this->type_hint |= NONE_TYPE_HINT;
+      hint(NONE_TYPE_HINT);
     }
 
     bool canBeNone() {
-      return type_hint & NONE_TYPE_HINT;
+      return canBe(NONE_TYPE_HINT);
     }
 
     bool isNone() {
-      return type_hint == NONE_TYPE_HINT;
+      return is(NONE_TYPE_HINT);
+    }
+
+  protected:
+    int type_hint = 0;
+    uint64_t const_val = 0;
+
+  private:
+    void hint(int type_const) {
+      this->type_hint |= type_const;
+    }
+
+    bool canBe(int type_const) {
+      return type_hint & type_const;
+    }
+
+    bool is(int type_const) {
+      return (type_hint & ~CONST_TYPE_HINT) == type_const;
     }
   };
 
@@ -137,7 +177,18 @@ namespace IR {
   struct Const : Operand {
     uint64_t val;
 
-    Const(uint64_t val) : val(val) {}
+    Const(VM::Value value) {
+      this->val = value.value;
+      if (value.isInteger())
+        hintInt();
+      else if (value.isString())
+        hintString();
+      else if (value.isBoolean())
+        hintBool();
+      else if (value.isNone())
+        hintNone();
+      hintConst(val);
+    }
 
     Const(shared_ptr<BC::Constant> constant) {
       if (auto val = dynamic_pointer_cast<BC::Integer>(constant)) {
@@ -153,12 +204,15 @@ namespace IR {
         hintBool();
       }
       else if (auto val = dynamic_pointer_cast<BC::String>(constant)) {
-        this->val = VM::Value::makeStringConstant(val->value.c_str()).value;
+        char * cstr = new char [val->value.length()+1];
+        strcpy(cstr, val->value.c_str());
+        this->val = VM::Value::makeStringConstant(cstr).value;
         hintString();
       }
       else {
         throw "invalid Constant!";
       }
+      hintConst(val);
     }
 
     virtual string toString() { return "$" + to_string(val); }
@@ -187,6 +241,8 @@ namespace IR {
     ShortJump,
     CondJump,
     CallHelper,
+    CallAssert,
+    Noop,
   };
 
   enum class Helper {
@@ -196,6 +252,9 @@ namespace IR {
     FieldStore,
     IndexLoad,
     IndexStore,
+  };
+
+  enum class Assert {
     AssertInt,
     AssertNotZero,
     AssertBool,
@@ -324,13 +383,17 @@ namespace IR {
 
     AllocClosure(shared_ptr<Temp> function, vector<shared_ptr<Temp>> refs) : function(function), refs(refs) {}
     virtual Operation op() { return Operation::AllocClosure; }
-    virtual string toString() {
-      string result = "alloc_closure " + function->toString() + " -- ";
-      for (auto t : refs) {
-        result += t->toString();
+    #ifdef DEBUG
+      virtual string toString() {
+        string result = "alloc_closure " + function->toString() + " -- ";
+        for (auto t : refs) {
+          result += t->toString();
+        }
+        return result;
       }
-      return result;
-    }
+    #else
+      virtual string toString() { return "alloc_closure"; }
+    #endif
   };
 
   template<Helper H>
@@ -371,6 +434,17 @@ namespace IR {
     virtual string toString() { return "call_helper " + to_string(static_cast<int>(H)); }
   };
 
+  template<Assert A>
+  struct CallAssert : Instruction {
+    shared_ptr<Temp> arg;
+
+    CallAssert(shared_ptr<Temp> arg) : arg(arg) {}
+
+    static Assert assert_() { return A; }
+    virtual Operation op() { return Operation::CallAssert; }
+    virtual string toString() { return "call_assert_" + to_string(static_cast<int>(A)) + " " + arg->toString(); }
+  };
+
 
   struct Return : Instruction {
     shared_ptr<Temp> val;
@@ -408,6 +482,20 @@ namespace IR {
     CondJump(shared_ptr<Temp> cond, shared_ptr<Label> label) : cond(cond), label(label) {}
     virtual Operation op() { return Operation::CondJump; }
     virtual string toString() { return "cjmp " + cond->toString() + ", " + label->toString(); }
+  };
+
+  struct Noop : Instruction {
+    virtual Operation op() { return Operation::Noop; }
+    virtual string toString() { return "noop"; }
+
+    static Noop* Singleton() {
+      static Noop* instance = nullptr;
+
+      if (!instance)
+        instance = new Noop();
+
+      return instance;
+    }
   };
 
   typedef vector<Instruction*> InstructionList;
