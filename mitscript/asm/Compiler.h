@@ -214,6 +214,14 @@ namespace ASM {
             write_temp(add->dest, rax);
             break;
           }
+          case IR::Operation::IntAdd: {
+            auto intadd = dynamic_cast<IntAdd*>(instruction);
+            read_temp(intadd->src1, r10);
+            read_temp(intadd->src2, r11);
+            assm.add(r11, r10);
+            write_temp(intadd->dest, r11);
+            break;
+          }
           case IR::Operation::Sub: {
             auto sub = dynamic_cast<Sub*>(instruction);
             read_temp(sub->src1, r10);
