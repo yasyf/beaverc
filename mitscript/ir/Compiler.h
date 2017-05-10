@@ -43,23 +43,14 @@ namespace IR {
       return t;
     }
 
-    template<typename T, typename K>
-    shared_ptr<T> _get_operand(size_t num, K k) {
+    template<typename T>
+    shared_ptr<T> get_operand(size_t num) {
       static map<size_t, shared_ptr<T>> operands;
 
       if (!operands.count(num)) {
-        operands[num] = make_shared<T>(k);
+        operands[num] = make_shared<T>(num);
       }
       return operands[num];
-    }
-
-    template<typename T>
-    shared_ptr<T> get_operand(size_t num) {
-      return _get_operand<T, size_t>(num, num);
-    }
-
-    shared_ptr<Const> get_const(BC::Function& func, size_t num) {
-      return _get_operand<Const, shared_ptr<BC::Constant>>(num, func.constants_[num]);
     }
 
     template<typename T>
@@ -156,7 +147,7 @@ namespace IR {
             assign(get_operand<Var>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::LoadConst:
-            assign(get_const(func, instruction.operand0.value()));
+            assign(make_shared<Const>(func.constants_[instruction.operand0.value()]));
             break;
           case BC::Operation::StoreReference:
             store(get_operand<Deref>((size_t)instruction.operand0.value()));
