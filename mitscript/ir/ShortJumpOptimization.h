@@ -16,7 +16,7 @@ namespace IR {
         switch (instruction->op()) {
           case IR::Operation::Jump: {
             auto jump = dynamic_cast<Jump*>(instruction);
-            if (abs(count - func->labels[jump->label->num]) < SHORT_JUMP_MAX) {
+            if (abs(count - func->labels[jump->label->num]) <= SHORT_JUMP_MAX) {
               ir[count] = new ShortJump{jump->label};
               delete(jump);
             }
