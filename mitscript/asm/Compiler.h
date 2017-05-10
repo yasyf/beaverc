@@ -340,7 +340,7 @@ namespace ASM {
               read_temp(op->args[0], r11);
               assm.mov(r12, Imm64{op->arg0});
               read_temp(op->args[1], r13);
-              call_helper((void *)(&helper_field_load), r10, r11, r12, r13);
+              call_helper((void *)(&helper_field_store), r10, r11, r12, r13);
             } else if (auto op = dynamic_cast<CallHelper<Helper::IndexLoad>*>(instruction)) {
               read_temp(op->args[0], r10);
               read_temp(op->args[1], r11);

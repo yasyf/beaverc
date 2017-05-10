@@ -11,9 +11,9 @@ LEX = flex
 YACC = bison
 
 CFLAGS = -std=c++1y
-CXXFLAGS = -std=c++1y -I../x64asm
-LDFLAGS = -lstdc++ -L../x64asm/lib
-LIBS = -lx64asm
+CXXFLAGS = -std=c++1y -I../x64asm -I../udis86/libudis86
+LDFLAGS = -lstdc++ -L../x64asm/lib -L../udis86/libudis86/.libs
+LIBS = -lx64asm -ludis86
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)

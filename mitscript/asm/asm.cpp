@@ -7,6 +7,7 @@
 #include "../ir/OptimizingCompiler.h"
 #include "Compiler.h"
 #include "PrettyPrinter.h"
+#include "BinaryPrinter.h"
 #include <iostream>
 
 using namespace std;
@@ -14,7 +15,7 @@ using namespace std;
 enum Mode {SOURCE, BYTECODE};
 
 void usage() {
-  cout << "Usage: asm <-s|-b> <filename>" << endl;
+  cout << "Usage: asm <-s|-b> <filename> <binary|pretty> <indices down the parse tree>" << endl;
 }
 
 shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
@@ -24,15 +25,12 @@ shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
 
   if (argc == 2) {
     infile = stdin;
-  } else if (argc == 3) {
+  } else if (argc >= 3) {
     infile = fopen(argv[2], "r");
     if (!infile) {
       cout << "error: cannot open " << argv[2] << endl;
       exit(1);
     }
-  } else {
-    usage();
-    exit(1);
   }
 
   if (strcmp(argv[1], "-s") == 0) {
@@ -44,11 +42,15 @@ shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
     exit(1);
   }
 
+  shared_ptr<BC::Function> result;
+
   if (mode == SOURCE) {
     yylex_init(&scanner);
     yyset_in(infile, scanner);
 
     AST::Program* program;
+
+
 
     if (yyparse(scanner, program) != 0) {
       cout << "source parsing failed!" << endl;
@@ -57,7 +59,7 @@ shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
 
     BC::Compiler compiler;
     program->accept(compiler);
-    return compiler.result;
+    result = compiler.result;
 
   } else {
     bclex_init(&scanner);
@@ -68,8 +70,16 @@ shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
       cout << "bytecode parsing failed!" << endl;
       exit(1);
     }
-    return shared_ptr<BC::Function>(funcptr);
   }
+
+  int index = 4;
+
+  while (index < argc) {
+    result = result->functions_[stoi(argv[index])];
+    index++;
+  }
+
+  return result;
 }
 
 int main(int argc, char** argv)
@@ -87,8 +97,13 @@ int main(int argc, char** argv)
   x64asm::Function assm;
   asm_compiler.compileInto(assm);
 
-  ASM::PrettyPrinter printer(assm);
-  printer.print();
+  if (strcmp("binary", argv[3]) == 0) {
+    ASM::BinaryPrinter printer(assm);
+    printer.print();
+  } else {
+    ASM::PrettyPrinter printer(assm);
+    printer.print();
+  }
 
   return 0;
 }
