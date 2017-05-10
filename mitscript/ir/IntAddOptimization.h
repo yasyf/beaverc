@@ -14,8 +14,8 @@ namespace IR {
           case IR::Operation::Add: {
             auto add = dynamic_cast<Add*>(instruction);
             if (add->src1->isInt() && add->src2->isInt()) {
-              ir[count] = new IntAdd{add->dest, add->src1, add->src2};
-              delete(add);
+              // ir[count] = new IntAdd{add->dest, add->src1, add->src2};
+              // delete(add);
             }
             break;
           }

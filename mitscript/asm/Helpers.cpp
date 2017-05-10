@@ -165,7 +165,7 @@ namespace ASM {
 
     // Assign everything to none
     for (int i = 0; i < closure->value->local_vars_.size(); i++) {
-      base_pointer[-i-1] = Value::makeNone();
+      base_pointer[-i-RESERVED_STACK_SPACE] = Value::makeNone();
     }
 
     // Assign the variables
@@ -181,7 +181,7 @@ namespace ASM {
       std::cout << var_name << " = " << arguments[i].toString() << std::endl;
       #endif
       if (reverse_index.count(var_name) == 0) {
-        base_pointer[-i-1] = arguments[i];
+        base_pointer[-i-RESERVED_STACK_SPACE] = arguments[i];
       } else {
         refs[reverse_index[var_name]]->value = arguments[i];
       }
@@ -189,12 +189,18 @@ namespace ASM {
   }
 
   uint64_t helper_convert_to_closure(uint64_t bare_function) {
+    #if DEBUG
+      cout << "helper_convert_to_closure" << endl;
+    #endif
     BareFunctionValue* func = Value(bare_function).getPointer<BareFunctionValue>();
     return Value::makePointer(interpreter->heap.allocate<ClosureFunctionValue>(func->value)).value;
   }
 
   void helper_add_reference_to_closure(uint64_t closure, uint64_t reference) {
+    #if DEBUG
+      cout << "helper_add_reference_to_closure" << endl;
+    #endif
     ClosureFunctionValue* c = Value(closure).getPointer<ClosureFunctionValue>();
-    c->add_reference(Value(reference).getPointer<ReferenceValue>());
+    c->add_reference((ReferenceValue*) reference);
   }
 }

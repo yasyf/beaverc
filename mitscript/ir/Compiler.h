@@ -223,8 +223,9 @@ namespace IR {
             size_t ref_count = instruction.operand0.value();
             auto function = popTemp();
             vector<shared_ptr<Temp>> refs;
-            for (size_t i = 0; i < ref_count; ++i)
+            for (size_t i = 0; i < ref_count; ++i) {
               refs.push_back(popTemp());
+            }
             reverse(refs.begin(), refs.end());
             instructions.push_back(new AllocClosure{function, refs});
             assign(make_shared<RetVal>());
@@ -261,7 +262,7 @@ namespace IR {
             break;
         }
       }
-    }
+    };
 
   public:
     Compiler(shared_ptr<BC::Function> bytecode, InstructionList& instructions)

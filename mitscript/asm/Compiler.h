@@ -9,7 +9,6 @@ using namespace std;
 using namespace x64asm;
 using namespace IR;
 
-#define RESERVED_STACK_SPACE 2
 #define STACK_VALUE_SIZE 8
 
 #define IR_INSTRUCTION_BYTE_UPPER_BOUND 64
@@ -113,14 +112,15 @@ namespace ASM {
       assm.push(rbp);
       assm.mov(rbp, rsp);
 
+      assm.sub(rsp, Imm32{((uint32_t)num_locals + (uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
+      assm.mov(current_refs(), rsi);
+
       assm.push(rbx);
       assm.push(r12);
       assm.push(r13);
       assm.push(r14);
       assm.push(r15);
 
-      assm.sub(rsp, Imm32{((uint32_t)num_locals + (uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
-      assm.mov(current_refs(), rsi);
       assm.mov(rdx, rbp);
       uint64_t addr = VM::Value::makePointer(&closure).value;
       assm.mov(rcx, Imm64{addr});
@@ -129,7 +129,6 @@ namespace ASM {
     }
 
     void postamble(const R64& retval) {
-      assm.add(rsp, Imm32{((uint32_t)num_locals + (uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
       #warning clean up garbage collection here but not yet.
       assm.mov(rax, retval);
       assm.pop(r15);
@@ -137,6 +136,7 @@ namespace ASM {
       assm.pop(r13);
       assm.pop(r12);
       assm.pop(rbx);
+      assm.add(rsp, Imm32{((uint32_t)num_locals + (uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
       assm.pop(rbp);
     }
 
