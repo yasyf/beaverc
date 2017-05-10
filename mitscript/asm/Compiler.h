@@ -189,7 +189,7 @@ namespace ASM {
               assm.mov(r10, current_refs());
               assm.mov(r10, M64{r10, (uint32_t)store->dest->num * STACK_VALUE_SIZE});
               read_temp(store->src, r11);
-              assm.mov(M64{r10}, r11);
+              call_helper((void*) &helper_write_reference, r10, r11);
             } else if (auto store = dynamic_cast<Store<Glob>*>(instruction)) {
               assm.mov(r10, current_closure());
               assm.mov(r11, Imm64{(uint32_t)store->dest->num});
