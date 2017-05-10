@@ -4,6 +4,7 @@
 #include "Compiler.h"
 
 #include "ShortJumpOptimization.h"
+#include "IntAddOptimization.h"
 
 using namespace std;
 
@@ -21,6 +22,7 @@ namespace IR {
 
     void runAllPasses() {
       optimize<ShortJumpOptimization>();
+      optimize<IntAddOptimization>();
     }
 
   public:

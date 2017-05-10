@@ -12,81 +12,91 @@ using namespace std;
 
 namespace IR {
   class Compiler {
-    stack<Temp> operands;
+    stack<shared_ptr<Temp>> operands;
     shared_ptr<BC::Function> bytecode;
     InstructionList& instructions;
     size_t temp_count = 0;
 
-    Temp popTemp() {
-      Temp t = operands.top();
+    shared_ptr<Temp> popTemp() {
+      shared_ptr<Temp> t = operands.top();
       operands.pop();
       return t;
     }
 
     void swapTemp() {
-      Temp t1 = operands.top();
+      shared_ptr<Temp> t1 = operands.top();
       operands.pop();
-      Temp t2 = operands.top();
+      shared_ptr<Temp> t2 = operands.top();
       operands.pop();
 
       operands.push(t1);
       operands.push(t2);
     }
 
-    Temp peekTemp() {
+    shared_ptr<Temp> peekTemp() {
       return operands.top();
     }
 
-    Temp nextTemp() {
-      Temp t = Temp{temp_count++};
+    shared_ptr<Temp> nextTemp() {
+      shared_ptr<Temp> t(new Temp{temp_count++});
       operands.push(t);
       return t;
     }
 
     template<typename T>
-    void assign(T t) {
-      instructions.push_back(new Assign<T>{nextTemp(), t});
+    void assign(shared_ptr<T> t) {
+      auto temp = nextTemp();
+      temp->type_hint |= t->type_hint;
+      instructions.push_back(new Assign<T>{temp, t});
     }
 
     template<typename T>
-    void store(T t) {
+    void store(shared_ptr<T> t) {
       instructions.push_back(new Store<T>{t, popTemp()});
     }
 
     template<typename T, Helper H>
-    void helper_binop() {
-      Temp arg1 = popTemp();
-      Temp arg2 = popTemp();
+    T* helper_binop() {
+      auto arg1 = popTemp();
+      auto arg2 = popTemp();
       instructions.push_back(new CallHelper<H>{arg1});
       instructions.push_back(new CallHelper<H>{arg2});
-      instructions.push_back(new T{nextTemp(), arg1, arg2});
+      T* op = new T{nextTemp(), arg1, arg2};
+      instructions.push_back(op);
+      return op;
     }
 
     template<typename T, Helper H>
-    void helper_unop() {
-      Temp arg = popTemp();
+    T* helper_unop() {
+      auto arg = popTemp();
       instructions.push_back(new CallHelper<H>{arg});
-      instructions.push_back(new T{nextTemp(), arg});
+      T* op = new T{nextTemp(), arg};
+      instructions.push_back(op);
+      return op;
     }
 
     template<typename T>
     void int_binop() {
-      helper_binop<T, Helper::AssertInt>();
+      auto op = helper_binop<T, Helper::AssertInt>();
+      op->dest->hintInt();
     }
 
     template<typename T>
     void bool_binop() {
-      helper_binop<T, Helper::AssertBool>();
+      auto op = helper_binop<T, Helper::AssertBool>();
+      op->dest->hintBool();
     }
 
     template<typename T>
     void int_unop() {
-      helper_unop<T, Helper::AssertInt>();
+      auto op = helper_unop<T, Helper::AssertInt>();
+      op->dest->hintInt();
     }
 
     template<typename T>
     void bool_unop() {
-      helper_unop<T, Helper::AssertBool>();
+      auto op = helper_unop<T, Helper::AssertBool>();
+      op->dest->hintBool();
     }
 
     void compile(BC::Function& func) {
@@ -94,51 +104,51 @@ namespace IR {
         switch(instruction.operation) {
           case BC::Operation::Call: {
             size_t arg_count = instruction.operand0.value();
-            Temp closure = popTemp();
-            vector<Temp> args;
+            auto closure = popTemp();
+            vector<shared_ptr<Temp>> args;
             for (size_t i = 0; i < arg_count; ++i)
               args.push_back(popTemp());
             reverse(args.begin(), args.end());
             instructions.push_back(new Call{closure, args});
-            assign(RetVal{});
+            assign(make_shared<RetVal>());
             break;
           }
           case BC::Operation::LoadReference:
-            assign(Deref{(size_t)instruction.operand0.value()});
+            assign(make_shared<Deref>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::PushReference:
-            assign(Ref{(size_t)instruction.operand0.value()});
+            assign(make_shared<Ref>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::LoadFunc:
-            assign(Function{(size_t)instruction.operand0.value()});
+            assign(make_shared<Function>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::LoadGlobal:
-            assign(Glob{(size_t)instruction.operand0.value()});
+            assign(make_shared<Glob>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::LoadLocal:
-            assign(Var{(size_t)instruction.operand0.value()});
+            assign(make_shared<Var>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::LoadConst:
-            assign(Const{func.constants_[instruction.operand0.value()]});
+            assign(make_shared<Const>(func.constants_[instruction.operand0.value()]));
             break;
           case BC::Operation::StoreReference:
-            store(Deref{(size_t)instruction.operand0.value()});
+            store(make_shared<Deref>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::StoreLocal:
-            store(Var{(size_t)instruction.operand0.value()});
+            store(make_shared<Var>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::StoreGlobal:
-            store(Glob{(size_t)instruction.operand0.value()});
+            store(make_shared<Glob>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::Eq: {
-            Temp arg1 = popTemp();
-            Temp arg2 = popTemp();
+            auto arg1 = popTemp();
+            auto arg2 = popTemp();
             instructions.push_back(new Eq{nextTemp(), arg2, arg1});
             break;
           }
           case BC::Operation::Add: {
-            Temp arg1 = popTemp();
-            Temp arg2 = popTemp();
+            auto arg1 = popTemp();
+            auto arg2 = popTemp();
             instructions.push_back(new Add{nextTemp(), arg2, arg1});
             break;
           }
@@ -149,8 +159,8 @@ namespace IR {
             int_binop<Mul>();
             break;
           case BC::Operation::Div: {
-            Temp arg1 = popTemp();
-            Temp arg2 = popTemp();
+            auto arg1 = popTemp();
+            auto arg2 = popTemp();
             instructions.push_back(new CallHelper<Helper::AssertInt>{arg1});
             instructions.push_back(new CallHelper<Helper::AssertInt>{arg2});
             instructions.push_back(new CallHelper<Helper::AssertNotZero>{arg2});
@@ -183,54 +193,56 @@ namespace IR {
             break;
           case BC::Operation::AllocRecord:
             instructions.push_back(new CallHelper<Helper::AllocRecord>{});
-            assign(RetVal{});
+            assign(make_shared<RetVal>());
             break;
           case BC::Operation::FieldLoad:
             instructions.push_back(new CallHelper<Helper::FieldLoad>{(size_t)instruction.operand0.value(), popTemp()});
-            assign(RetVal{});
+            assign(make_shared<RetVal>());
             break;
           case BC::Operation::FieldStore: {
-            Temp value = popTemp();
-            Temp record = popTemp();
+            auto value = popTemp();
+            auto record = popTemp();
             instructions.push_back(new CallHelper<Helper::FieldStore>{(size_t)instruction.operand0.value(), record, value});
             break;
           }
           case BC::Operation::IndexLoad: {
-            Temp index = popTemp();
-            Temp record = popTemp();
+            auto index = popTemp();
+            auto record = popTemp();
             instructions.push_back(new CallHelper<Helper::IndexLoad>{record, index});
-            assign(RetVal{});
+            assign(make_shared<RetVal>());
             break;
           }
           case BC::Operation::IndexStore: {
-            Temp value = popTemp();
-            Temp index = popTemp();
-            Temp record = popTemp();
+            auto value = popTemp();
+            auto index = popTemp();
+            auto record = popTemp();
             instructions.push_back(new CallHelper<Helper::IndexStore>{record, index, value});
             break;
           }
           case BC::Operation::AllocClosure: {
             size_t ref_count = instruction.operand0.value();
-            Temp function = popTemp();
-            vector<Temp> refs;
+            auto function = popTemp();
+            vector<shared_ptr<Temp>> refs;
             for (size_t i = 0; i < ref_count; ++i)
               refs.push_back(popTemp());
             reverse(refs.begin(), refs.end());
             instructions.push_back(new AllocClosure{function, refs});
-            assign(RetVal{});
+            assign(make_shared<RetVal>());
             break;
           }
           case BC::Operation::Label: {
-            instructions.push_back(new OutputLabel{Label{instruction.operand0.value()}});
+            shared_ptr<Label> label(new Label{instruction.operand0.value()});
+            instructions.push_back(new OutputLabel{label});
             break;
           }
           case BC::Operation::Goto: {
-            instructions.push_back(new Jump{Label{instruction.operand0.value()}});
+            shared_ptr<Label> label(new Label{instruction.operand0.value()});
+            instructions.push_back(new Jump{label});
             break;
           }
           case BC::Operation::If: {
-            Label label{instruction.operand0.value()};
-            Temp cond = popTemp();
+            shared_ptr<Label> label(new Label{instruction.operand0.value()});
+            auto cond = popTemp();
             instructions.push_back(new CallHelper<Helper::AssertBool>{cond});
             instructions.push_back(new CondJump{cond, label});
             break;

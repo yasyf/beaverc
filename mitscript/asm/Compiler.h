@@ -35,30 +35,30 @@ namespace ASM {
       return M64{rbp, Imm32{(uint32_t)(-(i+RESERVED_STACK_SPACE+num_locals) * STACK_VALUE_SIZE)}};
     }
 
-    void read_local(Var v, const R64& reg) {
-      assm.mov(reg, local(v.num));
+    void read_local(shared_ptr<Var> v, const R64& reg) {
+      assm.mov(reg, local(v->num));
     }
 
-    void read_temp(Temp t, const R64& reg) {
-      assm.mov(reg, temp(t.num));
+    void read_temp(shared_ptr<Temp> t, const R64& reg) {
+      assm.mov(reg, temp(t->num));
     }
 
-    void write_local(Var v, const R64& reg) {
-      assm.mov(local(v.num), reg);
+    void write_local(shared_ptr<Var> v, const R64& reg) {
+      assm.mov(local(v->num), reg);
     }
 
-    void write_temp(Temp t, const M64& mem) {
+    void write_temp(shared_ptr<Temp> t, const M64& mem) {
       assm.mov(r10, mem);
-      assm.mov(temp(t.num), r10);
+      assm.mov(temp(t->num), r10);
     }
 
-    void write_temp(Temp t, const R64& reg) {
-      assm.mov(temp(t.num), reg);
+    void write_temp(shared_ptr<Temp> t, const R64& reg) {
+      assm.mov(temp(t->num), reg);
     }
 
-    void write_temp(Temp t, uint64_t cons) {
+    void write_temp(shared_ptr<Temp> t, uint64_t cons) {
       assm.mov(r10, Imm64{cons});
-      assm.mov(temp(t.num), r10);
+      assm.mov(temp(t->num), r10);
     }
 
     void call_helper(void* fn) {
@@ -150,7 +150,7 @@ namespace ASM {
         switch (instruction->op()) {
           case IR::Operation::OutputLabel: {
             auto ol = dynamic_cast<OutputLabel*>(instruction);
-            assm.bind(x64asm::Label{ol->label.toString()});
+            assm.bind(x64asm::Label{ol->label->toString()});
             break;
           }
           case IR::Operation::Assign: {
@@ -158,7 +158,7 @@ namespace ASM {
               read_local(assign->src, r10);
               write_temp(assign->dest, r10);
             } else if (auto assign = dynamic_cast<Assign<Const>*>(instruction)) {
-              write_temp(assign->dest, assign->src.val);
+              write_temp(assign->dest, assign->src->val);
             } else if (auto assign = dynamic_cast<Assign<RetVal>*>(instruction)) {
               write_temp(assign->dest, rax);
             } else if (auto assign = dynamic_cast<Assign<Temp>*>(instruction)) {
@@ -166,23 +166,23 @@ namespace ASM {
               write_temp(assign->dest, r10);
             } else if (auto assign = dynamic_cast<Assign<Ref>*>(instruction)) {
               assm.mov(r10, current_refs());
-              assm.mov(r10, M64{r10, (uint32_t)assign->src.num * STACK_VALUE_SIZE});
+              assm.mov(r10, M64{r10, (uint32_t)assign->src->num * STACK_VALUE_SIZE});
               write_temp(assign->dest, r10);
             } else if (auto assign = dynamic_cast<Assign<Deref>*>(instruction)) {
               assm.mov(r10, current_refs());
-              assm.mov(r10, M64{r10, (uint32_t)assign->src.num * STACK_VALUE_SIZE});
+              assm.mov(r10, M64{r10, (uint32_t)assign->src->num * STACK_VALUE_SIZE});
               call_helper((void*) &helper_read_reference, r10);
               write_temp(assign->dest, rax);
             } else if (auto assign = dynamic_cast<Assign<Glob>*>(instruction)) {
               uint64_t addr = VM::Value::makePointer(&closure).value;
               assm.mov(r10, Imm64{addr});
-              assm.mov(r11, Imm64{(uint32_t)assign->src.num});
+              assm.mov(r11, Imm64{(uint32_t)assign->src->num});
               call_helper((void *)(&helper_read_global), r10, r11);
               write_temp(assign->dest, rax);
             } else if (auto assign = dynamic_cast<Assign<IR::Function>*>(instruction)) {
               uint64_t addr = VM::Value::makePointer(&closure).value;
               assm.mov(r10, Imm64{addr});
-              assm.mov(r11, Imm64{(uint32_t)assign->src.num});
+              assm.mov(r11, Imm64{(uint32_t)assign->src->num});
               call_helper((void *)(&helper_read_function), r10, r11);
               write_temp(assign->dest, rax);
             }
@@ -194,13 +194,13 @@ namespace ASM {
               write_local(store->dest, r10);
             } else if (auto store = dynamic_cast<Store<Deref>*>(instruction)) {
               assm.mov(r10, current_refs());
-              assm.mov(r10, M64{r10, (uint32_t)store->dest.num * STACK_VALUE_SIZE});
+              assm.mov(r10, M64{r10, (uint32_t)store->dest->num * STACK_VALUE_SIZE});
               read_temp(store->src, r11);
               assm.mov(M64{r10}, r11);
             } else if (auto store = dynamic_cast<Store<Glob>*>(instruction)) {
               uint64_t addr = VM::Value::makePointer(&closure).value;
               assm.mov(r10, Imm64{addr});
-              assm.mov(r11, Imm64{(uint32_t)store->dest.num});
+              assm.mov(r11, Imm64{(uint32_t)store->dest->num});
               read_temp(store->src, rax);
               call_helper((void *)(&helper_write_global), r10, r11, rax);
             }
@@ -288,12 +288,12 @@ namespace ASM {
           }
           case IR::Operation::ShortJump: {
             auto sj = dynamic_cast<ShortJump*>(instruction);
-            assm.jmp(x64asm::Label{sj->label.toString()});
+            assm.jmp(x64asm::Label{sj->label->toString()});
             break;
           }
           case IR::Operation::Jump: {
             auto jump = dynamic_cast<Jump*>(instruction);
-            assm.jmp_1(x64asm::Label{jump->label.toString()});
+            assm.jmp_1(x64asm::Label{jump->label->toString()});
             break;
           }
           case IR::Operation::CondJump: {
@@ -301,7 +301,7 @@ namespace ASM {
             uint64_t true_val = VM::Value::makeBoolean(true).value;
             read_temp(cjump->cond, r10);
             assm.cmp(r10, Imm32{(uint32_t)true_val});
-            assm.je_1(x64asm::Label{cjump->label.toString()});
+            assm.je_1(x64asm::Label{cjump->label->toString()});
             break;
           }
           case IR::Operation::Call: {
@@ -367,7 +367,7 @@ namespace ASM {
             read_temp(op->function, r12);
             call_helper((void*) &helper_convert_to_closure, r12);
             assm.mov(r12, rax);
-            for (Temp t : op->refs) {
+            for (shared_ptr<Temp> t : op->refs) {
               read_temp(t, r10);
               call_helper((void*) &helper_add_reference_to_closure, r12, r10);
             }
