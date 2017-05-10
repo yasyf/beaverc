@@ -9,6 +9,7 @@ using namespace std;
 using namespace x64asm;
 using namespace IR;
 
+#define RESERVED_STACK_SPACE 4
 #define STACK_VALUE_SIZE 8
 
 #define IR_INSTRUCTION_BYTE_UPPER_BOUND 64
@@ -16,34 +17,32 @@ using namespace IR;
 namespace ASM {
   class Compiler {
     IR::InstructionList& ir;
-    VM::ClosureFunctionValue& closure;
     Assembler assm;
-    size_t num_locals;
     size_t num_temps;
 
-    M64 current_refs() {
-      #warning fill this in
+    M64 current_closure() {
       return M64{rbp, Imm32{(uint32_t)(-1 * STACK_VALUE_SIZE)}};
     }
 
-    M64 local(size_t i) {
-      return M64{rbp, Imm32{(uint32_t)(-(i+RESERVED_STACK_SPACE) * STACK_VALUE_SIZE)}};
+    M64 current_locals() {
+      return M64{rbp, Imm32{(uint32_t)(-2 * STACK_VALUE_SIZE)}};
+    }
+
+    M64 current_refs() {
+      return M64{rbp, Imm32{(uint32_t)(-3 * STACK_VALUE_SIZE)}};
     }
 
     M64 temp(size_t i) {
-      return M64{rbp, Imm32{(uint32_t)(-(i+RESERVED_STACK_SPACE+num_locals) * STACK_VALUE_SIZE)}};
+      return M64{rbp, Imm32{(uint32_t)(-(i+RESERVED_STACK_SPACE) * STACK_VALUE_SIZE)}};
     }
 
     void read_local(shared_ptr<Var> v, const R64& reg) {
-      assm.mov(reg, local(v->num));
+      assm.mov(reg, current_locals());
+      assm.mov(reg, M64{reg, Imm32{STACK_VALUE_SIZE*v->num}});
     }
 
     void read_temp(shared_ptr<Temp> t, const R64& reg) {
       assm.mov(reg, temp(t->num));
-    }
-
-    void write_local(shared_ptr<Var> v, const R64& reg) {
-      assm.mov(local(v->num), reg);
     }
 
     void write_temp(shared_ptr<Temp> t, const M64& mem) {
@@ -97,35 +96,30 @@ namespace ASM {
 
     void preamble() {
       // preconditions:
-      // rdi contains a pointer to the list of arguments
-      // rsi contains a pointer to the list of references (local references and free vars)
+      // rdi contains a pointer to the closure (not a tagged pointer)
+      // rsi contains a pointer to the list of local variables
+      // rdx contains a pointer to the list of references (local references and free vars)
       // Stuff that needs to happen:
-      // Extend the stack RESERVED_STACK_SPACE + num_locals*8 + num_temps*8 downward
+      // Extend the stack RESERVED_STACK_SPACE + num_temps*8 downward
+      // Store closure pointer into the special place
+      // Store list of locals into the special place
       // Store references list into the special place
-      // Call the setup_function helper. It is called with:
-        // The closure, the list of arguments, the list of references, the base pointer
-      // It does the following:
-        // Writes none to every variable
-        // Takes the arguments and assigns them correctly on the stack
-        // Adds the local variables (but not local reference variables) to the set of roots
+
+      // Push all the registers we're gonna use
 
       assm.push(rbp);
       assm.mov(rbp, rsp);
 
-      assm.sub(rsp, Imm32{((uint32_t)num_locals + (uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
-      assm.mov(current_refs(), rsi);
+      assm.sub(rsp, Imm32{((uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
+      assm.mov(current_closure(), rdi);
+      assm.mov(current_locals(), rsi);
+      assm.mov(current_refs(), rdx);
 
       assm.push(rbx);
       assm.push(r12);
       assm.push(r13);
       assm.push(r14);
       assm.push(r15);
-
-      assm.mov(rdx, rbp);
-      uint64_t addr = VM::Value::makePointer(&closure).value;
-      assm.mov(rcx, Imm64{addr});
-      assm.mov(r10, Imm64{(uint64_t)&helper_setup_function});
-      assm.call(r10);
     }
 
     void postamble(const R64& retval) {
@@ -136,7 +130,7 @@ namespace ASM {
       assm.pop(r13);
       assm.pop(r12);
       assm.pop(rbx);
-      assm.add(rsp, Imm32{((uint32_t)num_locals + (uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
+      assm.add(rsp, Imm32{((uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
       assm.pop(rbp);
     }
 
@@ -174,14 +168,12 @@ namespace ASM {
               call_helper((void*) &helper_read_reference, r10);
               write_temp(assign->dest, rax);
             } else if (auto assign = dynamic_cast<Assign<Glob>*>(instruction)) {
-              uint64_t addr = VM::Value::makePointer(&closure).value;
-              assm.mov(r10, Imm64{addr});
+              assm.mov(r10, current_closure());
               assm.mov(r11, Imm64{(uint32_t)assign->src->num});
               call_helper((void *)(&helper_read_global), r10, r11);
               write_temp(assign->dest, rax);
             } else if (auto assign = dynamic_cast<Assign<IR::Function>*>(instruction)) {
-              uint64_t addr = VM::Value::makePointer(&closure).value;
-              assm.mov(r10, Imm64{addr});
+              assm.mov(r10, current_closure());
               assm.mov(r11, Imm64{(uint32_t)assign->src->num});
               call_helper((void *)(&helper_read_function), r10, r11);
               write_temp(assign->dest, rax);
@@ -191,15 +183,15 @@ namespace ASM {
           case IR::Operation::Store: {
             if (auto store = dynamic_cast<Store<Var>*>(instruction)) {
               read_temp(store->src, r10);
-              write_local(store->dest, r10);
+              assm.mov(r11, current_locals());
+              assm.mov(M64{r11, Imm32{STACK_VALUE_SIZE*store->dest->num}}, r10);
             } else if (auto store = dynamic_cast<Store<Deref>*>(instruction)) {
               assm.mov(r10, current_refs());
               assm.mov(r10, M64{r10, (uint32_t)store->dest->num * STACK_VALUE_SIZE});
               read_temp(store->src, r11);
               assm.mov(M64{r10}, r11);
             } else if (auto store = dynamic_cast<Store<Glob>*>(instruction)) {
-              uint64_t addr = VM::Value::makePointer(&closure).value;
-              assm.mov(r10, Imm64{addr});
+              assm.mov(r10, current_closure());
               assm.mov(r11, Imm64{(uint32_t)store->dest->num});
               read_temp(store->src, rax);
               call_helper((void *)(&helper_write_global), r10, r11, rax);
@@ -337,14 +329,12 @@ namespace ASM {
             } else if (auto op = dynamic_cast<CallHelper<Helper::AllocRecord>*>(instruction)) {
               call_helper((void *)(&helper_alloc_record));
             } else if (auto op = dynamic_cast<CallHelper<Helper::FieldLoad>*>(instruction)) {
-              uint64_t addr = VM::Value::makePointer(&closure).value;
-              assm.mov(r10, Imm64{addr});
+              assm.mov(r10, current_closure());
               read_temp(op->args[0], r11);
               assm.mov(r12, Imm64{op->arg0});
               call_helper((void *)(&helper_field_load), r10, r11, r12);
             } else if (auto op = dynamic_cast<CallHelper<Helper::FieldStore>*>(instruction)) {
-              uint64_t addr = VM::Value::makePointer(&closure).value;
-              assm.mov(r10, Imm64{addr});
+              assm.mov(r10, current_closure());
               read_temp(op->args[0], r11);
               assm.mov(r12, Imm64{op->arg0});
               read_temp(op->args[1], r13);
@@ -407,9 +397,7 @@ namespace ASM {
     }
 
   public:
-    Compiler(IR::InstructionList& ir, VM::ClosureFunctionValue& closure, size_t num_temps) : ir(ir), closure(closure), num_temps(num_temps) {
-      this->num_locals = closure.value->local_vars_.size();
-    }
+    Compiler(IR::InstructionList& ir, size_t num_temps) : ir(ir), num_temps(num_temps) {}
 
     void compileInto(x64asm::Function& func) {
       compile(ir, func);

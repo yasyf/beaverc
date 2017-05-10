@@ -22,20 +22,22 @@ namespace VM {
     }
   };
 
-  void Interpreter::push_frame(Value* local,
-                               int local_size,
-                               std::vector<ReferenceValue*>* local_reference,
-                               std::stack<Value>* local_stack) {
+  void Interpreter::push_frame(std::vector<Value>* local, std::vector<ReferenceValue*>* local_reference) {
     local_variable_stack.push_back(local);
-    local_variable_size_stack.push_back(local_size);
     local_reference_variable_stack.push_back(local_reference);
-    operand_stack_stack.push_back(local_stack);
   }
 
   void Interpreter::pop_frame() {
     local_variable_stack.pop_back();
-    local_variable_size_stack.pop_back();
     local_reference_variable_stack.pop_back();
+    
+  }
+
+  void Interpreter::push_stack(std::stack<Value>* local_stack) {
+    operand_stack_stack.push_back(local_stack);
+  }
+
+  void Interpreter::pop_stack() {
     operand_stack_stack.pop_back();
   }
 
@@ -58,12 +60,10 @@ namespace VM {
       #endif
       std::vector<PointerValue*> roots;
       roots.push_back(main_closure);
-      for (int i = 0; i < local_variable_stack.size(); i++) {
-        auto local_variables = local_variable_stack[i];
-        auto size = local_variable_size_stack[i];
-        for (int j = 0; j < size; j++) {
-          if (local_variables[j].isPointer()) {
-            roots.push_back(local_variables[j].getPointerValue());
+      for (auto local_variables : local_variable_stack) {
+        for (auto value : *local_variables) {
+          if (value.isPointer()) {
+            roots.push_back(value.getPointerValue());
           }
         }
       }
@@ -157,35 +157,13 @@ namespace VM {
 
   Value Interpreter::run_function(
       ClosureFunctionValue* closure,
-      std::vector<Value> const & arguments,
-      std::vector<ReferenceValue*>& local_reference_vars
+      Value* local_variables,
+      ReferenceValue** local_reference_vars
   ) {
       BC::Function& func = *closure->value;
       std::stack<Value> stack;
-      Value local_variables[func.local_vars_.size()];
-      push_frame(local_variables, func.local_vars_.size(), &local_reference_vars, &stack);
 
-      if (func.parameter_count_ != arguments.size()) {
-          throw RuntimeException("An incorrect number of parameters was passed to the function");
-      }
-
-      {
-        std::map<std::string, int> reverse_index;
-        for (int i = 0; i < func.local_reference_vars_.size(); i++) {
-          reverse_index[func.local_reference_vars_[i]] = i;
-        }
-        for (int i = 0; i < arguments.size(); i++) {
-          std::string var_name = func.local_vars_[i];
-          #if DEBUG
-          std::cout << var_name << " = " << arguments[i].toString() << std::endl;
-          #endif
-          if (reverse_index.count(var_name) == 0) {
-              local_variables[i] = arguments[i];
-          } else {
-              local_reference_vars[reverse_index[var_name]]->value = arguments[i];
-          }
-        }
-      }
+      push_stack(&stack);
 
       int ip = 0;
       while (ip >= 0 && ip < func.instructions.size()) {
@@ -399,7 +377,7 @@ namespace VM {
               // Mnemonic:    return
               // Stack::      S :: operand 1 => S
               case Operation::Return: {
-                  pop_frame();
+                  pop_stack();
                   return safe_peek(stack);
               }
               break;
@@ -598,7 +576,7 @@ namespace VM {
           #endif
           ip = new_ip;
       }
-      pop_frame();
+      pop_stack();
       return Value::makeNone();
   }
 }

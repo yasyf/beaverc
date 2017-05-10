@@ -35,8 +35,7 @@ namespace ASM {
     return closure->call(values).value;
   }
 
-  uint64_t helper_read_global(uint64_t closure_p, int index) {
-    ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
+  uint64_t helper_read_global(ClosureFunctionValue* closure, int index) {
     std::string name = closure->value->names_[index];
     #if DEBUG
       cout << "helper_read_global" << endl;
@@ -46,8 +45,7 @@ namespace ASM {
     return interpreter->global_variables[name].value;
   }
 
-  void helper_write_global(uint64_t closure_p, int index, uint64_t value) {
-    ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
+  void helper_write_global(ClosureFunctionValue* closure, int index, uint64_t value) {
     std::string name = closure->value->names_[index];
     #if DEBUG
       cout << "helper_write_global" << endl;
@@ -72,28 +70,25 @@ namespace ASM {
     ((ReferenceValue*) reference_p)->value.value = value;
   }
 
-  uint64_t helper_read_function(uint64_t closure_p, int index) {
+  uint64_t helper_read_function(ClosureFunctionValue* closure, int index) {
     #if DEBUG
       cout << "helper_read_function" << endl;
     #endif
-    ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
     return allocateFunction(closure, index).value;
   }
 
-  uint64_t helper_field_load(uint64_t closure_p, uint64_t record_p, int index) {
+  uint64_t helper_field_load(ClosureFunctionValue* closure, uint64_t record_p, int index) {
     #if DEBUG
       cout << "helper_field_load" << endl;
     #endif
-    ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
     RecordValue* record = Value(record_p).getPointer<RecordValue>();
     return record->get(closure->value->names_[index]).value;
   }
 
-  void helper_field_store(uint64_t closure_p, uint64_t record_p, int index, uint64_t value) {
+  void helper_field_store(ClosureFunctionValue* closure, uint64_t record_p, int index, uint64_t value) {
     #if DEBUG
       cout << "helper_field_store" << endl;
     #endif
-    ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
     RecordValue* record = Value(record_p).getPointer<RecordValue>();
     record->insert(closure->value->names_[index], Value(value));
   }
@@ -152,40 +147,6 @@ namespace ASM {
       cout << "helper_equals" << endl;
     #endif
     return equals(Value(left), Value(right)).value;
-  }
-
-  void helper_setup_function(Value* arguments, ReferenceValue** refs, Value* base_pointer, uint64_t closure_p) {
-    #if DEBUG
-      cout << "helper_setup_function" << endl;
-    #endif
-
-    ClosureFunctionValue* closure = Value(closure_p).getPointer<ClosureFunctionValue>();
-
-    #warning Make sure to add locals and temps to the set of roots
-
-    // Assign everything to none
-    for (int i = 0; i < closure->value->local_vars_.size(); i++) {
-      base_pointer[-i-RESERVED_STACK_SPACE] = Value::makeNone();
-    }
-
-    // Assign the variables
-    std::map<std::string, int> reverse_index;
-    for (int i = 0; i < closure->value->local_reference_vars_.size(); i++) {
-      reverse_index[closure->value->local_reference_vars_[i]] = i;
-    }
-
-    for (int i = 0; i < closure->value->parameter_count_; i++) {
-      std::string var_name = closure->value->local_vars_[i];
-      #if DEBUG
-      std::cout << "Assembly: ";
-      std::cout << var_name << " = " << arguments[i].toString() << std::endl;
-      #endif
-      if (reverse_index.count(var_name) == 0) {
-        base_pointer[-i-RESERVED_STACK_SPACE] = arguments[i];
-      } else {
-        refs[reverse_index[var_name]]->value = arguments[i];
-      }
-    }
   }
 
   uint64_t helper_convert_to_closure(uint64_t bare_function) {

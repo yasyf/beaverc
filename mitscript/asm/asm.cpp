@@ -90,10 +90,7 @@ int main(int argc, char** argv)
   IR::OptimizingCompiler ir_compiler(bytecode, ir);
   size_t temp_count = ir_compiler.compile();
 
-  GC::CollectedHeap heap(0);
-  VM::ClosureFunctionValue closure(heap, bytecode);
-
-  ASM::Compiler asm_compiler(ir, closure, temp_count);
+  ASM::Compiler asm_compiler(ir, temp_count);
   x64asm::Function assm;
   asm_compiler.compileInto(assm);
 

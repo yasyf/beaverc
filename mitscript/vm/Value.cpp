@@ -14,12 +14,35 @@ namespace VM {
   }
 
   Value ClosureFunctionValue::call(std::vector<Value> & arguments) {
+    if (value->parameter_count_ != arguments.size()) {
+        throw RuntimeException("An incorrect number of parameters was passed to the function");
+    }
+
+    std::vector<Value> local_vars(value->local_vars_.size(), Value::makeNone());
     std::vector<ReferenceValue*> local_reference_vars;
     for (auto var : value->local_reference_vars_) {
       local_reference_vars.push_back(heap.allocate<ReferenceValue>(Value::makeNone()));
     }
     for (auto var : references) {
       local_reference_vars.push_back(var);
+    }
+
+    {
+      std::map<std::string, int> reverse_index;
+      for (int i = 0; i < value->local_reference_vars_.size(); i++) {
+        reverse_index[value->local_reference_vars_[i]] = i;
+      }
+      for (int i = 0; i < arguments.size(); i++) {
+        std::string var_name = value->local_vars_[i];
+        #if DEBUG
+        std::cout << var_name << " = " << arguments[i].toString() << std::endl;
+        #endif
+        if (reverse_index.count(var_name) == 0) {
+            local_vars[i] = arguments[i];
+        } else {
+            local_reference_vars[reverse_index[var_name]]->value = arguments[i];
+        }
+      }
     }
 
     if (
@@ -29,17 +52,23 @@ namespace VM {
       InstructionList ir;
       IR::OptimizingCompiler ir_compiler(value, ir);
       size_t temp_count = ir_compiler.compile(has_option(OPTION_ALL));
-      ASM::Compiler asm_compiler(ir, *this, temp_count);
+      ASM::Compiler asm_compiler(ir, temp_count);
       asm_compiler.compileInto(compiled_func);
       is_compiled = !has_option(OPTION_COMPILE_ONLY);
     }
 
+    interpreter->push_frame(&local_vars, &local_reference_vars);
+
+    Value result;
     if (is_compiled) {
-      uint64_t result = compiled_func.call<uint64_t, void*, void*>(&arguments[0], &local_reference_vars[0]);
-      return Value(result);
+      result = Value(compiled_func.call<uint64_t, void*, void*, void*>(this, &local_vars[0], &local_reference_vars[0]));
     } else {
-      return interpreter->run_function(this, arguments, local_reference_vars);
+      result = interpreter->run_function(this, &local_vars[0], &local_reference_vars[0]);
     }
+
+    interpreter->pop_frame();
+
+    return result;
   }
 
   Value BuiltInFunctionValue::call(std::vector<Value> & arguments) {
