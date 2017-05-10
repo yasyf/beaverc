@@ -1,13 +1,13 @@
 #pragma once
 #include "Instructions.h"
-#include <stdlib.h>
+#include "Optimization.h"
 
 using namespace std;
 
 namespace IR {
-  class IntAddOptimization {
+  class IntAddOptimization : Optimization {
   public:
-    size_t optimize(shared_ptr<BC::Function> func, InstructionList& ir) {
+    virtual void optimize(shared_ptr<BC::Function> func, InstructionList& ir) {
       size_t count = 0;
       for (auto instruction : ir) {
         switch (instruction->op()) {

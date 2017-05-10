@@ -3,6 +3,7 @@
 #include "Instructions.h"
 #include "Compiler.h"
 
+#include "PropagateTypesOptimization.h"
 #include "ShortJumpOptimization.h"
 #include "IntAddOptimization.h"
 
@@ -21,7 +22,9 @@ namespace IR {
     }
 
     void runAllPasses() {
+      optimize<PropagateTypesOptimization>();
       optimize<IntAddOptimization>();
+      optimize<PropagateTypesOptimization>();
       optimize<ShortJumpOptimization>();
     }
 

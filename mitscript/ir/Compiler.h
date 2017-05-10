@@ -74,16 +74,12 @@ namespace IR {
 
     template<typename T>
     void assign(shared_ptr<T> t) {
-      auto temp = nextTemp();
-      temp->type_hint = t->type_hint;
-      instructions.push_back(new Assign<T>{temp, t});
+      instructions.push_back(new Assign<T>{nextTemp(), t});
     }
 
     template<typename T>
     void store(shared_ptr<T> t) {
-      auto temp = popTemp();
-      t->type_hint = temp->type_hint;
-      instructions.push_back(new Store<T>{t, temp});
+      instructions.push_back(new Store<T>{t, popTemp()});
     }
 
     template<typename T, Helper H>
