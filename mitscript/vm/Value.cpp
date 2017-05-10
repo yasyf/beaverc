@@ -22,10 +22,13 @@ namespace VM {
       local_reference_vars.push_back(var);
     }
 
-    if ((has_option(OPTION_MACHINE_CODE_ONLY) || has_option(OPTION_COMPILE_ONLY)) && !is_compiled) {
+    if (
+      (has_option(OPTION_MACHINE_CODE_ONLY) || has_option(OPTION_COMPILE_ONLY) || has_option(OPTION_ALL))
+      && !is_compiled
+    ) {
       InstructionList ir;
       IR::OptimizingCompiler ir_compiler(value, ir);
-      size_t temp_count = ir_compiler.compile();
+      size_t temp_count = ir_compiler.compile(has_option(OPTION_ALL));
       ASM::Compiler asm_compiler(ir, *this, temp_count);
       asm_compiler.compileInto(compiled_func);
       is_compiled = !has_option(OPTION_COMPILE_ONLY);

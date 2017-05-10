@@ -59,12 +59,12 @@ int main(int argc, char** argv)
       case 'o':
         if (strcmp(optarg, "machine-code-only") == 0) {
           set_option(OPTION_MACHINE_CODE_ONLY);
-        }
-        if (strcmp(optarg, "string-trees") == 0) {
+        } else if (strcmp(optarg, "string-trees") == 0) {
           set_option(OPTION_STRING_TREES);
-        }
-        if (strcmp(optarg, "compile-only") == 0) {
+        } else if (strcmp(optarg, "compile-only") == 0) {
           set_option(OPTION_COMPILE_ONLY);
+        } else if (strcmp(optarg, "all") == 0) {
+          set_option(OPTION_ALL);
         }
         break;
       case '?':
