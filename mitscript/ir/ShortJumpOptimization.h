@@ -5,7 +5,7 @@
 using namespace std;
 
 // over-constrain since 1 IR instruction could generate multiple ASM
-#define SHORT_JUMP_MAX (1 << 5)
+#define SHORT_JUMP_MAX 1
 
 namespace IR {
   class ShortJumpOptimization : Optimization {
