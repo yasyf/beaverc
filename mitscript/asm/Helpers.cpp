@@ -39,7 +39,7 @@ namespace ASM {
     std::string name = closure->value->names_[index];
     #if DEBUG
       cout << "helper_read_global" << endl;
-      cout << "Closure: " << (void*) closure_p << endl;
+      cout << "Closure: " << (void*) closure << endl;
       cout << "name: " << name << endl;
     #endif
     return interpreter->global_variables[name].value;
@@ -49,7 +49,7 @@ namespace ASM {
     std::string name = closure->value->names_[index];
     #if DEBUG
       cout << "helper_write_global" << endl;
-      cout << "Closure: " << (void*) closure_p << endl;
+      cout << "Closure: " << (void*) closure << endl;
       cout << "name: " << name << endl;
     #endif
     interpreter->global_variables[name].value = value;

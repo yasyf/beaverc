@@ -127,12 +127,18 @@ int main(int argc, char** argv)
   #endif
 
   interpreter = new VM::Interpreter(function, usable_memory);
-  try {
-    return interpreter->interpret();
-  } catch (SystemException& ex) {
-    cout << ex.what() << endl;
-    return 1;
-  }
 
-  return 0;
+  std::set_terminate([](){
+    try {
+      std::exception_ptr eptr = std::current_exception();
+      if (eptr) {
+        std::rethrow_exception(eptr);
+      }
+    } catch (SystemException& ex) {
+      cout << ex.what() << endl;
+      exit(1);
+    }
+  });
+
+  return interpreter->interpret();
 }

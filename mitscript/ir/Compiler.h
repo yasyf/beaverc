@@ -190,7 +190,7 @@ namespace IR {
             auto arg2 = popTemp();
             instructions.push_back(new CallHelper<Helper::AssertInt>{arg1});
             instructions.push_back(new CallHelper<Helper::AssertInt>{arg2});
-            instructions.push_back(new CallHelper<Helper::AssertNotZero>{arg2});
+            instructions.push_back(new CallHelper<Helper::AssertNotZero>{arg1});
             instructions.push_back(new Div{nextTemp(), arg2, arg1});
             break;
           }
@@ -253,7 +253,6 @@ namespace IR {
             for (size_t i = 0; i < ref_count; ++i) {
               refs.push_back(popTemp());
             }
-            reverse(refs.begin(), refs.end());
             instructions.push_back(new AllocClosure{function, refs});
             assign(get_singleton<RetVal>());
             break;
