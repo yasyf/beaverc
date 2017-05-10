@@ -21,8 +21,8 @@ namespace IR {
     }
 
     void runAllPasses() {
-      optimize<ShortJumpOptimization>();
       optimize<IntAddOptimization>();
+      optimize<ShortJumpOptimization>();
     }
 
   public:
