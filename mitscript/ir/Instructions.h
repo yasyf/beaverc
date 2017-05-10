@@ -77,6 +77,7 @@ namespace IR {
     size_t num;
 
     Temp(size_t num) : num(num) {}
+
     #ifdef DEBUG
       virtual string toString() { return "t" + to_string(num) + " (" + to_string(type_hint) + ")"; }
     #else
@@ -92,14 +93,24 @@ namespace IR {
     size_t num;
 
     Var(size_t num) : num(num) {}
-    virtual string toString() { return "%" + to_string(num); }
+
+    #ifdef DEBUG
+      virtual string toString() { return "%" + to_string(num) + " (" + to_string(type_hint) + ")"; }
+    #else
+      virtual string toString() { return "%" + to_string(num); }
+    #endif
   };
 
   struct Glob : Operand {
     size_t num;
 
     Glob(size_t num) : num(num) {}
-    virtual string toString() { return "%%" + to_string(num); }
+
+    #ifdef DEBUG
+      virtual string toString() { return "%%" + to_string(num) + " (" + to_string(type_hint) + ")"; }
+    #else
+      virtual string toString() { return "%%" + to_string(num); }
+    #endif
   };
 
   struct Function : Operand {

@@ -43,16 +43,47 @@ namespace IR {
       return t;
     }
 
+    template<typename T, typename K>
+    shared_ptr<T> _get_operand(size_t num, K k) {
+      static map<size_t, shared_ptr<T>> operands;
+
+      if (!operands.count(num)) {
+        operands[num] = make_shared<T>(k);
+      }
+      return operands[num];
+    }
+
+    template<typename T>
+    shared_ptr<T> get_operand(size_t num) {
+      return _get_operand<T, size_t>(num, num);
+    }
+
+    shared_ptr<Const> get_const(BC::Function& func, size_t num) {
+      return _get_operand<Const, shared_ptr<BC::Constant>>(num, func.constants_[num]);
+    }
+
+    template<typename T>
+    shared_ptr<T> get_singleton() {
+      static shared_ptr<T> instance = nullptr;
+
+      if (!instance)
+        instance = make_shared<T>();
+
+      return instance;
+    }
+
     template<typename T>
     void assign(shared_ptr<T> t) {
       auto temp = nextTemp();
-      temp->type_hint |= t->type_hint;
+      temp->type_hint = t->type_hint;
       instructions.push_back(new Assign<T>{temp, t});
     }
 
     template<typename T>
     void store(shared_ptr<T> t) {
-      instructions.push_back(new Store<T>{t, popTemp()});
+      auto temp = popTemp();
+      t->type_hint = temp->type_hint;
+      instructions.push_back(new Store<T>{t, temp});
     }
 
     template<typename T, Helper H>
@@ -110,35 +141,35 @@ namespace IR {
               args.push_back(popTemp());
             reverse(args.begin(), args.end());
             instructions.push_back(new Call{closure, args});
-            assign(make_shared<RetVal>());
+            assign(get_singleton<RetVal>());
             break;
           }
           case BC::Operation::LoadReference:
-            assign(make_shared<Deref>((size_t)instruction.operand0.value()));
+            assign(get_operand<Deref>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::PushReference:
-            assign(make_shared<Ref>((size_t)instruction.operand0.value()));
+            assign(get_operand<Ref>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::LoadFunc:
-            assign(make_shared<Function>((size_t)instruction.operand0.value()));
+            assign(get_operand<Function>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::LoadGlobal:
-            assign(make_shared<Glob>((size_t)instruction.operand0.value()));
+            assign(get_operand<Glob>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::LoadLocal:
-            assign(make_shared<Var>((size_t)instruction.operand0.value()));
+            assign(get_operand<Var>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::LoadConst:
-            assign(make_shared<Const>(func.constants_[instruction.operand0.value()]));
+            assign(get_const(func, instruction.operand0.value()));
             break;
           case BC::Operation::StoreReference:
-            store(make_shared<Deref>((size_t)instruction.operand0.value()));
+            store(get_operand<Deref>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::StoreLocal:
-            store(make_shared<Var>((size_t)instruction.operand0.value()));
+            store(get_operand<Var>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::StoreGlobal:
-            store(make_shared<Glob>((size_t)instruction.operand0.value()));
+            store(get_operand<Glob>((size_t)instruction.operand0.value()));
             break;
           case BC::Operation::Eq: {
             auto arg1 = popTemp();
@@ -193,11 +224,11 @@ namespace IR {
             break;
           case BC::Operation::AllocRecord:
             instructions.push_back(new CallHelper<Helper::AllocRecord>{});
-            assign(make_shared<RetVal>());
+            assign(get_singleton<RetVal>());
             break;
           case BC::Operation::FieldLoad:
             instructions.push_back(new CallHelper<Helper::FieldLoad>{(size_t)instruction.operand0.value(), popTemp()});
-            assign(make_shared<RetVal>());
+            assign(get_singleton<RetVal>());
             break;
           case BC::Operation::FieldStore: {
             auto value = popTemp();
@@ -209,7 +240,7 @@ namespace IR {
             auto index = popTemp();
             auto record = popTemp();
             instructions.push_back(new CallHelper<Helper::IndexLoad>{record, index});
-            assign(make_shared<RetVal>());
+            assign(get_singleton<RetVal>());
             break;
           }
           case BC::Operation::IndexStore: {
@@ -228,7 +259,7 @@ namespace IR {
             }
             reverse(refs.begin(), refs.end());
             instructions.push_back(new AllocClosure{function, refs});
-            assign(make_shared<RetVal>());
+            assign(get_singleton<RetVal>());
             break;
           }
           case BC::Operation::Label: {
