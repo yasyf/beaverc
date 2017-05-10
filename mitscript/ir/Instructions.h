@@ -104,6 +104,7 @@ namespace IR {
     Return,
     OutputLabel,
     Jump,
+    ShortJump,
     CondJump,
     CallHelper,
   };
@@ -302,6 +303,10 @@ namespace IR {
     Jump(Label label) : label(label) {}
     virtual Operation op() { return Operation::Jump; }
     virtual string toString() { return "jmp " + label.toString(); }
+  };
+
+  struct ShortJump : public Jump {
+    using Jump::Jump;
   };
 
   struct CondJump : Instruction {

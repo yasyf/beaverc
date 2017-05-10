@@ -286,6 +286,11 @@ namespace ASM {
             write_temp(nott->dest, r10);
             break;
           }
+          case IR::Operation::ShortJump: {
+            auto sj = dynamic_cast<ShortJump*>(instruction);
+            assm.jmp(x64asm::Label{sj->label.toString()});
+            break;
+          }
           case IR::Operation::Jump: {
             auto jump = dynamic_cast<Jump*>(instruction);
             assm.jmp_1(x64asm::Label{jump->label.toString()});

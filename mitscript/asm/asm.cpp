@@ -4,7 +4,7 @@
 #include "../bcparser/parser.h"
 #include "../bcparser/lexer.h"
 #include "../bccompiler/Compiler.h"
-#include "../ir/Compiler.h"
+#include "../ir/OptimizingCompiler.h"
 #include "Compiler.h"
 #include "PrettyPrinter.h"
 #include <iostream>
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
   auto bytecode = getBytecodeFunction(argc, argv);
 
   IR::InstructionList ir;
-  IR::Compiler ir_compiler(bytecode, ir);
+  IR::OptimizingCompiler ir_compiler(bytecode, ir);
   size_t temp_count = ir_compiler.compile();
 
   GC::CollectedHeap heap(0);

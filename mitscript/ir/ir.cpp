@@ -3,7 +3,7 @@
 #include "../bcparser/parser.h"
 #include "../bcparser/lexer.h"
 #include "../bccompiler/Compiler.h"
-#include "Compiler.h"
+#include "OptimizingCompiler.h"
 #include "PrettyPrinter.h"
 #include <iostream>
 
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
   auto bytecode = getBytecodeFunction(argc, argv);
 
   IR::InstructionList instructions;
-  IR::Compiler compiler(bytecode, instructions);
+  IR::OptimizingCompiler compiler(bytecode, instructions);
   compiler.compile();
 
   IR::PrettyPrinter printer(instructions);

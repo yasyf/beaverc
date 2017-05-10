@@ -1,7 +1,7 @@
 #include "Value.h"
 #include "Interpreter.h"
 #include "globals.h"
-#include "../ir/Compiler.h"
+#include "../ir/OptimizingCompiler.h"
 #include "../asm/Compiler.h"
 #include <list>
 
@@ -24,9 +24,9 @@ namespace VM {
 
     if ((has_option(OPTION_MACHINE_CODE_ONLY) || has_option(OPTION_COMPILE_ONLY)) && !is_compiled) {
       InstructionList ir;
-      IR::Compiler ir_compiler = IR::Compiler(value, ir);
+      IR::OptimizingCompiler ir_compiler(value, ir);
       size_t temp_count = ir_compiler.compile();
-      ASM::Compiler asm_compiler = ASM::Compiler(ir, *this, temp_count);
+      ASM::Compiler asm_compiler(ir, *this, temp_count);
       asm_compiler.compileInto(compiled_func);
       is_compiled = !has_option(OPTION_COMPILE_ONLY);
     }
