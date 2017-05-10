@@ -1,6 +1,8 @@
 #pragma once
 #include "../vm/Value.h"
 
+#define RESERVED_STACK_SPACE 2
+
 namespace ASM {
   void helper_garbage_collect();
   uint64_t helper_alloc_record();

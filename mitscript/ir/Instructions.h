@@ -313,7 +313,13 @@ namespace IR {
 
     AllocClosure(shared_ptr<Temp> function, vector<shared_ptr<Temp>> refs) : function(function), refs(refs) {}
     virtual Operation op() { return Operation::AllocClosure; }
-    virtual string toString() { return "alloc_closure " + function->toString(); }
+    virtual string toString() {
+      string result = "alloc_closure " + function->toString() + " -- ";
+      for (auto t : refs) {
+        result += t->toString();
+      }
+      return result;
+    }
   };
 
   template<Helper H>
