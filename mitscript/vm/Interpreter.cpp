@@ -5,7 +5,7 @@
 using namespace BC;
 using namespace GC;
 
-#define COLLECTION_RATIO 0.5
+#define COLLECTION_RATIO 0.9
 
 namespace VM {
   Interpreter::Interpreter(std::shared_ptr<BC::Function> main_func, size_t max_size) : heap(max_size) {
