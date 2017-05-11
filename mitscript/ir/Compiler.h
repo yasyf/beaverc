@@ -33,10 +33,6 @@ namespace IR {
       operands.push(t2);
     }
 
-    shared_ptr<Temp> peekTemp() {
-      return operands.top();
-    }
-
     shared_ptr<Temp> nextTemp() {
       shared_ptr<Temp> t(new Temp{temp_count++});
       operands.push(t);
@@ -271,7 +267,7 @@ namespace IR {
             break;
           }
           case BC::Operation::Dup:
-            assign(peekTemp());
+            instructions.push_back(new Fork{popTemp(), nextTemp(), nextTemp()});
             break;
           case BC::Operation::Swap:
             swapTemp();

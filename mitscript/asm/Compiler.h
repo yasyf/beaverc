@@ -395,6 +395,13 @@ namespace ASM {
             write_temp(orr->dest, r10);
             break;
           }
+          case IR::Operation::Fork: {
+            auto fork = dynamic_cast<Fork*>(instruction);
+            read_temp(fork->src, r10);
+            write_temp(fork->dest1, r10);
+            write_temp(fork->dest2, r10);
+            break;
+          }
           default: {
             throw UnexpectedOperation(to_string(static_cast<int>(instruction->op())));
           }

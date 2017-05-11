@@ -268,6 +268,7 @@ namespace IR {
     CallHelper,
     CallAssert,
     Noop,
+    Fork,
   };
 
   enum class Helper {
@@ -521,6 +522,16 @@ namespace IR {
 
       return instance;
     }
+  };
+
+  struct Fork : Instruction {
+    shared_ptr<Temp> src;
+    shared_ptr<Temp> dest1;
+    shared_ptr<Temp> dest2;
+
+    Fork(shared_ptr<Temp> src, shared_ptr<Temp> dest1, shared_ptr<Temp> dest2) : src(src), dest1(dest1), dest2(dest2) {}
+    virtual Operation op() { return Operation::Fork; }
+    virtual string toString() override { return src->toString() + " -> " + dest1->toString() + " " + dest2->toString(); }
   };
 
   typedef vector<Instruction*> InstructionList;
