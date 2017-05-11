@@ -21,7 +21,8 @@ namespace BC {
     shared_ptr<FunctionLinkedList> root;
 
     while (node) {
-      if (index(node->function->names_, name.name)) {
+      if (index(node->globals_, name.name)) {
+        insert(functions->globals_, name.name);
         insert(current()->names_, name.name);
         return;
       }
@@ -31,6 +32,7 @@ namespace BC {
 
     // Special case for recursive define at top level
     if (root->storing == name.name) {
+      insert(functions->globals_, name.name);
       insert(current()->names_, name.name);
     }
   }

@@ -95,6 +95,7 @@ namespace BC {
     std::shared_ptr<Function> function;
     std::shared_ptr<FunctionLinkedList> last;
     std::vector<std::string> free_reference_vars_;
+    std::vector<std::string> globals_;
     std::string storing;
     std::stack<InstructionList*> outs;
     bool returned = false;

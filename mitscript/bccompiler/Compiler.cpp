@@ -35,6 +35,7 @@ namespace BC {
   void Compiler::addNativeFunction(string name, size_t argc) {
     static size_t n_native_funcs = 1;
     output(Operation::LoadFunc, -(n_native_funcs++));
+    insert(parents->globals_, name);
     output(Operation::StoreGlobal, insert(current().names_, name));
   }
 
@@ -131,7 +132,8 @@ namespace BC {
   }
 
   void Compiler::visit(Name& name) {
-    if (auto i = index(current().names_, name.name)) {
+    if (index(parents->globals_, name.name)) {
+      auto i = index(current().names_, name.name);
       if (storing)
         output(Operation::StoreGlobal, *i);
       else
@@ -156,6 +158,7 @@ namespace BC {
         output(Operation::LoadLocal, *i);
     } else {
       if (storing && isGlobal()) {
+        insert(parents->globals_, name.name);
         size_t i = insert(current().names_, name.name);
         output(Operation::StoreGlobal, i);
       } else {
@@ -286,8 +289,10 @@ namespace BC {
     CompilerGlobalsScanner globalsScanner;
     globalsScanner.scan(func.body);
     vector<string> globals = globalsScanner.getGlobals();
-    for (string& global : globals)
+    for (string& global : globals) {
+      insert(parents->globals_, global);
       insert(function->names_, global);
+    }
 
     CompilerLocalsScanner localsScanner(globalsScanner.globals);
     localsScanner.scan(func.body);
