@@ -55,8 +55,9 @@ astprinter: parser $(PARSE_OBJECTS) $(OBJECTS) pprinter/PrettyPrinter.o $(ASOBJE
 BCCOOBJECTS = $(patsubst %.cpp, %.o, $(wildcard bccompiler/Compiler*.cpp))
 GCOBJECTS = $(patsubst %.cpp, %.o, $(wildcard gc/*.cpp))
 IROBJECTS = $(patsubst %.cpp, %.o, $(wildcard ir/*.cpp))
-ir: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) $(GCOBJECTS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) $(GCOBJECTS) -o bin/$@
+OPTSOBJECTS = $(patsubst %.cpp, %.o, $(wildcard vm/global*.cpp))
+ir: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) $(GCOBJECTS) $(OPTSOBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) $(GCOBJECTS) $(OPTSOBJECTS) -o bin/$@
 
 ASMOBJECTS = $(patsubst %.cpp, %.o, $(wildcard asm/*.cpp))
 VMASMOBJECTS = $(patsubst %.cpp, %.o, $(filter-out vm/vm.cpp,$(wildcard vm/*.cpp)))

@@ -9,10 +9,14 @@
 #include "IntAddOptimization.h"
 #include "ConstantFoldingOptimization.h"
 #include "RemoveObsoleteOptimization.h"
+#include "RemoveNoopOptimization.h"
+#include "CopyOptimization.h"
 
 using namespace std;
 
 namespace IR {
+  const size_t NUM_PASSES = 2;
+
   class OptimizingCompiler {
     Compiler compiler;
     shared_ptr<BC::Function> bytecode;
@@ -36,12 +40,16 @@ namespace IR {
     }
 
     void runAllPasses() {
-      optimize<PropagateTypesOptimization>();
-      optimize<ConstantFoldingOptimization>();
-      optimize<IntAddOptimization>();
-      optimize<PropagateTypesOptimization>();
-      removeObsolete();
-      optimize<ShortJumpOptimization>();
+      for (size_t i = 0; i < NUM_PASSES; ++i) {
+        optimize<PropagateTypesOptimization>();
+        optimize<ConstantFoldingOptimization>();
+        optimize<IntAddOptimization>();
+        optimize<PropagateTypesOptimization>();
+        removeObsolete();
+        optimize<CopyOptimization>();
+        optimize<RemoveNoopOptimization>();
+        optimize<ShortJumpOptimization>();
+      }
     }
 
   public:

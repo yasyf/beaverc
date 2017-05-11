@@ -68,16 +68,10 @@ namespace BC {
   }
 
   void Compiler::output(const Operation operation) {
-    #if DEBUG
-      cout << static_cast<int>(operation) << endl;
-    #endif
     output(Instruction(operation, nullopt));
   }
 
   void Compiler::output(const Operation operation, int32_t operand0) {
-    #if DEBUG
-      cout << static_cast<int>(operation) << " " <<  operand0 << endl;
-    #endif
     output(Instruction(operation, operand0));
   }
 

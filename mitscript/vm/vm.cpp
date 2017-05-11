@@ -58,13 +58,19 @@ int main(int argc, char** argv)
         break;
       case 'o':
         if (strcmp(optarg, "machine-code-only") == 0) {
-          set_option(OPTION_MACHINE_CODE_ONLY);
+          set_option(OPTION_MACHINE_CODE);
         } else if (strcmp(optarg, "string-trees") == 0) {
           set_option(OPTION_STRING_TREES);
         } else if (strcmp(optarg, "compile-only") == 0) {
+          set_option(OPTION_MACHINE_CODE);
           set_option(OPTION_COMPILE_ONLY);
+        } else if (strcmp(optarg, "no-compile-errors") == 0) {
+          set_option(OPTION_NO_COMPILE_ERRORS);
         } else if (strcmp(optarg, "all") == 0) {
-          set_option(OPTION_ALL);
+          set_option(OPTION_MACHINE_CODE);
+          set_option(OPTION_STRING_TREES);
+          set_option(OPTION_OPTIMIZATION_PASSES);
+          set_option(OPTION_NO_COMPILE_ERRORS);
         }
         break;
       case '?':

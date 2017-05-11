@@ -27,7 +27,7 @@ namespace IR {
           (op->src2->hasHint() && !op->src2->canBeInt())
         )
       ) {
-        throw IllegalCastException("Value is not an int");
+        throw_exception(IllegalCastException("Value is not an int"));
       }
     }
 
@@ -39,7 +39,7 @@ namespace IR {
           case IR::Operation::Add: {
             auto add = dynamic_cast<Add*>(instruction);
             if (!add->src1->isConst() || !add->src2->isConst()) {
-              continue;
+              break;
             }
 
             if (add->src1->isString() && add->src2->isString()) {
@@ -57,16 +57,17 @@ namespace IR {
               delete[] s1;
               delete[] s2;
               delete(add);
+            } else {
+              foldIntsBinOp(add, ir, count, [] (int a, int b) { return a + b; }, false);
             }
 
-            foldIntsBinOp(add, ir, count, [] (int a, int b) { return a + b; }, false);
             break;
           }
 
           case IR::Operation::IntAdd: {
             auto add = dynamic_cast<IntAdd*>(instruction);
             if (!add->src1->isConst() || !add->src2->isConst()) {
-              continue;
+              break;
             }
             foldIntsBinOp(add, ir, count, [] (int a, int b) { return a + b; });
             break;
@@ -75,7 +76,7 @@ namespace IR {
           case IR::Operation::Sub: {
             auto sub = dynamic_cast<Sub*>(instruction);
             if (!sub->src1->isConst() || !sub->src2->isConst()) {
-              continue;
+              break;
             }
             foldIntsBinOp(sub, ir, count, [] (int a, int b) { return b - a; });
             break;
@@ -84,36 +85,39 @@ namespace IR {
           case IR::Operation::Mul: {
             auto mul = dynamic_cast<Mul*>(instruction);
             if (!mul->src1->isConst() || !mul->src2->isConst()) {
-              continue;
+              break;
             }
             foldIntsBinOp(mul, ir, count, [] (int a, int b) { return a * b; });
             break;
           }
 
           case IR::Operation::Div: {
-            auto div = dynamic_cast<Mul*>(instruction);
+            auto div = dynamic_cast<Div*>(instruction);
             if (!div->src1->isConst() || !div->src2->isConst()) {
-              continue;
+              break;
             }
-            foldIntsBinOp(div, ir, count, [] (int a, int b) {
-              if (a == 0)
-                throw IllegalArithmeticException("divide by zero");
-              return b / a;
-            });
+
+            int64_t b = div->src2->getConstValue().getInteger();
+            if (b == 0) {
+              throw_exception(IllegalArithmeticException("divide by zero"));
+              break;
+            }
+
+            foldIntsBinOp(div, ir, count, [] (int a, int b) { return a / b; });
             break;
           }
 
           case IR::Operation::Neg: {
             auto neg = dynamic_cast<Neg*>(instruction);
             if (!neg->src->isConst()) {
-              continue;
+              break;
             }
 
             if (!neg->src->isInt()) {
               if (neg->src->hasHint()) {
-                throw IllegalCastException("Value is not an int");
+                throw_exception(IllegalCastException("Value is not an int"));
               }
-              continue;
+              break;
             }
 
             int64_t i = neg->src->getConstValue().getInteger();
@@ -129,14 +133,14 @@ namespace IR {
           case IR::Operation::Not: {
             auto nott = dynamic_cast<Not*>(instruction);
             if (!nott->src->isConst()) {
-              continue;
+              break;
             }
 
             if (!nott->src->isBool()) {
               if (nott->src->hasHint()) {
-                throw IllegalCastException("Value is not a bool");
+                throw_exception(IllegalCastException("Value is not a bool"));
               }
-              continue;
+              break;
             }
 
             bool b = nott->src->getConstValue().getBoolean();

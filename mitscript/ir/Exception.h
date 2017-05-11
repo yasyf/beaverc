@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Exception.h"
+#include "../vm/globals.h"
 
 namespace IR {
   class CompilerException : public SystemException {
@@ -30,4 +31,11 @@ namespace IR {
       return "IllegalArithmeticException";
     }
   };
+
+  template<typename E>
+  void throw_exception(E ex) {
+    if (!has_option(OPTION_NO_COMPILE_ERRORS)) {
+      throw ex;
+    }
+  }
 }
