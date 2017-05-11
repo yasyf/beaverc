@@ -10,10 +10,9 @@ namespace GC {
     virtual ~Collectable() {}
 
     void mark();
-    size_t size();
+    virtual size_t size() = 0;
   private:
     virtual void markChildren() = 0;
-    virtual size_t _size() = 0;
   protected:
     /*
     The mark phase of the garbage collector needs to follow all pointers from the collectable objects, check

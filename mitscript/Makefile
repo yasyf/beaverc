@@ -24,6 +24,12 @@ else
     CXXFLAGS += -DNDEBUG -O2
 endif
 
+PROFILE ?= 0
+ifeq ($(PROFILE), 1)
+    CFLAGS += -pg
+    CXXFLAGS += -pg
+endif
+
 CPPSOURCES = $(wildcard *.cpp)
 CSOURCES = $(wildcard *.c)
 OBJECTS = $(patsubst %.cpp, %.o, $(CPPSOURCES)) $(patsubst %.c, %.o, $(CSOURCES))

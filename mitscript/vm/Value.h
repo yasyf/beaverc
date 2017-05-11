@@ -223,7 +223,7 @@ namespace VM {
       return left.toString() + right.toString();
     };
 
-    virtual size_t _size() {
+    virtual size_t size() {
       if (height == 0) {
         return sizeof(StringValue) + length * sizeof(char);
       } else {
@@ -274,7 +274,7 @@ namespace VM {
       return result;
     }
 
-    virtual size_t _size() {
+    virtual size_t size() {
       size_t s = sizeof(RecordValue);
       for (auto pair : values) {
         s += sizeof(std::string) + pair.first.capacity() * sizeof(char) + sizeof(Value);
@@ -283,7 +283,7 @@ namespace VM {
     }
 
     virtual void markChildren() {
-      for (auto pair : values) {
+      for (auto& pair : values) {
         if (pair.second.isPointer()) {
           pair.second.getPointerValue()->mark();
         }
@@ -313,7 +313,7 @@ namespace VM {
       #endif
     }
 
-    virtual size_t _size() {
+    virtual size_t size() {
       return sizeof(ReferenceValue);
     }
 
@@ -347,7 +347,7 @@ namespace VM {
 
     Value call(std::vector<Value> & arguments);
 
-    virtual size_t _size() {
+    virtual size_t size() {
       return sizeof(BareFunctionValue);
     }
 
@@ -379,7 +379,7 @@ namespace VM {
     };
 
     Value call(std::vector<Value> & arguments);
-    virtual size_t _size() {
+    virtual size_t size() {
       return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
     }
 
@@ -415,7 +415,7 @@ namespace VM {
       heap.decreaseSize(size());
     }
 
-    virtual size_t _size() {
+    virtual size_t size() {
       return sizeof(BuiltInFunctionValue);
     }
 

@@ -42,18 +42,20 @@ namespace GC {
       increaseSize(sizeof(CollectedHeap));
     }
 
+    #define OVERHEAD_FACTOR 5
+
     void increaseSize(size_t n) {
       #if DEBUG
         cout << "increasing stack by " << n << endl;
       #endif
-      __sync_fetch_and_add(&bytes_current, n);
+      __sync_fetch_and_add(&bytes_current, n * OVERHEAD_FACTOR);
     }
 
     void decreaseSize(size_t n) {
       #if DEBUG
         cout << "decreasing stack by " << n << endl;
       #endif
-      __sync_fetch_and_sub(&bytes_current, n);
+      __sync_fetch_and_sub(&bytes_current, n * OVERHEAD_FACTOR);
     }
 
     /*
