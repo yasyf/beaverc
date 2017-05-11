@@ -51,7 +51,7 @@ namespace IR {
               }
             } else if (auto op = dynamic_cast<CallAssert<Assert::AssertNotZero>*>(instruction)) {
               if (!delete_if_obsolete(ir, count, op->arg, op) && op->arg->isInt() && op->arg->isConst()) {
-                int64_t i = op->arg->getConstValue().getInteger();
+                int64_t i = op->arg->getConst().getInteger();
                 if (i != 0) {
                   delete_inst(ir, count, op);
                 }

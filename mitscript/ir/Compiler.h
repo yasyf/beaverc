@@ -64,8 +64,10 @@ namespace IR {
     }
 
     template<typename T>
-    void assign(shared_ptr<T> t) {
-      instructions.push_back(new Assign<T>{nextTemp(), t});
+    shared_ptr<Temp> assign(shared_ptr<T> t) {
+      auto temp = nextTemp();
+      instructions.push_back(new Assign<T>{temp, t});
+      return temp;
     }
 
     template<typename T>
@@ -143,9 +145,12 @@ namespace IR {
           case BC::Operation::LoadGlobal:
             assign(get_operand<Glob>((size_t)instruction.operand0.value()));
             break;
-          case BC::Operation::LoadLocal:
-            assign(get_operand<Var>((size_t)instruction.operand0.value()));
+          case BC::Operation::LoadLocal: {
+            auto var = get_operand<Var>((size_t)instruction.operand0.value());
+            auto temp = assign(var);
+            temp->hintVar(var->num);
             break;
+          }
           case BC::Operation::LoadConst:
             assign(make_shared<Const>(func.constants_[instruction.operand0.value()]));
             break;

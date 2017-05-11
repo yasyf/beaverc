@@ -26,6 +26,7 @@ namespace IR {
           }
          case IR::Operation::Store: {
           if (auto store = dynamic_cast<Store<Var>*>(instruction)) {
+            store->src->hintVar(store->dest->num);
             store->dest->transferHint(store->src);
           } else if (auto store = dynamic_cast<Store<Deref>*>(instruction)) {
             store->dest->transferHint(store->src);

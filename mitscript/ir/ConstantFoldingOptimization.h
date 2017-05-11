@@ -11,8 +11,8 @@ namespace IR {
     template<typename T, typename F>
     void foldIntsBinOp(T op, InstructionList& ir, size_t count, F func, bool check = true) {
       if (op->src1->isInt() && op->src2->isInt()) {
-        int64_t i1 = op->src1->getConstValue().getInteger();
-        int64_t i2 = op->src2->getConstValue().getInteger();
+        int64_t i1 = op->src1->getConst().getInteger();
+        int64_t i2 = op->src2->getConst().getInteger();
         VM::Value v = VM::Value::makeInteger(func(i1, i2));
 
         ir[count] = new Assign<Const>{op->dest, make_shared<Const>(v)};
@@ -43,8 +43,8 @@ namespace IR {
             }
 
             if (add->src1->isString() && add->src2->isString()) {
-              const char* s1 = add->src1->getConstValue().getStringConstant();
-              const char* s2 = add->src2->getConstValue().getStringConstant();
+              const char* s1 = add->src1->getConst().getStringConstant();
+              const char* s2 = add->src2->getConst().getStringConstant();
               char* s = new char [strlen(s1)+strlen(s2)+2];
               strcpy(s, s1);
               strcat(s, s2);
@@ -97,7 +97,7 @@ namespace IR {
               break;
             }
 
-            int64_t b = div->src2->getConstValue().getInteger();
+            int64_t b = div->src2->getConst().getInteger();
             if (b == 0) {
               throw_exception(IllegalArithmeticException("divide by zero"));
               break;
@@ -120,7 +120,7 @@ namespace IR {
               break;
             }
 
-            int64_t i = neg->src->getConstValue().getInteger();
+            int64_t i = neg->src->getConst().getInteger();
             VM::Value v = VM::Value::makeInteger(-i);
 
             ir[count] = new Assign<Const>{neg->dest, make_shared<Const>(v)};
@@ -143,7 +143,7 @@ namespace IR {
               break;
             }
 
-            bool b = nott->src->getConstValue().getBoolean();
+            bool b = nott->src->getConst().getBoolean();
             VM::Value v = VM::Value::makeBoolean(!b);
 
             ir[count] = new Assign<Const>{nott->dest, make_shared<Const>(v)};

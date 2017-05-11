@@ -8,21 +8,27 @@
 using namespace std;
 
 namespace IR {
-  const int CONST_TYPE_HINT  = (1 << 0);
-  const int INT_TYPE_HINT    = (1 << 1);
-  const int BOOL_TYPE_HINT   = (1 << 2);
-  const int STRING_TYPE_HINT = (1 << 3);
-  const int NONE_TYPE_HINT   = (1 << 4);
+  const int CONST_SRC_HINT    = (1 << 0);
+  const int VAR_SRC_HINT      = (1 << 1);
+
+  const int INT_TYPE_HINT    = (1 << 2);
+  const int BOOL_TYPE_HINT   = (1 << 3);
+  const int STRING_TYPE_HINT = (1 << 4);
+  const int NONE_TYPE_HINT   = (1 << 5);
+
+  const int SRC_HINT_MASK = CONST_SRC_HINT | VAR_SRC_HINT;
+
+  struct Var;
 
   struct Operand {
     int type_hint = 0;
-    uint64_t const_val = 0;
+    uint64_t src_val = 0;
 
     virtual string toString() = 0;
 
      virtual void transferHint(shared_ptr<Operand> op) {
-      this->const_val = op->const_val;
-      this->type_hint = op->type_hint & ~CONST_TYPE_HINT;
+      this->type_hint = op->type_hint & ~SRC_HINT_MASK;
+      this->src_val = op->src_val;
     }
 
     bool hasHint() {
@@ -30,17 +36,31 @@ namespace IR {
     }
 
     void hintConst(uint64_t val) {
-      this->const_val = val;
-      hint(CONST_TYPE_HINT);
+      this->src_val = val;
+      hint(CONST_SRC_HINT);
     }
 
     bool isConst() {
-      return canBe(CONST_TYPE_HINT);
+      return canBe(CONST_SRC_HINT);
     }
 
-    VM::Value getConstValue() {
+    VM::Value getConst() {
       assert(isConst());
-      return VM::Value(const_val);
+      return VM::Value(src_val);
+    }
+
+    void hintVar(uint64_t num) {
+      this->src_val = num;
+      hint(VAR_SRC_HINT);
+    }
+
+    bool isVar() {
+      return canBe(VAR_SRC_HINT);
+    }
+
+    uint64_t getVar() {
+      assert(isVar());
+      return src_val;
     }
 
     void hintInt() {
@@ -102,7 +122,7 @@ namespace IR {
     }
 
     bool is(int type_const) {
-      return (type_hint & ~CONST_TYPE_HINT) == type_const;
+      return (type_hint & ~SRC_HINT_MASK) == type_const;
     }
   };
 
@@ -119,7 +139,7 @@ namespace IR {
     Temp(size_t num) : num(num) {}
 
     virtual void transferHint(shared_ptr<Operand> op) {
-      this->const_val = op->const_val;
+      this->src_val = op->src_val;
       this->type_hint = op->type_hint;
     }
 
