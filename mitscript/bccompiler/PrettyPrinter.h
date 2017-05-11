@@ -372,6 +372,11 @@ namespace BC {
 
                 break;
             }
+            case Operation::GarbageCollect:
+            {
+                os << "gc";
+                break;
+            }
 
             default:
                 assert(false && "Unhandled Operation");
