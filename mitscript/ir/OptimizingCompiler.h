@@ -46,7 +46,7 @@ namespace IR {
         optimize<IntAddOptimization>();
         optimize<PropagateTypesOptimization>();
         removeObsolete();
-        optimize<CopyOptimization>();
+        // optimize<CopyOptimization>();
         optimize<RemoveNoopOptimization>();
         optimize<ShortJumpOptimization>();
       }

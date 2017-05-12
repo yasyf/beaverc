@@ -1,53 +1,6 @@
 function
 {
-	functions =
-	[
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 0,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		}
-	],
+	functions = [],
 	constants = [5, 1, 2, "Should print: 5 0 -2 -10 25 1 -1", " ", 3, 0],
 	parameter_count = 0,
 	local_vars = [],
@@ -56,11 +9,11 @@ function
 	names = [print, input, intcast, a, b, c],
 	instructions = 
 	[
-		load_func	0
+		load_func	-1
 		store_global	0
-		load_func	1
+		load_func	-2
 		store_global	1
-		load_func	2
+		load_func	-3
 		store_global	2
 		load_const	0
 		neg
@@ -74,6 +27,7 @@ function
 		load_global	0
 		call	1
 		pop
+		gc
 		load_global	3
 		load_global	4
 		div
@@ -120,6 +74,7 @@ function
 		load_global	0
 		call	1
 		pop
+		gc
 		load_const	6
 		return
 	]

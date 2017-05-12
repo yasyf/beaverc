@@ -16,4 +16,28 @@ namespace ASM {
       return "UnexpectedOperation";
     }
   };
+
+ class InvalidNumArgs : public CompilerException {
+    using CompilerException::CompilerException;
+
+    string description() const override {
+      return "InvalidNumArgs";
+    }
+  };
+
+  class RegistersExhausted : public CompilerException {
+    using CompilerException::CompilerException;
+
+    string description() const override {
+      return "RegistersExhausted";
+    }
+  };
+
+  class RegisterReused : public CompilerException {
+    using CompilerException::CompilerException;
+
+    string description() const override {
+      return "RegisterReused";
+    }
+  };
 }

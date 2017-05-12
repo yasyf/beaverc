@@ -5,17 +5,15 @@ function
 		function
 		{
 			functions = [],
-			constants = ["OUTPUT: ", None],
-			parameter_count = 1,
-			local_vars = [s],
+			constants = [1, None],
+			parameter_count = 0,
+			local_vars = [],
 			local_ref_vars = [],
 			free_vars = [],
-			names = [oldprint],
+			names = [print],
 			instructions = 
 			[
 				load_const	0
-				load_local	0
-				add
 				load_global	0
 				call	1
 				pop
@@ -25,12 +23,12 @@ function
 			]
 		}
 	],
-	constants = ["Hello", 7, 0],
+	constants = [0],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
 	free_vars = [],
-	names = [print, input, intcast, oldprint],
+	names = [print, input, intcast, rec],
 	instructions = 
 	[
 		load_func	-1
@@ -39,29 +37,24 @@ function
 		store_global	1
 		load_func	-3
 		store_global	2
-		load_const	0
-		load_global	0
-		call	1
-		pop
-		gc
-		load_global	0
-		store_global	3
+		alloc_record
+		dup
 		load_func	0
 		alloc_closure	0
-		store_global	0
+		field_store	0
+		store_global	3
+		load_global	3
+		field_load	0
+		load_global	0
+		call	1
+		pop
+		gc
+		load_global	3
+		field_load	0
+		call	0
+		pop
+		gc
 		load_const	0
-		load_global	0
-		call	1
-		pop
-		gc
-		load_const	1
-		load_const	2
-		div
-		load_global	0
-		call	1
-		pop
-		gc
-		load_const	2
 		return
 	]
 }

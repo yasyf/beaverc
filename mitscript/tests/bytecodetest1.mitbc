@@ -5,51 +5,6 @@ function
 		function
 		{
 			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 0,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
 			constants = ["val: ", "d", 1, "x", 0],
 			parameter_count = 2,
 			local_vars = [x, val],
@@ -61,8 +16,9 @@ function
 				load_local	0
 				load_const	4
 				gt
-				if	2
-				goto	19
+				if	0
+				goto	1
+				
 				load_const	0
 				load_local	1
 				add
@@ -71,6 +27,7 @@ function
 				load_global	0
 				call	1
 				pop
+				gc
 				load_local	0
 				load_const	2
 				sub
@@ -80,9 +37,11 @@ function
 				load_global	1
 				call	2
 				return
-				goto	3
+				goto	2
+				
 				load_local	1
 				return
+				
 			]
 		}
 	],
@@ -94,15 +53,15 @@ function
 	names = [print, input, intcast, x, foo],
 	instructions = 
 	[
-		load_func	0
+		load_func	-1
 		store_global	0
-		load_func	1
+		load_func	-2
 		store_global	1
-		load_func	2
+		load_func	-3
 		store_global	2
 		load_const	0
 		store_global	3
-		load_func	3
+		load_func	0
 		alloc_closure	0
 		store_global	4
 		load_const	1
@@ -112,6 +71,7 @@ function
 		load_global	0
 		call	1
 		pop
+		gc
 		load_const	3
 		return
 	]

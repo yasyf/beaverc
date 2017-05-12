@@ -17,8 +17,8 @@ LIBS = -lx64asm -ludis86
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
-    CFLAGS += -DDEBUG -g -O0
-    CXXFLAGS += -DDEBUG -g -O0
+    CFLAGS += -DDEBUG -g -Og
+    CXXFLAGS += -DDEBUG -g -Og
 else
     CFLAGS += -DNDEBUG -O2
     CXXFLAGS += -DNDEBUG -O2
@@ -93,7 +93,10 @@ bcparser/parser.cpp:
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f bin/* *.o */*.o bytecode/*.o
+	rm -f bin/* *.o */*.o
+
+asmclean:
+	rm -rf bin/vm bin/asm vm/*.o asm/*.o
 
 extraclean: clean
 	rm -f parser/*.c parser/*.cpp parser/*.h bcparser/*.c bcparser/*.cpp bcparser/*.h

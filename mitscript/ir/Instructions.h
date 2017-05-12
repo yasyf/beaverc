@@ -1,11 +1,13 @@
 #pragma once
-
+#include "include/x64asm.h"
 #include "../bccompiler/Types.h"
 #include "../vm/Value.h"
+#include <experimental/optional>
 #include <vector>
 #include <cassert>
 
 using namespace std;
+using namespace std::experimental;
 
 namespace IR {
   const int CONST_SRC_HINT    = (1 << 0);
@@ -23,8 +25,9 @@ namespace IR {
   struct Operand {
     int type_hint = 0;
     uint64_t src_val = 0;
+    optional<x64asm::R64> reg;
 
-    virtual string toString() = 0;
+    virtual string toString() const = 0;
 
      virtual void transferHint(shared_ptr<Operand> op) {
       this->type_hint = op->type_hint & ~SRC_HINT_MASK;
@@ -130,7 +133,7 @@ namespace IR {
     size_t num;
 
     Label(size_t num) : num(num) {}
-    virtual string toString() override { return "l" + to_string(num); }
+    virtual string toString() const override { return "l" + to_string(num); }
   };
 
   struct Temp : Operand {
@@ -144,14 +147,14 @@ namespace IR {
     }
 
     #ifdef DEBUG
-      virtual string toString() override { return "t" + to_string(num) + " (" + to_string(type_hint) + ")"; }
+      virtual string toString() const override { return "t" + to_string(num) + " (" + to_string(type_hint) + ")"; }
     #else
-      virtual string toString() override { return "t" + to_string(num); }
+      virtual string toString() const override { return "t" + to_string(num); }
     #endif
   };
 
   struct RetVal : Operand {
-    virtual string toString() override { return "retval"; }
+    virtual string toString() const override { return "retval"; }
   };
 
   struct Var : Operand {
@@ -160,9 +163,9 @@ namespace IR {
     Var(size_t num) : num(num) {}
 
     #ifdef DEBUG
-      virtual string toString() override { return "%" + to_string(num) + " (" + to_string(type_hint) + ")"; }
+      virtual string toString() const override { return "%" + to_string(num) + " (" + to_string(type_hint) + ")"; }
     #else
-      virtual string toString() override { return "%" + to_string(num); }
+      virtual string toString() const override { return "%" + to_string(num); }
     #endif
   };
 
@@ -172,9 +175,9 @@ namespace IR {
     Glob(size_t num) : num(num) {}
 
     #ifdef DEBUG
-      virtual string toString() override { return "%%" + to_string(num) + " (" + to_string(type_hint) + ")"; }
+      virtual string toString() const override { return "%%" + to_string(num) + " (" + to_string(type_hint) + ")"; }
     #else
-      virtual string toString() override { return "%%" + to_string(num); }
+      virtual string toString() const override { return "%%" + to_string(num); }
     #endif
   };
 
@@ -182,21 +185,21 @@ namespace IR {
     size_t num;
 
     Function(size_t num) : num(num) {}
-    virtual string toString() override { return "f" + to_string(num); }
+    virtual string toString() const override { return "f" + to_string(num); }
   };
 
   struct Ref : Operand {
     size_t num;
 
     Ref(size_t num) : num(num) {}
-    virtual string toString() override { return "r" + to_string(num); }
+    virtual string toString() const override { return "r" + to_string(num); }
   };
 
   struct Deref : Operand {
     size_t num;
 
     Deref(size_t num) : num(num) {}
-    virtual string toString() override { return "*r" + to_string(num); }
+    virtual string toString() const override { return "*r" + to_string(num); }
   };
 
   struct Const : Operand {
@@ -240,7 +243,7 @@ namespace IR {
       hintConst(val);
     }
 
-    virtual string toString() override { return "$" + to_string(val); }
+    virtual string toString() const override { return "$" + to_string(val); }
   };
 
   enum class Operation {
@@ -287,7 +290,7 @@ namespace IR {
   };
 
   struct Instruction {
-    virtual string toString() = 0;
+    virtual string toString() const = 0;
     virtual Operation op() = 0;
   };
 
@@ -298,7 +301,7 @@ namespace IR {
 
     Assign(shared_ptr<Temp> dest, shared_ptr<S> src) : dest(dest), src(src) {}
     virtual Operation op() { return Operation::Assign; }
-    virtual string toString() override { return dest->toString() + " = " + src->toString(); }
+    virtual string toString() const override { return dest->toString() + " = " + src->toString(); }
   };
 
   template<typename D>
@@ -308,7 +311,7 @@ namespace IR {
 
     Store(shared_ptr<D> dest, shared_ptr<Temp> src) : dest(dest), src(src) {}
     virtual Operation op() { return Operation::Store; }
-    virtual string toString() override { return dest->toString() + " = " + src->toString(); }
+    virtual string toString() const override { return dest->toString() + " = " + src->toString(); }
   };
 
   template<Operation Op>
@@ -319,13 +322,13 @@ namespace IR {
 
     BinOp(shared_ptr<Temp> dest, shared_ptr<Temp> src1, shared_ptr<Temp> src2) : dest(dest), src1(src1), src2(src2) {}
     virtual Operation op() { return Op; }
-    virtual string opString() = 0;
-    virtual string toString() override { return dest->toString() + " = " + src2->toString() + " " + opString() + " " + src1->toString(); }
+    virtual string opString() const = 0;
+    virtual string toString() const override { return dest->toString() + " = " + src2->toString() + " " + opString() + " " + src1->toString(); }
   };
 
   struct Add : BinOp<Operation::Add> {
     using BinOp::BinOp;
-    virtual string opString() { return "+"; }
+    virtual string opString() const override { return "+"; }
   };
 
   struct IntAdd : public Add {
@@ -335,42 +338,42 @@ namespace IR {
 
   struct Sub : BinOp<Operation::Sub> {
     using BinOp::BinOp;
-    virtual string opString() { return "-"; }
+    virtual string opString() const override { return "-"; }
   };
 
   struct Mul : BinOp<Operation::Mul> {
     using BinOp::BinOp;
-    virtual string opString() { return "*"; }
+    virtual string opString() const override { return "*"; }
   };
 
   struct Div : BinOp<Operation::Div> {
     using BinOp::BinOp;
-    virtual string opString() { return "/"; }
+    virtual string opString() const override { return "/"; }
   };
 
   struct Gt : BinOp<Operation::Gt> {
     using BinOp::BinOp;
-    virtual string opString() { return "<"; }
+    virtual string opString() const override { return "<"; }
   };
 
   struct Geq : BinOp<Operation::Geq> {
     using BinOp::BinOp;
-    virtual string opString() { return "<="; }
+    virtual string opString() const override { return "<="; }
   };
 
   struct Eq : BinOp<Operation::Eq> {
     using BinOp::BinOp;
-    virtual string opString() { return "=="; }
+    virtual string opString() const override { return "=="; }
   };
 
   struct And : BinOp<Operation::And> {
     using BinOp::BinOp;
-    virtual string opString() { return "&"; }
+    virtual string opString() const override { return "&"; }
   };
 
   struct Or : BinOp<Operation::Or> {
     using BinOp::BinOp;
-    virtual string opString() { return "|"; }
+    virtual string opString() const override { return "|"; }
   };
 
   template<Operation Op>
@@ -380,18 +383,18 @@ namespace IR {
 
     UnOp(shared_ptr<Temp> dest, shared_ptr<Temp> src) : dest(dest), src(src) {}
     virtual Operation op() { return Op; }
-    virtual string opString() = 0;
-    virtual string toString() override { return dest->toString() + " = " + opString() + src->toString(); }
+    virtual string opString() const = 0;
+    virtual string toString() const override { return dest->toString() + " = " + opString() + src->toString(); }
   };
 
   struct Neg : UnOp<Operation::Neg> {
     using UnOp::UnOp;
-    virtual string opString() { return "-"; }
+    virtual string opString() const override { return "-"; }
   };
 
   struct Not : UnOp<Operation::Not> {
     using UnOp::UnOp;
-    virtual string opString() { return "!"; }
+    virtual string opString() const override { return "!"; }
   };
 
   struct Call : Instruction {
@@ -400,7 +403,7 @@ namespace IR {
 
     Call(shared_ptr<Temp> closure, vector<shared_ptr<Temp>> args) : closure(closure), args(args) {}
     virtual Operation op() { return Operation::Call; }
-    virtual string toString() override { return "call " + closure->toString(); }
+    virtual string toString() const override { return "call " + closure->toString(); }
   };
 
   struct AllocClosure : Instruction {
@@ -410,7 +413,7 @@ namespace IR {
     AllocClosure(shared_ptr<Temp> function, vector<shared_ptr<Temp>> refs) : function(function), refs(refs) {}
     virtual Operation op() { return Operation::AllocClosure; }
     #ifdef DEBUG
-      virtual string toString() override {
+      virtual string toString() const override {
         string result = "alloc_closure " + function->toString() + " -- ";
         for (auto t : refs) {
           result += t->toString();
@@ -418,7 +421,7 @@ namespace IR {
         return result;
       }
     #else
-      virtual string toString() override { return "alloc_closure"; }
+      virtual string toString() const override { return "alloc_closure"; }
     #endif
   };
 
@@ -457,7 +460,7 @@ namespace IR {
 
     static Helper helper() { return H; }
     virtual Operation op() { return Operation::CallHelper; }
-    virtual string toString() override { return "call_helper " + to_string(static_cast<int>(H)); }
+    virtual string toString() const override { return "call_helper " + to_string(static_cast<int>(H)); }
   };
 
   template<Assert A>
@@ -468,7 +471,7 @@ namespace IR {
 
     static Assert assert_() { return A; }
     virtual Operation op() { return Operation::CallAssert; }
-    virtual string toString() override { return "call_assert_" + to_string(static_cast<int>(A)) + " " + arg->toString(); }
+    virtual string toString() const override { return "call_assert_" + to_string(static_cast<int>(A)) + " " + arg->toString(); }
   };
 
 
@@ -477,7 +480,7 @@ namespace IR {
 
     Return(shared_ptr<Temp> val) : val(val) {}
     virtual Operation op() { return Operation::Return; }
-    virtual string toString() override { return "return " + val->toString(); }
+    virtual string toString() const override { return "return " + val->toString(); }
   };
 
   struct OutputLabel : Instruction {
@@ -485,7 +488,7 @@ namespace IR {
 
     OutputLabel(shared_ptr<Label> label) : label(label) {}
     virtual Operation op() { return Operation::OutputLabel; }
-    virtual string toString() override { return label->toString() + ":"; }
+    virtual string toString() const override { return label->toString() + ":"; }
   };
 
   struct Jump : Instruction {
@@ -493,7 +496,7 @@ namespace IR {
 
     Jump(shared_ptr<Label> label) : label(label) {}
     virtual Operation op() { return Operation::Jump; }
-    virtual string toString() override { return "jmp " + label->toString(); }
+    virtual string toString() const override { return "jmp " + label->toString(); }
   };
 
   struct ShortJump : public Jump {
@@ -507,12 +510,12 @@ namespace IR {
 
     CondJump(shared_ptr<Temp> cond, shared_ptr<Label> label) : cond(cond), label(label) {}
     virtual Operation op() { return Operation::CondJump; }
-    virtual string toString() override { return "cjmp " + cond->toString() + ", " + label->toString(); }
+    virtual string toString() const override { return "cjmp " + cond->toString() + ", " + label->toString(); }
   };
 
   struct Noop : Instruction {
     virtual Operation op() { return Operation::Noop; }
-    virtual string toString() override { return "noop"; }
+    virtual string toString() const override { return "noop"; }
 
     static Noop* Singleton() {
       static Noop* instance = nullptr;
@@ -531,8 +534,18 @@ namespace IR {
 
     Fork(shared_ptr<Temp> src, shared_ptr<Temp> dest1, shared_ptr<Temp> dest2) : src(src), dest1(dest1), dest2(dest2) {}
     virtual Operation op() { return Operation::Fork; }
-    virtual string toString() override { return src->toString() + " -> " + dest1->toString() + " " + dest2->toString(); }
+    virtual string toString() const override { return src->toString() + " -> " + dest1->toString() + " " + dest2->toString(); }
   };
 
   typedef vector<Instruction*> InstructionList;
+}
+
+inline ostream& operator<<(ostream& os, const IR::Operand& op) {
+  os << op.toString();
+  return os;
+}
+
+inline ostream& operator<<(ostream& os, const IR::Instruction& op) {
+  os << op.toString();
+  return os;
 }

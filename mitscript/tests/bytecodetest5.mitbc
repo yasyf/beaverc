@@ -4,51 +4,6 @@ function
 	[
 		function
 		{
-			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 0,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
 			functions =
 			[
 				function
@@ -76,6 +31,7 @@ function
 						load_global	0
 						call	1
 						pop
+						gc
 						load_const	3
 						return
 					]
@@ -123,13 +79,13 @@ function
 	names = [print, input, intcast, Rect, p, derp, herp, nested, still, yep, still_nested, mega_nested],
 	instructions = 
 	[
-		load_func	0
+		load_func	-1
 		store_global	0
-		load_func	1
+		load_func	-2
 		store_global	1
-		load_func	2
+		load_func	-3
 		store_global	2
-		load_func	3
+		load_func	0
 		alloc_closure	0
 		store_global	3
 		load_const	0
@@ -143,10 +99,12 @@ function
 		field_load	0
 		call	0
 		pop
+		gc
 		load_global	4
 		load_global	0
 		call	1
 		pop
+		gc
 		alloc_record
 		dup
 		alloc_record
@@ -192,6 +150,7 @@ function
 		load_global	0
 		call	1
 		pop
+		gc
 		load_const	7
 		return
 	]
