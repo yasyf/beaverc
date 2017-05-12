@@ -4,7 +4,7 @@
 namespace VM {
     Value add(Value left, Value right) {
         if (right.isString() || left.isString()) {
-            if (has_option(OPTION_STRING_TREES)) {
+            if (has_optimization(OPTIMIZATION_STRING_TREES)) {
                 return Value::makeString(interpreter->heap.allocate<StringValue>(left, right));
             } else {
                 return Value::makeString(interpreter->heap.allocate<StringValue>(left.toString() + right.toString()));

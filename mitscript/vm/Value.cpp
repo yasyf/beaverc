@@ -45,13 +45,13 @@ namespace VM {
       }
     }
 
-    if (has_option(OPTION_MACHINE_CODE) && !is_compiled) {
+    if (has_optimization(OPTIMIZATION_MACHINE_CODE) && !is_compiled) {
       InstructionList ir;
       IR::OptimizingCompiler ir_compiler(value, ir);
-      size_t temp_count = ir_compiler.compile(has_option(OPTION_OPTIMIZATION_PASSES));
+      size_t temp_count = ir_compiler.compile(has_optimization(OPTIMIZATION_OPTIMIZATION_PASSES));
       ASM::Compiler asm_compiler(ir, temp_count);
       asm_compiler.compileInto(compiled_func);
-      is_compiled = !has_option(OPTION_COMPILE_ONLY);
+      is_compiled = !has_optimization(OPTIMIZATION_COMPILE_ONLY);
     }
 
     interpreter->push_frame(&local_vars, &local_reference_vars);
@@ -77,7 +77,9 @@ namespace VM {
           #if DEBUG
           std::cout << "===== ";
           #endif
-          std::cout << arguments[0].toString() << std::endl;
+          if (!has_option(OPTION_SHOW_MEMORY_TRACE)) {
+            std::cout << arguments[0].toString() << std::endl;
+          }
           return Value::makeNone();
         }
         break;

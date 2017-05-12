@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include "Collectable.h"
+#include "../vm/options.h"
 
 using namespace std;
 
@@ -22,6 +23,9 @@ namespace GC {
   private:
     template<typename T>
     void register_allocation(T* t) {
+      if (has_option(OPTION_SHOW_MEMORY_TRACE)) {
+        cout << "A," << (void*) t << endl;
+      }
       allocated.push_back(t);
       increaseSize(sizeof(Collectable*));
     }
@@ -127,6 +131,9 @@ namespace GC {
           #ifdef DEBUG
             cout << "ABOUT TO COLLECT: ";
           #endif
+          if (has_option(OPTION_SHOW_MEMORY_TRACE)) {
+            cout << "D," << (void*) ptr << endl;
+          }
           delete ptr;
           it = allocated.erase(it);
           decreaseSize(sizeof(Collectable*));

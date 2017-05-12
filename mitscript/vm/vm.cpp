@@ -4,6 +4,7 @@
 #include "../bcparser/lexer.h"
 #include "../bccompiler/Compiler.h"
 #include "Interpreter.h"
+#include "options.h"
 #include "globals.h"
 #include "mem.h"
 #include <iostream>
@@ -35,16 +36,18 @@ int main(int argc, char** argv)
       {
         /* These options don’t set a flag.
            We distinguish them by their indices. */
-        {"mem",         required_argument, 0, 'm'},
-        {"source",      no_argument,       0, 's'},
-        {"bytecode",    no_argument,       0, 'b'},
-        {"opt",         required_argument, 0, 'o'},
-        {"show-memory", no_argument,       0, 'M'},
+        {"mem",               required_argument, 0, 'm'},
+        {"source",            no_argument,       0, 's'},
+        {"bytecode",          no_argument,       0, 'b'},
+        {"opt",               required_argument, 0, 'o'},
+        {"memory-usage",      no_argument,       0, 'u'},
+        {"memory-trace",      no_argument,       0, 't'},
+        {"compile-errors",    no_argument,       0, 'e'},
         {0, 0, 0, 0}
       };
-    int option_index = 0;
+    int OPTIMIZATION_index = 0;
     int c = getopt_long (argc, argv, "m:sbo:",
-                     long_options, &option_index);
+                     long_options, &OPTIMIZATION_index);
 
     if (c == -1) {
       break;
@@ -62,23 +65,26 @@ int main(int argc, char** argv)
         break;
       case 'o':
         if (strcmp(optarg, "machine-code-only") == 0) {
-          set_option(OPTION_MACHINE_CODE);
+          set_optimization(OPTIMIZATION_MACHINE_CODE);
         } else if (strcmp(optarg, "string-trees") == 0) {
-          set_option(OPTION_STRING_TREES);
+          set_optimization(OPTIMIZATION_STRING_TREES);
         } else if (strcmp(optarg, "compile-only") == 0) {
-          set_option(OPTION_MACHINE_CODE);
-          set_option(OPTION_COMPILE_ONLY);
-        } else if (strcmp(optarg, "no-compile-errors") == 0) {
-          set_option(OPTION_NO_COMPILE_ERRORS);
+          set_optimization(OPTIMIZATION_MACHINE_CODE);
+          set_optimization(OPTIMIZATION_COMPILE_ONLY);
         } else if (strcmp(optarg, "all") == 0) {
-          set_option(OPTION_MACHINE_CODE);
-          set_option(OPTION_STRING_TREES);
-          set_option(OPTION_OPTIMIZATION_PASSES);
-          set_option(OPTION_NO_COMPILE_ERRORS);
+          set_optimization(OPTIMIZATION_MACHINE_CODE);
+          set_optimization(OPTIMIZATION_STRING_TREES);
+          set_optimization(OPTIMIZATION_OPTIMIZATION_PASSES);
         }
         break;
-      case 'M':
-        print_memory = true;
+      case 'u':
+        set_option(OPTION_SHOW_MEMORY_USAGE);
+        break;
+      case 't':
+        set_option(OPTION_SHOW_MEMORY_TRACE);
+        break;
+      case 'e':
+        set_option(OPTION_COMPILE_ERRORS);
         break;
       case '?':
         break;
@@ -154,7 +160,7 @@ int main(int argc, char** argv)
   });
 
   int result = interpreter->interpret();
-  if (print_memory) {
+  if (has_option(OPTION_SHOW_MEMORY_USAGE)) {
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
     cout << usage.ru_maxrss << " kilobytes used." << endl;

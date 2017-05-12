@@ -18,7 +18,7 @@ bad() {
 }
 
 check_memory() {
-  mem=$(memusg bin/vm --show-memory --mem 4 -s "$1")
+  mem=$(memusg bin/vm --show-memory --mem 0 -s "$1")
   if [[ "$mem" =~ ^[0-9]+$ ]]; then
     if [[ "$mem" -lt "$MAX_MEM" ]]; then
       good "$1" "check_mem $mem kb"
