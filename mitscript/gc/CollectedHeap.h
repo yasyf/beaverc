@@ -4,10 +4,11 @@
 #include <vector>
 #include <iostream>
 #include <memory>
+#include <algorithm>
 #include "Collectable.h"
 #include "../vm/options.h"
 
-#define OVERHEAD_FACTOR 6
+#define OVERHEAD_FACTOR 8
 
 using namespace std;
 
@@ -34,8 +35,9 @@ namespace GC {
 
   public:
     size_t generation = 0;
+    size_t max_bytes_used = 0;
     size_t bytes_max;
-    volatile size_t bytes_current = 0;
+    size_t bytes_current = 0;
 
     /*
     The constructor should take as an argument the maximum size of the garbage collected heap.
@@ -52,14 +54,15 @@ namespace GC {
       #if DEBUG
         cout << "increasing stack by " << n << endl;
       #endif
-      __sync_fetch_and_add(&bytes_current, n * OVERHEAD_FACTOR);
+      bytes_current += n * OVERHEAD_FACTOR;
+      max_bytes_used = max(max_bytes_used, bytes_current);
     }
 
     void decreaseSize(size_t n) {
       #if DEBUG
         cout << "decreasing stack by " << n << endl;
       #endif
-      __sync_fetch_and_sub(&bytes_current, n * OVERHEAD_FACTOR);
+      bytes_current -= n * OVERHEAD_FACTOR;
     }
 
     /*

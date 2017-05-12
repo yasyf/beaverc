@@ -105,9 +105,7 @@ namespace VM {
           return Value::makeInteger(c->value);
       }
       if (std::shared_ptr<String> c = std::dynamic_pointer_cast<String>(constant)) {
-          char * cstr = new char [c->value.length()+1];
-          strcpy(cstr, c->value.c_str());
-          return Value::makeStringConstant(cstr);
+          return Value::makeStringConstant(c->value.c_str());
       }
       if (std::shared_ptr<Boolean> c = std::dynamic_pointer_cast<Boolean>(constant)) {
           return Value::makeBoolean(c->value);
