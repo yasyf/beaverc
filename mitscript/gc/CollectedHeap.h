@@ -7,6 +7,8 @@
 #include "Collectable.h"
 #include "../vm/options.h"
 
+#define OVERHEAD_FACTOR 6
+
 using namespace std;
 
 namespace GC {
@@ -45,8 +47,6 @@ namespace GC {
     CollectedHeap(size_t maxmem) : bytes_max(maxmem) {
       increaseSize(sizeof(CollectedHeap));
     }
-
-    #define OVERHEAD_FACTOR 5
 
     void increaseSize(size_t n) {
       #if DEBUG

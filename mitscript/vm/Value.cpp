@@ -5,8 +5,6 @@
 #include "../asm/Compiler.h"
 #include <list>
 
-#define LRU_SIZE 2
-
 namespace VM {
 
   Value BareFunctionValue::call(std::vector<Value> & arguments) {
