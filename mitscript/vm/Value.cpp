@@ -43,20 +43,20 @@ namespace VM {
       }
     }
 
-    if (has_optimization(OPTIMIZATION_MACHINE_CODE) && !is_compiled) {
+    if (has_optimization(OPTIMIZATION_MACHINE_CODE) && !value->is_compiled) {
       InstructionList ir;
       IR::OptimizingCompiler ir_compiler(value, ir);
       size_t temp_count = ir_compiler.compile(has_optimization(OPTIMIZATION_OPTIMIZATION_PASSES));
       ASM::Compiler asm_compiler(ir, temp_count);
-      asm_compiler.compileInto(compiled_func);
-      is_compiled = !has_optimization(OPTIMIZATION_COMPILE_ONLY);
+      asm_compiler.compileInto(value->compiled_function);
+      value->is_compiled = !has_optimization(OPTIMIZATION_COMPILE_ONLY);
     }
 
     interpreter->push_frame(&local_vars, &local_reference_vars);
 
     Value result;
-    if (is_compiled) {
-      result = Value(compiled_func.call<uint64_t, void*, void*, void*>(this, &local_vars[0], &local_reference_vars[0]));
+    if (value->is_compiled) {
+      result = Value(value->compiled_function.call<uint64_t, void*, void*, void*>(this, &local_vars[0], &local_reference_vars[0]));
     } else {
       result = interpreter->run_function(this, &local_vars[0], &local_reference_vars[0]);
     }

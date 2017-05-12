@@ -10,7 +10,7 @@ endif
 LEX = flex
 YACC = bison
 
-CFLAGS = -std=c++1y
+CFLAGS = -std=c++1y -I../x64asm -I../udis86/libudis86
 CXXFLAGS = -std=c++1y -I../x64asm -I../udis86/libudis86
 LDFLAGS = -lstdc++ -L../x64asm/lib -L../udis86/libudis86/.libs
 LIBS = -lx64asm -ludis86
