@@ -61,7 +61,7 @@ astprinter: parser $(PARSE_OBJECTS) $(OBJECTS) pprinter/PrettyPrinter.o $(ASOBJE
 BCCOOBJECTS = $(patsubst %.cpp, %.o, $(wildcard bccompiler/Compiler*.cpp))
 GCOBJECTS = $(patsubst %.cpp, %.o, $(wildcard gc/*.cpp))
 IROBJECTS = $(patsubst %.cpp, %.o, $(wildcard ir/*.cpp))
-OPTSOBJECTS = $(patsubst %.cpp, %.o, $(wildcard vm/global*.cpp))
+OPTSOBJECTS = $(patsubst %.cpp, %.o, $(wildcard vm/option*.cpp))
 ir: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) $(GCOBJECTS) $(OPTSOBJECTS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) $(GCOBJECTS) $(OPTSOBJECTS) -o bin/$@
 

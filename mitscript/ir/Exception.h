@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Exception.h"
-#include "../vm/globals.h"
+#include "../vm/options.h"
 
 namespace IR {
   class CompilerException : public SystemException {
