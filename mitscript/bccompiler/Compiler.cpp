@@ -259,8 +259,8 @@ namespace BC {
     size_t body_label = reserveLabel();
     size_t skip_body_label = reserveLabel();
 
-    output(Operation::GarbageCollect);
     outputLabel(loop_start_label);
+    output(Operation::GarbageCollect);
     drain(condInst); // cond-block
     output(Operation::If, body_label); // skip past end-goto
     output(Operation::Goto, skip_body_label); // end-goto: skip past body-block and loop-goto
