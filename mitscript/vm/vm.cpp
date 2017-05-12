@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 using namespace std;
 
@@ -20,6 +22,7 @@ enum Mode {SOURCE, BYTECODE};
 
 int main(int argc, char** argv)
 {
+  bool print_memory = false;
   void* scanner;
   FILE* infile;
   Mode mode = SOURCE;
@@ -32,10 +35,11 @@ int main(int argc, char** argv)
       {
         /* These options don’t set a flag.
            We distinguish them by their indices. */
-        {"mem",      required_argument, 0, 'm'},
-        {"source",   no_argument,       0, 's'},
-        {"bytecode", no_argument,       0, 'b'},
-        {"opt",      required_argument, 0, 'o'},
+        {"mem",         required_argument, 0, 'm'},
+        {"source",      no_argument,       0, 's'},
+        {"bytecode",    no_argument,       0, 'b'},
+        {"opt",         required_argument, 0, 'o'},
+        {"show-memory", no_argument,       0, 'M'},
         {0, 0, 0, 0}
       };
     int option_index = 0;
@@ -72,6 +76,9 @@ int main(int argc, char** argv)
           set_option(OPTION_OPTIMIZATION_PASSES);
           set_option(OPTION_NO_COMPILE_ERRORS);
         }
+        break;
+      case 'M':
+        print_memory = true;
         break;
       case '?':
         break;
@@ -146,5 +153,11 @@ int main(int argc, char** argv)
     }
   });
 
-  return interpreter->interpret();
+  int result = interpreter->interpret();
+  if (print_memory) {
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    cout << usage.ru_maxrss << " kilobytes used." << endl;
+  }
+  return result;
 }
