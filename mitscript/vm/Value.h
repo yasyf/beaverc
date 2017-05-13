@@ -230,12 +230,13 @@ namespace VM {
       }
     }
 
-    virtual void markChildren() {
+    virtual void markChildren(size_t generation) {
+      if (height == 0) return;
       if (left.isPointer()) {
-        left.getPointerValue()->mark();
+        left.getPointerValue()->mark(generation);
       }
       if (right.isPointer()) {
-        right.getPointerValue()->mark();
+        right.getPointerValue()->mark(generation);
       }
     }
   };
@@ -281,10 +282,10 @@ namespace VM {
       return s;
     }
 
-    virtual void markChildren() {
+    virtual void markChildren(size_t generation) {
       for (auto& pair : values) {
         if (pair.second.isPointer()) {
-          pair.second.getPointerValue()->mark();
+          pair.second.getPointerValue()->mark(generation);
         }
       }
     }
@@ -316,9 +317,9 @@ namespace VM {
       return sizeof(ReferenceValue);
     }
 
-    virtual void markChildren() {
+    virtual void markChildren(size_t generation) {
       if (value.isPointer()) {
-        value.getPointerValue()->mark();
+        value.getPointerValue()->mark(generation);
       }
     }
   };
@@ -350,7 +351,7 @@ namespace VM {
       return sizeof(BareFunctionValue);
     }
 
-    virtual void markChildren() {}
+    virtual void markChildren(size_t generation) {}
   };
 
   struct ClosureFunctionValue : public AbstractFunctionValue {
@@ -379,9 +380,9 @@ namespace VM {
       return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
     }
 
-    virtual void markChildren() {
+    virtual void markChildren(size_t generation) {
       for (auto ref : references)
-        ref->mark();
+        ref->mark(generation);
     }
   };
 
@@ -415,7 +416,7 @@ namespace VM {
       return sizeof(BuiltInFunctionValue);
     }
 
-    virtual void markChildren() {}
+    virtual void markChildren(size_t generation) {}
 
     Value call(std::vector<Value> & arguments);
   };

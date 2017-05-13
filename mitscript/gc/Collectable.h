@@ -9,10 +9,10 @@ namespace GC {
     Collectable(CollectedHeap& heap) : heap(heap) {}
     virtual ~Collectable() {}
 
-    void mark();
+    void mark(size_t generation);
     virtual size_t size() = 0;
   private:
-    virtual void markChildren() = 0;
+    virtual void markChildren(size_t generation) = 0;
   protected:
     /*
     The mark phase of the garbage collector needs to follow all pointers from the collectable objects, check

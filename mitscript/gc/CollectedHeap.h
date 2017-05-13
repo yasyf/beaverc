@@ -8,7 +8,7 @@
 #include "Collectable.h"
 #include "../vm/options.h"
 
-#define OVERHEAD_FACTOR 8
+#define OVERHEAD_FACTOR 16
 
 using namespace std;
 
@@ -124,7 +124,8 @@ namespace GC {
       generation++;
 
       for (auto c = begin; c != end; c++) {
-        (*c)->mark();
+        if ((*c)->marked != generation)
+          (*c)->mark(generation);
       }
 
       auto it = allocated.begin();

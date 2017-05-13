@@ -7,13 +7,13 @@ echo_commit() {
 run_single_test() {
     TIMEFORMAT='%U'
     exec 3>&1 4>&2
-    var=$( { time ./speedtest/$1 ${@:2} speedtest/benchmark.mit 1>&3 2>&4; } 2>&1 )  # Captures time only.
+    var=$( { time ./speedtest/$1 ${@:2} ./tests/PerfTests/textproc.mit < ./tests/PerfTests/textproc.input 1>&3 2>&4; } 2>&1 )  # Captures time only.
     exec 3>&- 4>&-
     echo $var
 }
 
 run_multiple_tests() {
-    COUNT=4
+    COUNT=1
     sum=0
     for i in $(seq 1 $COUNT); do
         result=$(run_single_test $1 ${@:2})

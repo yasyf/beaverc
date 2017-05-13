@@ -2,10 +2,10 @@
 #include "CollectedHeap.h"
 
 namespace GC {
-  void Collectable::mark() {
-    if (marked == heap.generation)
+  void Collectable::mark(size_t generation) {
+    if (marked == generation)
       return;
-    this->marked = heap.generation;
-    markChildren();
+    marked = generation;
+    markChildren(generation);
   };
 }
