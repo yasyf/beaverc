@@ -27,7 +27,7 @@ namespace BC {
       return parents->function == result;
     }
     void addNativeFunction(string name, size_t argc);
-    void transpile(AST_node *node, bool storing = false, InstructionList* out = nullptr);
+    void transpile(AST_node *node, bool storing = false);
     void transpileTo(AST_node *node, InstructionList* out);
     void store(AST_node *node);
     size_t count();

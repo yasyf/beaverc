@@ -39,21 +39,11 @@ namespace BC {
     output(Operation::StoreGlobal, insert(current().names_, name));
   }
 
-  void Compiler::transpile(AST_node *node, bool storing, InstructionList* out) {
+  void Compiler::transpile(AST_node *node, bool storing) {
     bool old_storing = this->storing;
     this->storing = storing;
-    if (out)
-      parents->outs.push(out);
-
     node->accept(*this);
-
-    if (out)
-      parents->outs.pop();
     this->storing = old_storing;
-  }
-
-  void Compiler::transpileTo(AST_node *node, InstructionList* out) {
-    transpile(node, false, out);
   }
 
   void Compiler::store(AST_node *node) {
@@ -74,11 +64,6 @@ namespace BC {
 
   void Compiler::output(const Operation operation, int32_t operand0) {
     output(Instruction(operation, operand0));
-  }
-
-  void Compiler::drain(InstructionList il) {
-    for (auto inst : il)
-      output(inst);
   }
 
   void Compiler::loadConst(shared_ptr<Constant> constant) {
@@ -205,15 +190,9 @@ namespace BC {
   }
 
   void Compiler::visit(Call& call) {
-    vector<InstructionList> argInsts;
     for (auto arg : call.arguments) {
-      InstructionList argInst;
-      transpileTo(arg, &argInst);
-      argInsts.push_back(argInst);
+      transpile(arg);
     }
-    for (auto a : argInsts)
-      drain(a);
-
     transpile(call.target);
     output(Operation::Call, call.arguments.size());
   }

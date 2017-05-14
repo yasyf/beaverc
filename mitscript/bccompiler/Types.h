@@ -102,13 +102,12 @@ namespace BC {
     std::vector<std::string> free_reference_vars_;
     std::vector<std::string> globals_;
     std::string storing;
-    std::stack<InstructionList*> outs;
     bool returned = false;
 
     FunctionLinkedList(std::shared_ptr<Function> function) : function(function), last(nullptr) {}
 
     InstructionList* getOut() {
-      return outs.size() ? outs.top() : &(function->instructions);
+      return &(function->instructions);
     }
 
     std::shared_ptr<FunctionLinkedList> extend(std::shared_ptr<Function> function) {
