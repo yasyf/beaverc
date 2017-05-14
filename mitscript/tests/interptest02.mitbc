@@ -101,8 +101,8 @@ function
 		load_func	0
 		alloc_closure	0
 		store_global	7
-		gc
 		
+		gc
 		load_const	5
 		load_global	3
 		gt
@@ -123,8 +123,8 @@ function
 		store_global	3
 		goto	3
 		
-		gc
 		
+		gc
 		load_const	7
 		if	7
 		goto	8
