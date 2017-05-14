@@ -157,11 +157,12 @@ namespace ASM {
     return Value::makePointer(interpreter->heap.allocate<ClosureFunctionValue>(func->value)).value;
   }
 
-  void helper_add_reference_to_closure(uint64_t closure, uint64_t reference) {
+  uint64_t helper_add_reference_to_closure(uint64_t closure, uint64_t reference) {
     #if DEBUG
       cout << "helper_add_reference_to_closure" << endl;
     #endif
     ClosureFunctionValue* c = Value(closure).getPointer<ClosureFunctionValue>();
     c->add_reference((ReferenceValue*) reference);
+    return closure;
   }
 }

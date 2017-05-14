@@ -5,51 +5,6 @@ function
 		function
 		{
 			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 0,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
 			constants = [" foobar ", None],
 			parameter_count = 2,
 			local_vars = [a, b],
@@ -66,6 +21,7 @@ function
 				load_global	0
 				call	1
 				pop
+				gc
 				load_const	1
 				return
 			]
@@ -90,6 +46,7 @@ function
 				load_global	1
 				call	2
 				pop
+				gc
 				load_const	1
 				return
 			]
@@ -103,11 +60,11 @@ function
 	names = [print, input, intcast, x, b, y, r, f, z, f2],
 	instructions = 
 	[
-		load_func	0
+		load_func	-1
 		store_global	0
-		load_func	1
+		load_func	-2
 		store_global	1
-		load_func	2
+		load_func	-3
 		store_global	2
 		load_const	0
 		neg
@@ -125,25 +82,33 @@ function
 		load_global	6
 		load_global	6
 		eq
-		if	2
-		goto	6
+		if	0
+		goto	1
+		
 		load_global	6
 		load_global	0
 		call	1
 		pop
-		goto	5
+		gc
+		goto	2
+		
 		load_const	4
 		load_global	0
 		call	1
 		pop
-		load_func	3
+		gc
+		
+		load_func	0
 		alloc_closure	0
 		store_global	7
+		gc
+		
 		load_const	5
 		load_global	3
 		gt
-		if	2
-		goto	13
+		if	4
+		goto	5
+		
 		load_global	3
 		load_global	3
 		load_const	0
@@ -151,22 +116,28 @@ function
 		load_global	7
 		call	2
 		pop
+		gc
 		load_global	3
 		load_const	0
 		add
 		store_global	3
-		goto	-16
+		goto	3
+		
+		gc
+		
 		load_const	7
-		if	2
-		goto	6
+		if	7
+		goto	8
+		
 		load_global	3
 		load_const	6
 		div
 		store_global	3
-		goto	-7
+		goto	6
+		
 		load_const	0
 		store_global	8
-		load_func	4
+		load_func	1
 		alloc_closure	0
 		store_global	9
 		load_global	9
@@ -174,10 +145,12 @@ function
 		load_global	0
 		call	1
 		pop
+		gc
 		load_global	8
 		load_global	0
 		call	1
 		pop
+		gc
 		load_const	6
 		return
 	]

@@ -12,9 +12,15 @@ compile() {
   ./bin/bccompiler < "$1" > "$1bc"
 }
 
-make bccompiler
+run() {
+  message "Running $1"
+  ./bin/vm -s "$1" > "$1.out"
+}
 
-for f in tests/bytecodetest*.mit tests/interptest*.mit
+make bccompiler vm
+
+for f in tests/bytecodetest*.mit tests/interptest*.mit tests/asmtest*.mit
 do
   compile "$f"
+  run "$f"
 done

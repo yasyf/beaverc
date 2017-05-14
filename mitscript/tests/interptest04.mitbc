@@ -5,51 +5,6 @@ function
 		function
 		{
 			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 0,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
 			constants = ["here", None, "bad"],
 			parameter_count = 0,
 			local_vars = [],
@@ -62,12 +17,14 @@ function
 				load_global	0
 				call	1
 				pop
+				gc
 				load_const	1
 				return
 				load_const	2
 				load_global	0
 				call	1
 				pop
+				gc
 			]
 		}
 	],
@@ -79,13 +36,13 @@ function
 	names = [print, input, intcast, f],
 	instructions = 
 	[
-		load_func	0
+		load_func	-1
 		store_global	0
-		load_func	1
+		load_func	-2
 		store_global	1
-		load_func	2
+		load_func	-3
 		store_global	2
-		load_func	3
+		load_func	0
 		alloc_closure	0
 		store_global	3
 		load_global	3
@@ -93,15 +50,18 @@ function
 		load_global	0
 		call	1
 		pop
+		gc
 		load_const	0
 		load_global	0
 		call	1
 		pop
+		gc
 		load_const	1
 		return
 		load_const	2
 		load_global	0
 		call	1
 		pop
+		gc
 	]
 }

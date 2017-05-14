@@ -4,51 +4,6 @@ function
 	[
 		function
 		{
-			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 0,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
-			functions = [],
-			constants = [None],
-			parameter_count = 1,
-			local_vars = [],
-			local_ref_vars = [],
-			free_vars = [],
-			names = [],
-			instructions = 
-			[
-				load_const	0
-				return
-			]
-		},
-		function
-		{
 			functions =
 			[
 				function
@@ -76,6 +31,7 @@ function
 								load_global	0
 								call	1
 								pop
+								gc
 								load_const	2
 								return
 							]
@@ -99,12 +55,14 @@ function
 						load_local	1
 						call	1
 						pop
+						gc
 						load_const	1
 						store_ref	0
 						load_const	1
 						load_local	1
 						call	1
 						pop
+						gc
 						load_local	1
 						return
 					]
@@ -121,8 +79,9 @@ function
 				load_local	0
 				load_const	3
 				gt
-				if	2
-				goto	25
+				if	0
+				goto	1
+				
 				load_local	0
 				store_global	0
 				load_func	0
@@ -136,6 +95,7 @@ function
 				load_local	2
 				call	1
 				pop
+				gc
 				load_const	1
 				load_local	0
 				add
@@ -146,11 +106,14 @@ function
 				load_global	1
 				call	1
 				pop
-				goto	5
+				gc
+				goto	2
+				
 				load_const	3
 				load_const	4
 				div
 				store_local	1
+				
 				load_const	5
 				return
 			]
@@ -164,21 +127,22 @@ function
 	names = [print, input, intcast, x, foo],
 	instructions = 
 	[
-		load_func	0
+		load_func	-1
 		store_global	0
-		load_func	1
+		load_func	-2
 		store_global	1
-		load_func	2
+		load_func	-3
 		store_global	2
 		load_const	0
 		store_global	3
-		load_func	3
+		load_func	0
 		alloc_closure	0
 		store_global	4
 		load_const	1
 		load_global	4
 		call	1
 		pop
+		gc
 		load_const	2
 		return
 	]

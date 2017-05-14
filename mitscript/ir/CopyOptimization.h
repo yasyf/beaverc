@@ -12,6 +12,7 @@ namespace IR {
       auto assign = dynamic_cast<Assign<T>*>(instruction);
 
       if (assign && store && assign->src->num == store->dest->num) {
+        #warning cannot reuse temp, use fork
         ir[count] = new Assign<Temp>{assign->dest, store->src};
         delete(assign);
         return true;

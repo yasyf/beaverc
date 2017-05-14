@@ -6,7 +6,7 @@ function
 	local_vars = [],
 	local_ref_vars = [],
 	free_vars = [],
-	names = [print, input, intcast, x, y, z],
+	names = [print, input, intcast, x],
 	instructions = 
 	[
 		load_func	-1
@@ -16,18 +16,9 @@ function
 		load_func	-3
 		store_global	2
 		load_const	0
-		store_global	3
 		load_const	1
-		store_global	4
-		load_global	3
-		load_global	4
-		add
-		store_global	5
-		load_global	5
-		load_global	0
-		call	1
-		pop
-		gc
+		gt
+		store_global	3
 		load_const	2
 		return
 	]

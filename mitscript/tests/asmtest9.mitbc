@@ -1,12 +1,12 @@
 function
 {
 	functions = [],
-	constants = [1, 2, 0],
+	constants = [0, 1, 5, "done!"],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
 	free_vars = [],
-	names = [print, input, intcast, x, y, z],
+	names = [print, input, intcast, x],
 	instructions = 
 	[
 		load_func	-1
@@ -17,18 +17,31 @@ function
 		store_global	2
 		load_const	0
 		store_global	3
-		load_const	1
-		store_global	4
+		gc
+		
+		load_const	2
 		load_global	3
-		load_global	4
-		add
-		store_global	5
-		load_global	5
+		gt
+		if	1
+		goto	2
+		
+		load_global	3
 		load_global	0
 		call	1
 		pop
 		gc
-		load_const	2
+		load_global	3
+		load_const	1
+		add
+		store_global	3
+		goto	0
+		
+		load_const	3
+		load_global	0
+		call	1
+		pop
+		gc
+		load_const	0
 		return
 	]
 }
