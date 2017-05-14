@@ -29,7 +29,7 @@ int main(int argc, char** argv)
   Mode mode = SOURCE;
   shared_ptr<BC::Function> function;
 
-  const char* max_mem = "4";
+  const char* max_mem = "500";
 
   while (true) {
     static struct option long_options[] =
