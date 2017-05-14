@@ -29,7 +29,7 @@ int main(int argc, char** argv)
   Mode mode = SOURCE;
   shared_ptr<BC::Function> function;
 
-  const char* max_mem = "4";
+  const char* max_mem = "500";
 
   while (true) {
     static struct option long_options[] =
@@ -75,7 +75,6 @@ int main(int argc, char** argv)
           set_optimization(OPTIMIZATION_GC_GENERATIONAL);
         } else if (strcmp(optarg, "all") == 0) {
           set_optimization(OPTIMIZATION_MACHINE_CODE);
-          set_optimization(OPTIMIZATION_STRING_TREES);
           set_optimization(OPTIMIZATION_GC_GENERATIONAL);
           set_optimization(OPTIMIZATION_OPTIMIZATION_PASSES);
         }
