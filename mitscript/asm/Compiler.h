@@ -697,7 +697,7 @@ namespace ASM {
             auto orr = dynamic_cast<Or*>(instruction);
             auto s1 = read_temp(orr->src1);
             auto s2 = read_temp(orr->src2);
-            assm.and_(s2, s1);
+            assm.or_(s2, s1);
             dead(s1);
             write_temp(orr->dest, s2);
             dead(s2);

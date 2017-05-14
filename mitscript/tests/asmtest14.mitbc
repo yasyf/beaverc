@@ -30,6 +30,13 @@ function
 		pop
 		gc
 		load_const	1
+		load_const	0
+		or
+		load_global	0
+		call	1
+		pop
+		gc
+		load_const	1
 		load_const	1
 		or
 		load_global	0
@@ -38,6 +45,13 @@ function
 		gc
 		load_const	0
 		load_const	1
+		and
+		load_global	0
+		call	1
+		pop
+		gc
+		load_const	1
+		load_const	0
 		and
 		load_global	0
 		call	1
