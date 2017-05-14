@@ -140,6 +140,7 @@ namespace GC {
       auto it_end = recently_allocated_objects.end();
       while (it != it_end) {
         auto ptr = *it;
+        ptr->generation = Generation::Old;
         if (ptr->marked != generation) {
           #ifdef DEBUG
             cout << "ABOUT TO COLLECT: ";
@@ -175,6 +176,7 @@ namespace GC {
       auto it_end = old_objects.end();
       while (it != it_end) {
         auto ptr = *it;
+        ptr->generation = Generation::Old;
         if (ptr->marked != generation) {
           #ifdef DEBUG
             cout << "ABOUT TO COLLECT: ";
