@@ -49,7 +49,6 @@ namespace VM {
 
   void Interpreter::potentially_garbage_collect() {
     #ifdef DEBUG
-    std::cout << "$$$ Num objects: " << heap.getCount() << std::endl;
     std::cout << "$$$ Bytes current: " << heap.bytes_current << std::endl;
     std::cout << "$$$ Bytes max: " << heap.bytes_max << std::endl;
     #endif
