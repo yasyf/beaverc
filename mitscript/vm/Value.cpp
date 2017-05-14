@@ -7,8 +7,231 @@
 
 namespace VM {
 
+  std::string Value::toString() const {
+    switch (value & _VALUE_MASK) {
+      case _INTEGER_TAG: {
+        return std::to_string(getInteger());
+      }
+      case _NONE_TAG: {
+        return "None";
+      }
+      case _BOOLEAN_TAG: {
+        return (getBoolean()) ? "True" : "False";
+      }
+      case _STRING_CONSTANT_TAG: {
+        return std::string(getStringConstant());
+      }
+      case _STRING_VALUE_TAG:
+      case _POINTER_TAG: {
+        return getPointerValue()->toString();
+      }
+    }
+  }
+
+  StringValue::StringValue(GC::CollectedHeap& heap, const std::string& value) : PointerValue(heap) {
+    height = 0;
+    length = value.size();
+    if (length > 0) {
+      memory = static_cast<char*>(malloc(length * sizeof(char)));
+      strncpy(memory, value.c_str(), length);
+    }
+    heap.increaseSize(size());
+  }
+
+  StringValue::StringValue(GC::CollectedHeap& heap, const Value l, const Value r) : PointerValue(heap) {
+    if (l.isPointer() && !l.isStringValue()) {
+      // Must be a record or function
+      left = Value::makeString(heap.allocate<StringValue>(l.toString()));
+    } else {
+      left = l;
+    }
+    if (r.isPointer() && !r.isStringValue()) {
+      // Must be a record or function
+      right = Value::makeString(heap.allocate<StringValue>(r.toString()));
+    } else {
+      right = r;
+    }
+    height = 1;
+    if (left.isPointer()) {
+      // Must be a string now
+      StringValue* ll = left.getPointer<StringValue>();
+      height = max(height, ll->height + 1);
+    }
+    if (right.isPointer()) {
+      StringValue* rr = right.getPointer<StringValue>();
+      height = max(height, rr->height + 1);
+    }
+  }
+
+  StringValue::~StringValue() {
+    #ifdef DEBUG
+    cout << "DELETING StringValue: " << toString() << endl;
+    #endif
+    if (height == 0 && length > 0) {
+      free(memory);
+    }
+    heap.decreaseSize(size());
+  }
+
+  std::string StringValue::toString() {
+    if (height == 0) {
+      return std::string(memory, length);
+    }
+    return left.toString() + right.toString();
+  };
+
+  size_t StringValue::size() {
+    if (height == 0) {
+      return sizeof(StringValue) + length * sizeof(char);
+    } else {
+      return sizeof(StringValue);
+    }
+  }
+
+  void StringValue::markChildren(size_t generation, bool mark_recent_only) {
+    if (height == 0) return;
+    if (left.isPointer()) {
+      left.getPointerValue()->mark(generation, mark_recent_only);
+    }
+    if (right.isPointer()) {
+      right.getPointerValue()->mark(generation, mark_recent_only);
+    }
+  }
+
+  RecordValue::RecordValue(GC::CollectedHeap& heap) : PointerValue(heap) {
+    heap.increaseSize(size());
+  }
+
+  RecordValue::~RecordValue() {
+    #ifdef DEBUG
+    cout << "DELETING RecordValue: " << toString() << endl;
+    #endif
+    heap.decreaseSize(size());
+  }
+
+  Value RecordValue::get(std::string key) {
+    return values[key];
+  }
+
+  void RecordValue::insert(std::string key, Value inserted) {
+    if (values.count(key) == 0)
+      heap.increaseSize(sizeof(std::string) + key.capacity() * sizeof(char) + sizeof(Value));
+    if (has_optimization(OPTIMIZATION_GC_GENERATIONAL) &&
+        inserted.isPointer() &&
+        inserted.getPointerValue()->generation == GC::Generation::RecentlyAllocated &&
+        this->generation != GC::Generation::RecentlyAllocated) {
+      heap.cross_generation_pointers.push_back(this);
+    }
+    values[key] = inserted;
+  }
+
+  std::string RecordValue::toString() {
+    std::string result = "{";
+    for (auto keyvalue : values) {
+        result += keyvalue.first + ":" + keyvalue.second.toString() + " ";
+    };
+    result += "}";
+    return result;
+  }
+
+  size_t RecordValue::size() {
+    size_t s = sizeof(RecordValue);
+    for (auto pair : values) {
+      s += sizeof(std::string) + pair.first.capacity() * sizeof(char) + sizeof(Value);
+    }
+    return s;
+  }
+
+  void RecordValue::markChildren(size_t generation, bool mark_recent_only) {
+    for (auto& pair : values) {
+      if (pair.second.isPointer()) {
+        pair.second.getPointerValue()->mark(generation, mark_recent_only);
+      }
+    }
+  }
+
+  ReferenceValue::ReferenceValue(GC::CollectedHeap& heap, Value v) : PointerValue(heap), value(v) {
+    heap.increaseSize(size());
+  }
+
+  ReferenceValue::~ReferenceValue() {
+    #ifdef DEBUG
+    cout << "DELETING ReferenceValue: " << toString() << endl;
+    #endif
+    heap.decreaseSize(size());
+  }
+
+  std::string ReferenceValue::toString() {
+    #if DEBUG
+      return "ref";
+    #else
+      throw RuntimeException("You have uncovered a bug :(");
+    #endif
+  }
+
+  void ReferenceValue::write(Value v) {
+    if (has_optimization(OPTIMIZATION_GC_GENERATIONAL) &&
+        v.isPointer() &&
+        v.getPointerValue()->generation == GC::Generation::RecentlyAllocated &&
+        this->generation != GC::Generation::RecentlyAllocated) {
+      heap.cross_generation_pointers.push_back(this);
+    }
+    value = v;
+  }
+
+  size_t ReferenceValue::size() {
+    return sizeof(ReferenceValue);
+  }
+
+  void ReferenceValue::markChildren(size_t generation, bool mark_recent_only) {
+    if (value.isPointer()) {
+      value.getPointerValue()->mark(generation, mark_recent_only);
+    }
+  }
+
+  std::string AbstractFunctionValue::toString() {
+    return "FUNCTION";
+  }
+
+  BareFunctionValue::BareFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {
+      heap.increaseSize(size());
+    }
+
+  BareFunctionValue::~BareFunctionValue() {
+    #ifdef DEBUG
+    cout << "DELETING BareFunctionValue: " << toString() << endl;
+    #endif
+    heap.decreaseSize(size());
+  }
+
   Value BareFunctionValue::call(std::vector<Value> & arguments) {
     throw RuntimeException("call on a BareFunctionValue");
+  }
+
+  ClosureFunctionValue::ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {
+    heap.increaseSize(size());
+  }
+
+  ClosureFunctionValue::~ClosureFunctionValue() {
+    #ifdef DEBUG
+    cout << "DELETING ClosureFunctionValue: " << toString() << endl;
+    #endif
+    heap.decreaseSize(size());
+  }
+
+
+  void ClosureFunctionValue::add_reference(ReferenceValue* reference) {
+    heap.increaseSize(sizeof(ReferenceValue*));
+    references.push_back(reference);
+  };
+
+  size_t ClosureFunctionValue::size() {
+    return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
+  }
+
+  void ClosureFunctionValue::markChildren(size_t generation, bool mark_recent_only) {
+    for (auto ref : references)
+      ref->mark(generation, mark_recent_only);
   }
 
   Value ClosureFunctionValue::call(std::vector<Value> & arguments) {
@@ -110,5 +333,18 @@ namespace VM {
         break;
     }
     throw RuntimeException("Reached end of builtin function execution");
+  }
+
+
+  BuiltInFunctionValue::BuiltInFunctionValue(GC::CollectedHeap& heap, int t) : AbstractFunctionValue(heap) {
+    heap.increaseSize(size());
+    type = static_cast<BuiltInFunctionType>(t);
+  }
+
+  BuiltInFunctionValue::~BuiltInFunctionValue() {
+    #ifdef DEBUG
+    cout << "DELETING BuiltinFunctionValue: " << toString() << endl;
+    #endif
+    heap.decreaseSize(size());
   }
 }

@@ -112,26 +112,7 @@ namespace VM {
       throw IllegalCastException("Can't cast the pointer to the needed type");
     }
 
-    std::string toString() const {
-      switch (value & _VALUE_MASK) {
-        case _INTEGER_TAG: {
-          return std::to_string(getInteger());
-        }
-        case _NONE_TAG: {
-          return "None";
-        }
-        case _BOOLEAN_TAG: {
-          return (getBoolean()) ? "True" : "False";
-        }
-        case _STRING_CONSTANT_TAG: {
-          return std::string(getStringConstant());
-        }
-        case _STRING_VALUE_TAG:
-        case _POINTER_TAG: {
-          return getPointerValue()->toString();
-        }
-      }
-    };
+    std::string toString() const;
 
     bool operator==(Value other) {
       if (__IS_STRING(value) && __IS_STRING(other.value)) {
@@ -172,203 +153,57 @@ namespace VM {
     Value left;
     Value right;
 
-    StringValue(GC::CollectedHeap& heap, const std::string& value) : PointerValue(heap) {
-      height = 0;
-      length = value.size();
-      if (length > 0) {
-        memory = static_cast<char*>(malloc(length * sizeof(char)));
-        strncpy(memory, value.c_str(), length);
-      }
-      heap.increaseSize(size());
-    }
+    StringValue(GC::CollectedHeap& heap, const std::string& value);
+    StringValue(GC::CollectedHeap& heap, const Value l, const Value r);
+    ~StringValue();
 
-    StringValue(GC::CollectedHeap& heap, const Value l, const Value r) : PointerValue(heap) {
-      if (l.isPointer() && !l.isStringValue()) {
-        // Must be a record or function
-        left = Value::makeString(heap.allocate<StringValue>(l.toString()));
-      } else {
-        left = l;
-      }
-      if (r.isPointer() && !r.isStringValue()) {
-        // Must be a record or function
-        right = Value::makeString(heap.allocate<StringValue>(r.toString()));
-      } else {
-        right = r;
-      }
-      height = 1;
-      if (left.isPointer()) {
-        // Must be a string now
-        StringValue* ll = left.getPointer<StringValue>();
-        height = max(height, ll->height + 1);
-      }
-      if (right.isPointer()) {
-        StringValue* rr = right.getPointer<StringValue>();
-        height = max(height, rr->height + 1);
-      }
-    }
-
-    ~StringValue() {
-      #ifdef DEBUG
-      cout << "DELETING StringValue: " << toString() << endl;
-      #endif
-      if (height == 0 && length > 0) {
-        free(memory);
-      }
-      heap.decreaseSize(size());
-    }
-
-    std::string toString() {
-      if (height == 0) {
-        return std::string(memory, length);
-      }
-      return left.toString() + right.toString();
-    };
-
-    virtual size_t size() {
-      if (height == 0) {
-        return sizeof(StringValue) + length * sizeof(char);
-      } else {
-        return sizeof(StringValue);
-      }
-    }
-
-    virtual void markChildren(size_t generation, bool mark_recent_only) {
-      if (height == 0) return;
-      if (left.isPointer()) {
-        left.getPointerValue()->mark(generation, mark_recent_only);
-      }
-      if (right.isPointer()) {
-        right.getPointerValue()->mark(generation, mark_recent_only);
-      }
-    }
+    std::string toString();
+    virtual size_t size();
+    virtual void markChildren(size_t generation, bool mark_recent_only);
   };
 
   struct RecordValue : public PointerValue {
     std::unordered_map<std::string, Value> values;
 
-    RecordValue(GC::CollectedHeap& heap) : PointerValue(heap) {
-      heap.increaseSize(size());
-    }
+    RecordValue(GC::CollectedHeap& heap);
+    ~RecordValue();
 
-    ~RecordValue() {
-      #ifdef DEBUG
-      cout << "DELETING RecordValue: " << toString() << endl;
-      #endif
-      heap.decreaseSize(size());
-    }
+    Value get(std::string key);
+    void insert(std::string key, Value inserted);
 
-    Value get(std::string key) {
-      return values[key];
-    }
-
-    void insert(std::string key, Value inserted) {
-      if (values.count(key) == 0)
-        heap.increaseSize(sizeof(std::string) + key.capacity() * sizeof(char) + sizeof(Value));
-      if (has_optimization(OPTIMIZATION_GC_GENERATIONAL) &&
-          inserted.isPointer() &&
-          inserted.getPointerValue()->generation == GC::Generation::RecentlyAllocated &&
-          this->generation != GC::Generation::RecentlyAllocated) {
-        heap.cross_generation_pointers.push_back(this);
-      }
-      values[key] = inserted;
-    }
-
-    std::string toString() {
-      std::string result = "{";
-      for (auto keyvalue : values) {
-          result += keyvalue.first + ":" + keyvalue.second.toString() + " ";
-      };
-      result += "}";
-      return result;
-    }
-
-    virtual size_t size() {
-      size_t s = sizeof(RecordValue);
-      for (auto pair : values) {
-        s += sizeof(std::string) + pair.first.capacity() * sizeof(char) + sizeof(Value);
-      }
-      return s;
-    }
-
-    virtual void markChildren(size_t generation, bool mark_recent_only) {
-      for (auto& pair : values) {
-        if (pair.second.isPointer()) {
-          pair.second.getPointerValue()->mark(generation, mark_recent_only);
-        }
-      }
-    }
+    std::string toString();
+    virtual size_t size();
+    virtual void markChildren(size_t generation, bool mark_recent_only);
   };
 
   struct ReferenceValue : public PointerValue {
     Value value;
 
-    ReferenceValue(GC::CollectedHeap& heap, Value v) : PointerValue(heap), value(v) {
-      heap.increaseSize(size());
-    }
+    ReferenceValue(GC::CollectedHeap& heap, Value v);
+    ~ReferenceValue();
 
-    ~ReferenceValue() {
-      #ifdef DEBUG
-      cout << "DELETING ReferenceValue: " << toString() << endl;
-      #endif
-      heap.decreaseSize(size());
-    }
+    void write(Value v);
 
-    std::string toString() {
-      #if DEBUG
-        return "ref";
-      #else
-        throw RuntimeException("You have uncovered a bug :(");
-      #endif
-    }
-
-    void write(Value v) {
-      if (has_optimization(OPTIMIZATION_GC_GENERATIONAL) &&
-          v.isPointer() &&
-          v.getPointerValue()->generation == GC::Generation::RecentlyAllocated &&
-          this->generation != GC::Generation::RecentlyAllocated) {
-        heap.cross_generation_pointers.push_back(this);
-      }
-      value = v;
-    }
-
-    virtual size_t size() {
-      return sizeof(ReferenceValue);
-    }
-
-    virtual void markChildren(size_t generation, bool mark_recent_only) {
-      if (value.isPointer()) {
-        value.getPointerValue()->mark(generation, mark_recent_only);
-      }
-    }
+    std::string toString();
+    virtual size_t size();
+    virtual void markChildren(size_t generation, bool mark_recent_only);
   };
 
   struct AbstractFunctionValue : public PointerValue {
     AbstractFunctionValue(GC::CollectedHeap& heap) : PointerValue(heap) {}
 
-    std::string toString() { return "FUNCTION"; };
+    std::string toString();
     virtual Value call(std::vector<Value> & arguments) = 0;
   };
 
   struct BareFunctionValue : public AbstractFunctionValue {
     std::shared_ptr<BC::Function> value;
 
-    BareFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {
-      heap.increaseSize(size());
-    }
-
-    ~BareFunctionValue() {
-      #ifdef DEBUG
-      cout << "DELETING BareFunctionValue: " << toString() << endl;
-      #endif
-      heap.decreaseSize(size());
-    }
+    BareFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value);
+    ~BareFunctionValue();
 
     Value call(std::vector<Value> & arguments);
-
-    virtual size_t size() {
-      return sizeof(BareFunctionValue);
-    }
-
+    virtual size_t size() { return sizeof(BareFunctionValue); }
     virtual void markChildren(size_t generation, bool mark_recent_only) {}
   };
 
@@ -376,32 +211,14 @@ namespace VM {
     std::shared_ptr<BC::Function> value;
     std::vector<ReferenceValue*> references;
 
-    ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {
-      heap.increaseSize(size());
-    }
+    ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value);
+    ~ClosureFunctionValue();
 
-    ~ClosureFunctionValue() {
-      #ifdef DEBUG
-      cout << "DELETING ClosureFunctionValue: " << toString() << endl;
-      #endif
-      heap.decreaseSize(size());
-    }
-
-
-    void add_reference(ReferenceValue* reference) {
-      heap.increaseSize(sizeof(ReferenceValue*));
-      references.push_back(reference);
-    };
+    void add_reference(ReferenceValue* reference);
 
     Value call(std::vector<Value> & arguments);
-    virtual size_t size() {
-      return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
-    }
-
-    virtual void markChildren(size_t generation, bool mark_recent_only) {
-      for (auto ref : references)
-        ref->mark(generation, mark_recent_only);
-    }
+    virtual size_t size();
+    virtual void markChildren(size_t generation, bool mark_recent_only);
   };
 
   enum class BuiltInFunctionType {
@@ -414,28 +231,11 @@ namespace VM {
   struct BuiltInFunctionValue : public AbstractFunctionValue {
     BuiltInFunctionType type;
 
-    BuiltInFunctionValue(GC::CollectedHeap& heap, BuiltInFunctionType type) : AbstractFunctionValue(heap), type(type) {
-      heap.increaseSize(size());
-    }
-
-    BuiltInFunctionValue(GC::CollectedHeap& heap, int t) : AbstractFunctionValue(heap) {
-      heap.increaseSize(size());
-      type = static_cast<BuiltInFunctionType>(t);
-    }
-
-    ~BuiltInFunctionValue() {
-      #ifdef DEBUG
-      cout << "DELETING BuiltinFunctionValue: " << toString() << endl;
-      #endif
-      heap.decreaseSize(size());
-    }
-
-    virtual size_t size() {
-      return sizeof(BuiltInFunctionValue);
-    }
-
-    virtual void markChildren(size_t generation, bool mark_recent_only) {}
+    BuiltInFunctionValue(GC::CollectedHeap& heap, int t);
+    ~BuiltInFunctionValue();
 
     Value call(std::vector<Value> & arguments);
+    virtual size_t size() { return sizeof(BuiltInFunctionValue); }
+    virtual void markChildren(size_t generation, bool mark_recent_only) {}
   };
 }
