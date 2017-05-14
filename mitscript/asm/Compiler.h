@@ -20,6 +20,14 @@ using namespace IR;
 #define IR_INSTRUCTION_BYTE_UPPER_BOUND 64
 
 namespace ASM {
+  static constexpr std::array<R64, 8> caller_saved_regs = {
+    rcx, rdx, rsi, rdi, r8,  r9,  r10, r11
+  };
+
+  static constexpr std::array<R64, 4> arg_regs = {
+    rdi, rsi, rdx, rcx
+  };
+
   class Compiler {
     IR::InstructionList& ir;
     Assembler assm;
@@ -53,8 +61,13 @@ namespace ASM {
     void alive(shared_ptr<Temp> temp) {
       debug("alive", *temp);
       if (temp->reg) {
-        alive(*(temp->reg));
-        reg_temps[*(temp->reg)] = temp;
+        if (is_alive(*(temp->reg))) {
+          debug("spill", *temp);
+          temp->reg = experimental::nullopt;
+        } else {
+          alive(*(temp->reg));
+          reg_temps[*(temp->reg)] = temp;
+        }
       }
     }
 
@@ -65,13 +78,13 @@ namespace ASM {
     void dead(const R64& reg) {
       debug("dead", reg);
       live.erase(reg);
+      reg_temps.erase(reg);
     }
 
     void dead(shared_ptr<Temp> temp) {
       debug("dead", *temp);
       if (temp->reg) {
         dead(*(temp->reg));
-        reg_temps.erase(*(temp->reg));
       }
     }
 
@@ -79,7 +92,7 @@ namespace ASM {
       debug("reserve", reg);
       if (reg_temps.count(reg)) {
         auto temp = reg_temps[reg];
-        // flush to memory
+        debug("flush", *temp);
         assm.mov(temp_mem(temp->num), reg);
         temp->reg = experimental::nullopt;
         reg_temps.erase(reg);
@@ -135,25 +148,14 @@ namespace ASM {
 
     void assign_helper_call_to_temp(shared_ptr<Temp> dest, void* helper, int num) {
       prepare_call_helper(2);
-      alive(dest);
-      if (dest->reg) {
-        auto reg = *(dest->reg);
-        auto r2 = rsi;
-        assm.mov(reg, current_closure());
-        assm.mov(r2, Imm64{num});
-        call_helper(helper, reg, r2);
-        assm.mov(reg, rax);
-        dead(r2);
-      } else {
-        auto reg = rdi;
-        auto r2 = rsi;
-        assm.mov(reg, current_closure());
-        assm.mov(r2, Imm64{num});
-        call_helper(helper, reg, r2);
-        assm.mov(temp_mem(dest->num), rax);
-        dead(r2);
-        dead(reg);
-      }
+      auto reg = rdi;
+      auto r2 = rsi;
+      assm.mov(reg, current_closure());
+      assm.mov(r2, Imm64{num});
+      call_helper(helper, reg, r2);
+      write_temp(dest, rax);
+      dead(reg);
+      dead(r2);
     }
 
     void assign_local(shared_ptr<Var> src, shared_ptr<Temp> dest) {
@@ -170,21 +172,12 @@ namespace ASM {
 
     void assign_deref(shared_ptr<Deref> src, shared_ptr<Temp> dest) {
       prepare_call_helper(1);
-      alive(dest);
-      if (dest->reg) {
-        auto reg = *(dest->reg);
-        assm.mov(reg, current_refs());
-        assm.mov(reg, M64{reg, Imm32{STACK_VALUE_SIZE*src->num}});
-        call_helper((void*) &helper_read_reference, reg);
-        assm.mov(reg, rax);
-      } else {
-        auto reg = rdi;
-        assm.mov(reg, current_refs());
-        assm.mov(reg, M64{reg, Imm32{STACK_VALUE_SIZE*src->num}});
-        call_helper((void*) &helper_read_reference, reg);
-        assm.mov(temp_mem(dest->num), rax);
-        dead(reg);
-      }
+      auto reg = rdi;
+      assm.mov(reg, current_refs());
+      assm.mov(reg, M64{reg, Imm32{STACK_VALUE_SIZE*src->num}});
+      call_helper((void*) &helper_read_reference, reg);
+      write_temp(dest, rax);
+      dead(reg);
     }
 
     void store_deref(shared_ptr<Temp> src, shared_ptr<Deref> dest) {
@@ -229,7 +222,13 @@ namespace ASM {
     }
 
     R64 read_temp(shared_ptr<Temp> temp) {
-      return read_temp(temp, alloc_reg());
+      if (temp->reg) {
+        return *(temp->reg);
+      } else {
+        auto reg = alloc_reg();
+        assm.mov(reg, temp_mem(temp->num));
+        return reg;
+      }
     }
 
     void write_temp(shared_ptr<Temp> temp, const R64& reg) {
@@ -254,85 +253,65 @@ namespace ASM {
     }
 
     void prepare_call_helper(size_t argc) {
-      switch (argc) {
-        case 4:
-          reserve(rcx);
-        case 3:
-          reserve(rdx);
-        case 2:
-          reserve(rsi);
-        case 1:
-          reserve(rdi);
-        case 0:
-          break;
-        default:
-          throw InvalidNumArgs(to_string(argc));
+      if (argc > 4) {
+        throw InvalidNumArgs(to_string(argc));
+      }
+
+      for (size_t i = 0; i < argc; i++) {
+        reserve(arg_regs[i]);
+      }
+    }
+
+    void call_helper(void* fn, const R64 args[], size_t argc) {
+      auto scratch = alloc_reg();
+
+      for (size_t i = 0; i < argc; i++) {
+        assert(is_alive(arg_regs[i]));
+        reg_move(arg_regs[i], args[i]);
+        dead(arg_regs[i]);
+      }
+
+      assm.mov(scratch, Imm64{(uint64_t)fn});
+      dead(scratch);
+
+      for (auto reg : caller_saved_regs) {
+        if (is_alive(reg)) {
+          assm.push(reg);
+        }
+      }
+
+      assm.call(scratch);
+
+      for (auto reg : caller_saved_regs) {
+        if (is_alive(reg)) {
+          assm.pop(reg);
+        }
       }
     }
 
     void call_helper(void* fn) {
-      auto scratch = alloc_reg();
-      assm.mov(scratch, Imm64{(uint64_t)fn});
-      assm.call(scratch);
-      dead(scratch);
+      const R64 args[] = {};
+      call_helper(fn, args, 0);
     }
 
-    void call_helper(void* fn, const R64& arg1) {
-      assert(is_alive(rdi));
-      reg_move(rdi, arg1);
-      auto scratch = alloc_reg();
-      assm.mov(scratch, Imm64{(uint64_t)fn});
-      assm.call(scratch);
-      dead(scratch);
-      dead(rdi);
+    void call_helper(void* fn, const R64 arg1) {
+      const R64 args[] = {arg1};
+      call_helper(fn, args, 1);
     }
 
-    void call_helper(void* fn, const R64& arg1, const R64& arg2) {
-      assert(is_alive(rdi));
-      assert(is_alive(rsi));
-      reg_move(rdi, arg1);
-      reg_move(rsi, arg2);
-      auto scratch = alloc_reg();
-      assm.mov(scratch, Imm64{(uint64_t)fn});
-      assm.call(scratch);
-      dead(scratch);
-      dead(rsi);
-      dead(rdi);
+    void call_helper(void* fn, const R64 arg1, const R64 arg2) {
+      const R64 args[] = {arg1, arg2};
+      call_helper(fn, args, 2);
     }
 
-    void call_helper(void* fn, const R64& arg1, const R64& arg2, const R64& arg3) {
-      assert(is_alive(rdi));
-      assert(is_alive(rsi));
-      assert(is_alive(rdx));
-      reg_move(rdi, arg1);
-      reg_move(rsi, arg2);
-      reg_move(rdx, arg3);
-      auto scratch = alloc_reg();
-      assm.mov(scratch, Imm64{(uint64_t)fn});
-      assm.call(scratch);
-      dead(scratch);
-      dead(rdx);
-      dead(rsi);
-      dead(rdi);
+    void call_helper(void* fn, const R64 arg1, const R64 arg2, const R64 arg3) {
+      const R64 args[] = {arg1, arg2, arg3};
+      call_helper(fn, args, 3);
     }
 
-    void call_helper(void* fn, const R64& arg1, const R64& arg2, const R64& arg3, const R64& arg4) {
-      assert(is_alive(rdi));
-      assert(is_alive(rsi));
-      assert(is_alive(rdx));
-      assert(is_alive(rcx));
-      reg_move(rdi, arg1);
-      reg_move(rsi, arg2);
-      reg_move(rdx, arg3);
-      reg_move(rcx, arg4);
-      auto scratch = alloc_reg();
-      assm.mov(scratch, Imm64{(uint64_t)fn});
-      assm.call(scratch);
-      dead(scratch);
-      dead(rcx);
-      dead(rdx);
-      dead(rsi);
-      dead(rdi);
+    void call_helper(void* fn, const R64 arg1, const R64 arg2, const R64 arg3, const R64 arg4) {
+      const R64 args[] = {arg1, arg2, arg3, arg4};
+      call_helper(fn, args, 4);
     }
 
     void preamble() {
@@ -364,15 +343,13 @@ namespace ASM {
     }
 
     void postamble(const R64& retval) {
-      #warning clean up garbage collection here but not yet.
       assm.mov(rax, retval);
       assm.pop(r15);
       assm.pop(r14);
       assm.pop(r13);
       assm.pop(r12);
       assm.pop(rbx);
-      assm.add(rsp, Imm32{((uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
-      assm.pop(rbp);
+      assm.leave();
     }
 
     void compile(IR::InstructionList& ir, x64asm::Function& function) {

@@ -5,17 +5,35 @@
 using namespace std;
 
 namespace IR {
-  class TempLivenessOptimization : public Optimization {
-    size_t count = 0;
-
+  class DeadTempOptimization : public Optimization {
     using Optimization::Optimization;
 
-    void alive(shared_ptr<Temp> temp) {
-      temp->live_start = count;
+    size_t count = 0;
+    map<size_t, map<size_t, shared_ptr<Temp>>> instno_aliases;
+
+    bool maybe_obsolete_temp(shared_ptr<Temp> temp) {
+      if (temp->live_end == INT_MAX) {
+        obsolete.insert(temp->num);
+        return true;
+      }
+      return false;
     }
 
-    void dead(shared_ptr<Temp> temp) {
-      temp->live_end = count;
+    void replace_temp_temp_assignment(Assign<Temp>* assign) {
+      if (assign->dest->live_end == INT_MAX) {
+        return;
+      }
+      instno_aliases[assign->dest->live_end][assign->dest->num] = assign->src;
+    }
+
+    void maybe_resolve_alias(shared_ptr<Temp>* temp) {
+      if (instno_aliases.count(count)) {
+        auto num = (*temp)->num;
+        if (instno_aliases[count].count(num)) {
+          obsolete.insert(num);
+          *temp = instno_aliases[count][num];
+        }
+      }
     }
 
   public:
@@ -24,174 +42,175 @@ namespace IR {
         switch (instruction->op()) {
           case IR::Operation::Assign: {
             if (auto assign = dynamic_cast<Assign<Var>*>(instruction)) {
-              alive(assign->dest);
+              maybe_obsolete_temp(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Const>*>(instruction)) {
-              alive(assign->dest);
+              maybe_obsolete_temp(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Temp>*>(instruction)) {
-              dead(assign->src);
-              alive(assign->dest);
+              if (!maybe_obsolete_temp(assign->dest)) {
+                replace_temp_temp_assignment(assign);
+              }
             } else if (auto assign = dynamic_cast<Assign<RetVal>*>(instruction)) {
-              alive(assign->dest);
+              maybe_obsolete_temp(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Ref>*>(instruction)) {
-              alive(assign->dest);
+              maybe_obsolete_temp(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Deref>*>(instruction)) {
-              alive(assign->dest);
+              maybe_obsolete_temp(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Glob>*>(instruction)) {
-              alive(assign->dest);
+              maybe_obsolete_temp(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<IR::Function>*>(instruction)) {
-              alive(assign->dest);
+              maybe_obsolete_temp(assign->dest);
             }
             break;
           }
           case IR::Operation::Store: {
             if (auto store = dynamic_cast<Store<Var>*>(instruction)) {
-              dead(store->src);
+              maybe_resolve_alias(&store->src);
             } else if (auto store = dynamic_cast<Store<Deref>*>(instruction)) {
-              dead(store->src);
+              maybe_resolve_alias(&store->src);
             } else if (auto store = dynamic_cast<Store<Glob>*>(instruction)) {
-              dead(store->src);
+              maybe_resolve_alias(&store->src);
             }
             break;
           }
           case IR::Operation::Add: {
             auto add = dynamic_cast<Add*>(instruction);
-            dead(add->src1);
-            dead(add->src2);
-            alive(add->dest);
+            maybe_resolve_alias(&add->src1);
+            maybe_resolve_alias(&add->src2);
+            maybe_obsolete_temp(add->dest);
             break;
           }
           case IR::Operation::IntAdd: {
             auto intadd = dynamic_cast<IntAdd*>(instruction);
-            dead(intadd->src1);
-            dead(intadd->src2);
-            alive(intadd->dest);
+            maybe_resolve_alias(&intadd->src1);
+            maybe_resolve_alias(&intadd->src2);
+            maybe_obsolete_temp(intadd->dest);
             break;
           }
           case IR::Operation::Sub: {
             auto sub = dynamic_cast<Sub*>(instruction);
-            dead(sub->src1);
-            dead(sub->src2);
-            alive(sub->dest);
+            maybe_resolve_alias(&sub->src1);
+            maybe_resolve_alias(&sub->src2);
+            maybe_obsolete_temp(sub->dest);
             break;
           }
           case IR::Operation::Mul: {
             auto mul = dynamic_cast<Mul*>(instruction);
-            dead(mul->src1);
-            dead(mul->src2);
-            alive(mul->dest);
+            maybe_resolve_alias(&mul->src1);
+            maybe_resolve_alias(&mul->src2);
+            maybe_obsolete_temp(mul->dest);
             break;
           }
           case IR::Operation::Div: {
             auto div = dynamic_cast<Div*>(instruction);
-            dead(div->src1);
-            dead(div->src2);
-            alive(div->dest);
+            maybe_resolve_alias(&div->src1);
+            maybe_resolve_alias(&div->src2);
+            maybe_obsolete_temp(div->dest);
             break;
           }
           case IR::Operation::Gt: {
             auto gt = dynamic_cast<Gt*>(instruction);
-            dead(gt->src1);
-            dead(gt->src2);
-            alive(gt->dest);
+            maybe_resolve_alias(&gt->src1);
+            maybe_resolve_alias(&gt->src2);
+            maybe_obsolete_temp(gt->dest);
             break;
           }
           case IR::Operation::Geq: {
             auto gte = dynamic_cast<Geq*>(instruction);
-            dead(gte->src1);
-            dead(gte->src2);
-            alive(gte->dest);
+            maybe_resolve_alias(&gte->src1);
+            maybe_resolve_alias(&gte->src2);
+            maybe_obsolete_temp(gte->dest);
             break;
           }
           case IR::Operation::Eq: {
             auto eq = dynamic_cast<Eq*>(instruction);
-            dead(eq->src1);
-            dead(eq->src2);
-            alive(eq->dest);
+            maybe_resolve_alias(&eq->src1);
+            maybe_resolve_alias(&eq->src2);
+            maybe_obsolete_temp(eq->dest);
             break;
           }
           case IR::Operation::Neg: {
             auto neg = dynamic_cast<Neg*>(instruction);
-            dead(neg->src);
-            alive(neg->dest);
+            maybe_resolve_alias(&neg->src);
+            maybe_obsolete_temp(neg->dest);
             break;
           }
           case IR::Operation::Not: {
             auto nott = dynamic_cast<Not*>(instruction);
-            dead(nott->src);
-            alive(nott->dest);
+            maybe_resolve_alias(&nott->src);
+            maybe_obsolete_temp(nott->dest);
             break;
           }
           case IR::Operation::CondJump: {
             auto cjump = dynamic_cast<CondJump*>(instruction);
-            dead(cjump->cond);
+            maybe_resolve_alias(&cjump->cond);
             break;
           }
           case IR::Operation::Call: {
             auto call = dynamic_cast<IR::Call*>(instruction);
             for (int i = call->args.size() - 1; i >= 0; --i) {
-              dead(call->args[i]);
+              maybe_resolve_alias(&call->args[i]);
             }
-            dead(call->closure);
+            maybe_resolve_alias(&call->closure);
             break;
           }
           case IR::Operation::Return: {
             auto ret = dynamic_cast<IR::Return*>(instruction);
-            dead(ret->val);
+            maybe_resolve_alias(&ret->val);
             break;
           }
           case IR::Operation::CallHelper: {
             if (auto op = dynamic_cast<CallHelper<Helper::FieldLoad>*>(instruction)) {
-              dead(op->args[0]);
+              maybe_resolve_alias(&op->args[0]);
             } else if (auto op = dynamic_cast<CallHelper<Helper::FieldStore>*>(instruction)) {
-              dead(op->args[0]);
-              dead(op->args[1]);
+              maybe_resolve_alias(&op->args[0]);
+              maybe_resolve_alias(&op->args[1]);
             } else if (auto op = dynamic_cast<CallHelper<Helper::IndexLoad>*>(instruction)) {
-              dead(op->args[0]);
-              dead(op->args[1]);
+              maybe_resolve_alias(&op->args[0]);
+              maybe_resolve_alias(&op->args[1]);
             } else if (auto op = dynamic_cast<CallHelper<Helper::IndexStore>*>(instruction)) {
-              dead(op->args[0]);
-              dead(op->args[1]);
-              dead(op->args[2]);
+              maybe_resolve_alias(&op->args[0]);
+              maybe_resolve_alias(&op->args[1]);
+              maybe_resolve_alias(&op->args[2]);
             }
             break;
           }
           case IR::Operation::CallAssert: {
             if (auto op = dynamic_cast<CallAssert<Assert::AssertInt>*>(instruction)) {
-              dead(op->arg);
+              maybe_resolve_alias(&op->arg);
             } else if (auto op = dynamic_cast<CallAssert<Assert::AssertNotZero>*>(instruction)) {
-              dead(op->arg);
+              maybe_resolve_alias(&op->arg);
             } else if (auto op = dynamic_cast<CallAssert<Assert::AssertBool>*>(instruction)) {
-              dead(op->arg);
+              maybe_resolve_alias(&op->arg);
             }
             break;
           }
           case IR::Operation::AllocClosure: {
             auto op = dynamic_cast<AllocClosure*>(instruction);
-            dead(op->function);
+            maybe_resolve_alias(&op->function);
             for (shared_ptr<Temp> t : op->refs) {
-              dead(t);
+              maybe_resolve_alias(&t);
             }
             break;
           }
           case IR::Operation::And: {
             auto andd = dynamic_cast<And*>(instruction);
-            dead(andd->src1);
-            dead(andd->src2);
-            alive(andd->dest);
+            maybe_resolve_alias(&andd->src1);
+            maybe_resolve_alias(&andd->src2);
+            maybe_obsolete_temp(andd->dest);
             break;
           }
           case IR::Operation::Or: {
             auto orr = dynamic_cast<Or*>(instruction);
-            dead(orr->src1);
-            dead(orr->src2);
-            alive(orr->dest);
+            maybe_resolve_alias(&orr->src1);
+            maybe_resolve_alias(&orr->src2);
+            maybe_obsolete_temp(orr->dest);
             break;
           }
           case IR::Operation::Fork: {
             auto fork = dynamic_cast<Fork*>(instruction);
-            dead(fork->src);
-            alive(fork->dest1);
-            alive(fork->dest2);
+            maybe_resolve_alias(&fork->src);
+            maybe_obsolete_temp(fork->dest1);
+            maybe_obsolete_temp(fork->dest2);
             break;
           }
         }

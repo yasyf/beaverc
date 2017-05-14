@@ -21,6 +21,10 @@ namespace IR {
       return false;
     }
 
+    void reset_end(shared_ptr<Temp> temp) {
+      temp->live_end = INT_MAX;
+    }
+
   public:
     RemoveObsoleteOptimization(Compiler& compiler, set<size_t>& obsolete) : Optimization(compiler), obsolete(obsolete) {}
 
@@ -36,7 +40,9 @@ namespace IR {
             } else if (auto assign = dynamic_cast<Assign<RetVal>*>(instruction)) {
               delete_if_obsolete(count, assign->dest, assign);
             } else if (auto assign = dynamic_cast<Assign<Temp>*>(instruction)) {
-              delete_if_obsolete(count, assign->dest, assign);
+              if (delete_if_obsolete(count, assign->dest, assign)) {
+                reset_end(assign->src);
+              }
             } else if (auto assign = dynamic_cast<Assign<Ref>*>(instruction)) {
               delete_if_obsolete(count, assign->dest, assign);
             } else if (auto assign = dynamic_cast<Assign<Deref>*>(instruction)) {

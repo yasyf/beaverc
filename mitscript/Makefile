@@ -10,8 +10,8 @@ endif
 LEX = flex
 YACC = bison
 
-CFLAGS = -std=c++1y -I../x64asm -I../udis86/libudis86
-CXXFLAGS = -std=c++1y -I../x64asm -I../udis86/libudis86
+CFLAGS = -std=c++14 -I../x64asm -I../udis86/libudis86
+CXXFLAGS = -std=c++14 -I../x64asm -I../udis86/libudis86
 LDFLAGS = -lstdc++ -L../x64asm/lib -L../udis86/libudis86/.libs
 LIBS = -lx64asm -ludis86
 
@@ -63,7 +63,7 @@ GCOBJECTS = $(patsubst %.cpp, %.o, $(wildcard gc/*.cpp))
 IROBJECTS = $(patsubst %.cpp, %.o, $(wildcard ir/*.cpp))
 OPTSOBJECTS = $(patsubst %.cpp, %.o, $(wildcard vm/option*.cpp))
 ir: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) $(GCOBJECTS) $(OPTSOBJECTS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) $(GCOBJECTS) $(OPTSOBJECTS) -o bin/$@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) $(GCOBJECTS) $(OPTSOBJECTS) $(LIBS) -o bin/$@
 
 ASMOBJECTS = $(patsubst %.cpp, %.o, $(wildcard asm/*.cpp))
 VMASMOBJECTS = $(patsubst %.cpp, %.o, $(filter-out vm/vm.cpp,$(wildcard vm/*.cpp)))
@@ -102,7 +102,7 @@ clean:
 	rm -f bin/* *.o */*.o
 
 asmclean:
-	rm -rf bin/vm bin/asm vm/*.o asm/*.o
+	rm -rf bin/vm bin/asm bin/ir vm/*.o asm/*.o ir/*.o
 
 extraclean: clean
 	rm -f parser/*.c parser/*.cpp parser/*.h bcparser/*.c bcparser/*.cpp bcparser/*.h

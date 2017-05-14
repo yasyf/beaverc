@@ -14,6 +14,7 @@
 #include "VarLivenessOptimization.h"
 #include "TempLivenessOptimization.h"
 #include "DeadVariableAssignmentOptimization.h"
+#include "DeadTempOptimization.h"
 #include "RegisterAllocationOptimization.h"
 
 using namespace std;
@@ -49,17 +50,21 @@ namespace IR {
         optimize<TypeSpecializationOptimization>();
         optimize<PropagateTypesOptimization>();
         removeObsolete();
+
+        optimize<VarLivenessOptimization>();
+        optimize<DeadVariableAssignmentOptimization>();
+        optimize<CopyOptimization>();
+        removeObsolete();
+
+        optimize<RemoveNoopOptimization>();
+        optimize<ShortJumpOptimization>();
+
+        optimize<TempLivenessOptimization>();
+        optimize<DeadTempOptimization>();
+        removeObsolete();
       }
 
       optimize<VarLivenessOptimization>();
-      optimize<DeadVariableAssignmentOptimization>();
-      removeObsolete();
-
-      optimize<CopyOptimization>();
-
-      optimize<RemoveNoopOptimization>();
-      optimize<ShortJumpOptimization>();
-
       optimize<TempLivenessOptimization>();
       optimize<RegisterAllocationOptimization>();
     }
@@ -73,7 +78,7 @@ namespace IR {
       compiler.compile();
       if (optimize)
         runAllPasses();
-      return compiler.temp_count;
+      return compiler.temps.size();
     }
   };
 }

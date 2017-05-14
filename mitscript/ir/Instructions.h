@@ -6,6 +6,7 @@
 #include <vector>
 #include <cassert>
 #include <climits>
+#include <sstream>
 
 using namespace std;
 using namespace std::experimental;
@@ -150,7 +151,16 @@ namespace IR {
     }
 
     #ifdef DEBUG
-      virtual string toString() const override { return "t" + to_string(num) + " (" + to_string(type_hint) + ")"; }
+      virtual string toString() const override {
+        ostringstream os;
+        os << "t" << to_string(num);
+        os << " (" << to_string(type_hint) << ")";
+        os << " {" << to_string(live_start) << " - " << to_string(live_end) << "}";
+        if (reg) {
+          os << " [" << *reg << "]";
+        }
+        return os.str();
+      }
     #else
       virtual string toString() const override { return "t" + to_string(num); }
     #endif
@@ -575,7 +585,7 @@ namespace IR {
       dest2->transferHint(src);
     }
     virtual Operation op() { return Operation::Fork; }
-    virtual string toString() const override { return src->toString() + " -> " + dest1->toString() + " " + dest2->toString(); }
+    virtual string toString() const override { return src->toString() + " -> " + dest1->toString() + ", " + dest2->toString(); }
   };
 
   typedef vector<Instruction*> InstructionList;

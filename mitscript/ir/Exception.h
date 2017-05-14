@@ -32,6 +32,14 @@ namespace IR {
     }
   };
 
+  class RegistersExhausted : public CompilerException {
+    using CompilerException::CompilerException;
+
+    string description() const override {
+      return "RegistersExhausted";
+    }
+  };
+
   template<typename E>
   void throw_exception(E ex) {
     if (has_option(OPTION_COMPILE_ERRORS)) {

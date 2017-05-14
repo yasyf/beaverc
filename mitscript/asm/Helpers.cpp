@@ -24,7 +24,11 @@ namespace ASM {
     #if DEBUG
       cout << "helper_call_function" << endl;
       cout << "Closure: " << (void*) closure_p << endl;
-      cout << "Args: " << args << endl;
+      cout << "Args: [";
+      for (size_t i = 0; i < argc; ++i) {
+        cout << args[i].toString() << ", ";
+      }
+      cout << "]" << endl;
       cout << "Index: " << argc << endl;
     #endif
     AbstractFunctionValue* closure = Value(closure_p).getPointer<AbstractFunctionValue>();
@@ -41,6 +45,7 @@ namespace ASM {
       cout << "helper_read_global" << endl;
       cout << "Closure: " << (void*) closure << endl;
       cout << "name: " << name << endl;
+      cout << "value: " << Value(interpreter->global_variables[name].value).toString() << endl;
     #endif
     return interpreter->global_variables[name].value;
   }
@@ -51,6 +56,7 @@ namespace ASM {
       cout << "helper_write_global" << endl;
       cout << "Closure: " << (void*) closure << endl;
       cout << "name: " << name << endl;
+      cout << "value: " << Value(value).toString() << endl;
     #endif
     interpreter->global_variables[name].value = value;
   }

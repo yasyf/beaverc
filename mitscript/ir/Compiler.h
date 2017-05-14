@@ -16,10 +16,11 @@ namespace IR {
     stack<shared_ptr<Temp>> operands;
     shared_ptr<BC::Function> bytecode;
     InstructionList& instructions;
-    size_t temp_count = 0;
+    vector<shared_ptr<Temp>> temps;
 
     shared_ptr<Temp> extraTemp() {
-      shared_ptr<Temp> t(new Temp{temp_count++});
+      shared_ptr<Temp> t(new Temp{temps.size()});
+      temps.push_back(t);
       return t;
     }
 
@@ -41,7 +42,8 @@ namespace IR {
     }
 
     shared_ptr<Temp> nextTemp() {
-      shared_ptr<Temp> t(new Temp{temp_count++});
+      shared_ptr<Temp> t(new Temp{temps.size()});
+      temps.push_back(t);
       operands.push(t);
       return t;
     }
@@ -296,7 +298,7 @@ namespace IR {
 
     size_t compile() {
       compile(*bytecode);
-      return temp_count;
+      return temps.size();
     }
   };
 }
