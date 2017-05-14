@@ -1,7 +1,7 @@
 function
 {
 	functions = [],
-	constants = [1, 2, 0, 12341234],
+	constants = [1, 0, 2, 12341234],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
@@ -16,24 +16,24 @@ function
 		load_func	-3
 		store_global	2
 		load_const	0
-		load_const	2
+		load_const	1
 		eq
 		if	0
 		goto	1
-		
+		0:
 		load_const	0
 		load_global	0
 		call	1
 		pop
 		gc
 		goto	2
-		
-		load_const	1
+		1:
+		load_const	2
 		load_global	0
 		call	1
 		pop
 		gc
-		
+		2:
 		load_const	0
 		store_global	3
 		load_const	0
@@ -43,16 +43,16 @@ function
 		eq
 		if	3
 		goto	4
-		
+		3:
 		load_const	3
 		load_global	0
 		call	1
 		pop
 		gc
 		goto	5
-		
-		
-		load_const	2
+		4:
+		5:
+		load_const	1
 		return
 	]
 }

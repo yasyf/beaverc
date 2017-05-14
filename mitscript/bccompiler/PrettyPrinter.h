@@ -378,6 +378,12 @@ namespace BC {
                 break;
             }
 
+            case Operation::Label:
+            {
+                os << inst.operand0.value() << ":";
+                break;
+            }
+
             default:
                 assert(false && "Unhandled Operation");
             }

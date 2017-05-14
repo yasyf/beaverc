@@ -5,7 +5,7 @@ function
 		function
 		{
 			functions = [],
-			constants = ["val: ", "d", 1, "x", 0],
+			constants = [0, "val: ", "d", 1, "x"],
 			parameter_count = 2,
 			local_vars = [x, val],
 			local_ref_vars = [],
@@ -14,34 +14,34 @@ function
 			instructions = 
 			[
 				load_local	0
-				load_const	4
+				load_const	0
 				gt
 				if	0
 				goto	1
-				
-				load_const	0
+				0:
+				load_const	1
 				load_local	1
 				add
-				load_const	1
+				load_const	2
 				add
 				load_global	0
 				call	1
 				pop
 				gc
 				load_local	0
-				load_const	2
+				load_const	3
 				sub
 				load_local	1
-				load_const	3
+				load_const	4
 				add
 				load_global	1
 				call	2
 				return
 				goto	2
-				
+				1:
 				load_local	1
 				return
-				
+				2:
 			]
 		}
 	],

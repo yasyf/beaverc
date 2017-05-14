@@ -242,7 +242,7 @@ namespace BC {
         std::experimental::optional<int32_t> operand0;
 
         std::string toString() {
-            static std::string names[] = {"LoadConst", "LoadFunc", "LoadLocal", "StoreLocal", "LoadGlobal", "StoreGlobal", "PushReference", "LoadReference", "StoreReference", "AllocRecord", "FieldLoad", "FieldStore", "IndexLoad", "IndexStore", "AllocClosure", "Call", "Return", "Add", "Sub", "Mul", "Div", "Neg", "Gt", "Geq", "Eq", "And", "Or", "Not", "Goto", "If", "Dup", "Swap", "Pop", "GarbageCollect"};
+            static std::string names[] = {"LoadConst", "LoadFunc", "LoadLocal", "StoreLocal", "LoadGlobal", "StoreGlobal", "PushReference", "LoadReference", "StoreReference", "AllocRecord", "FieldLoad", "FieldStore", "IndexLoad", "IndexStore", "AllocClosure", "Call", "Return", "Add", "Sub", "Mul", "Div", "Neg", "Gt", "Geq", "Eq", "And", "Or", "Not", "Goto", "If", "Dup", "Swap", "Pop", "GarbageCollect", "Label"};
             if (operand0) {
                 return names[static_cast<int>(operation)] + " " + std::to_string(operand0.value());
             }

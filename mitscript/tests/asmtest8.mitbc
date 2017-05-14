@@ -20,10 +20,10 @@ function
 		gt
 		if	0
 		goto	1
-		
+		0:
 		goto	2
-		
-		
+		1:
+		2:
 		load_const	1
 		return
 	]

@@ -229,11 +229,6 @@ namespace BC {
   }
 
   void Compiler::visit(IfStatement& is) {
-    // Set up blocks
-    InstructionList thenInst, elseInst;
-    transpileTo(is.thenBlock, &thenInst);
-    transpileTo(is.elseBlock, &elseInst);
-
     size_t then_label = reserveLabel();
     size_t else_label = reserveLabel();
     size_t skip_else_label = reserveLabel();
@@ -243,29 +238,25 @@ namespace BC {
     output(Operation::If, then_label); // skip past else-goto
     output(Operation::Goto, else_label); // else-goto: skip past then-block and if-goto
     outputLabel(then_label);
-    drain(thenInst); // then-block
+    transpile(is.thenBlock); // then-block
     output(Operation::Goto, skip_else_label); // if-goto: skip past else-block
     outputLabel(else_label);
-    drain(elseInst); // else-block
+    transpile(is.elseBlock); // else-block
     outputLabel(skip_else_label);
   }
 
   void Compiler::visit(WhileLoop& wl) {
-    InstructionList bodyInst, condInst;
-    transpileTo(wl.body, &bodyInst);
-    transpileTo(wl.cond, &condInst);
-
     size_t loop_start_label = reserveLabel();
     size_t body_label = reserveLabel();
     size_t skip_body_label = reserveLabel();
 
     outputLabel(loop_start_label);
     output(Operation::GarbageCollect);
-    drain(condInst); // cond-block
+    transpile(wl.cond); // cond-block
     output(Operation::If, body_label); // skip past end-goto
     output(Operation::Goto, skip_body_label); // end-goto: skip past body-block and loop-goto
     outputLabel(body_label);
-    drain(bodyInst); // body-block
+    transpile(wl.body); // body-block
     output(Operation::Goto, loop_start_label); // loop-goto: back up to cond-block
     outputLabel(skip_body_label);
   }
