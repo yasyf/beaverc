@@ -6,6 +6,7 @@
 #define OPTIMIZATION_STRING_TREES         (1 << 1)
 #define OPTIMIZATION_COMPILE_ONLY         (1 << 2)
 #define OPTIMIZATION_OPTIMIZATION_PASSES  (1 << 3)
+#define OPTIMIZATION_GC_GENERATIONAL      (1 << 4)
 
 #define OPTION_COMPILE_ERRORS       (1 << 0)
 #define OPTION_SHOW_MEMORY_USAGE    (1 << 1)

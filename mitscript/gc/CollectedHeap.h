@@ -8,7 +8,7 @@
 #include "Collectable.h"
 #include "../vm/options.h"
 
-#define OVERHEAD_FACTOR 16
+#define OVERHEAD_FACTOR 3
 
 using namespace std;
 
@@ -21,7 +21,8 @@ namespace GC {
     -
   */
   class CollectedHeap {
-    list<Collectable*> allocated;
+    list<Collectable*> recently_allocated_objects;
+    list<Collectable*> old_objects;
 
   private:
     template<typename T>
@@ -29,7 +30,11 @@ namespace GC {
       if (has_option(OPTION_SHOW_MEMORY_TRACE)) {
         cout << "A," << (void*) t << endl;
       }
-      allocated.push_back(t);
+      if (has_optimization(OPTIMIZATION_GC_GENERATIONAL)) {
+        recently_allocated_objects.push_back(t);
+      } else {
+        old_objects.push_back(t);
+      }
       increaseSize(sizeof(Collectable*));
     }
 
@@ -38,6 +43,11 @@ namespace GC {
     size_t max_bytes_used = 0;
     size_t bytes_max;
     size_t bytes_current = 0;
+    size_t full_collections = 0;
+    size_t fast_collections = 0;
+    size_t successful_full_collections = 0;
+    size_t successful_fast_collections = 0;
+    list<Collectable*> cross_generation_pointers;
 
     /*
     The constructor should take as an argument the maximum size of the garbage collected heap.
@@ -70,14 +80,6 @@ namespace GC {
     This is different from the size of the heap, which should also be tracked
     by the garbage collector.
     */
-    int getCount() {
-      return allocated.size();
-    }
-
-    template<typename T, typename ARG>
-    T* allocateUncollectable(ARG a) {
-      return new T(*this, a);
-    }
 
     /*
     This method allocates an object of type T using the default constructor (with no parameters).
@@ -120,16 +122,23 @@ namespace GC {
 
     */
     template<typename ITERATOR>
-    void gc(ITERATOR begin, ITERATOR end) {
+    void gcFast(ITERATOR begin, ITERATOR end) {
+      fast_collections++;
       generation++;
 
       for (auto c = begin; c != end; c++) {
-        if ((*c)->marked != generation)
-          (*c)->mark(generation);
+        (*c)->mark(generation, true);
       }
 
-      auto it = allocated.begin();
-      while (it != allocated.end()) {
+      for (auto pointer : cross_generation_pointers) {
+        pointer->forceMark(generation, true);
+      }
+
+      cross_generation_pointers.clear();
+
+      auto it = recently_allocated_objects.begin();
+      auto it_end = recently_allocated_objects.end();
+      while (it != it_end) {
         auto ptr = *it;
         if (ptr->marked != generation) {
           #ifdef DEBUG
@@ -139,12 +148,46 @@ namespace GC {
             cout << "D," << (void*) ptr << endl;
           }
           delete ptr;
-          it = allocated.erase(it);
-          decreaseSize(sizeof(Collectable*));
-          continue;
+          it = recently_allocated_objects.erase(it);
+        } else {
+          it++;
         }
+      }
+      old_objects.splice(old_objects.end(), recently_allocated_objects);
+    }
 
-        ++it;
+
+    template<typename ITERATOR>
+    void gcFull(ITERATOR begin, ITERATOR end) {
+      full_collections++;
+      generation++;
+
+      if (has_optimization(OPTIMIZATION_GC_GENERATIONAL)) {
+        cross_generation_pointers.clear();
+        old_objects.splice(old_objects.end(), recently_allocated_objects);
+      }
+
+      for (auto c = begin; c != end; c++) {
+        (*c)->mark(generation, false);
+      }
+
+      auto it = old_objects.begin();
+      auto it_end = old_objects.end();
+      while (it != it_end) {
+        auto ptr = *it;
+        if (ptr->marked != generation) {
+          #ifdef DEBUG
+            cout << "ABOUT TO COLLECT: ";
+          #endif
+          if (has_option(OPTION_SHOW_MEMORY_TRACE)) {
+            cout << "D," << (void*) ptr << endl;
+          }
+          delete ptr;
+          it = old_objects.erase(it);
+          decreaseSize(sizeof(Collectable*));
+        } else {
+          it++;
+        }
       }
     }
   };

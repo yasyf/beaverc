@@ -38,7 +38,7 @@ namespace VM {
         if (reverse_index.count(var_name) == 0) {
             local_vars[i] = arguments[i];
         } else {
-            local_reference_vars[reverse_index[var_name]]->value = arguments[i];
+            local_reference_vars[reverse_index[var_name]]->write(arguments[i]);
         }
       }
     }

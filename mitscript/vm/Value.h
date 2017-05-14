@@ -232,13 +232,13 @@ namespace VM {
       }
     }
 
-    virtual void markChildren(size_t generation) {
+    virtual void markChildren(size_t generation, bool mark_recent_only) {
       if (height == 0) return;
       if (left.isPointer()) {
-        left.getPointerValue()->mark(generation);
+        left.getPointerValue()->mark(generation, mark_recent_only);
       }
       if (right.isPointer()) {
-        right.getPointerValue()->mark(generation);
+        right.getPointerValue()->mark(generation, mark_recent_only);
       }
     }
   };
@@ -264,6 +264,12 @@ namespace VM {
     void insert(std::string key, Value inserted) {
       if (values.count(key) == 0)
         heap.increaseSize(sizeof(std::string) + key.capacity() * sizeof(char) + sizeof(Value));
+      if (has_optimization(OPTIMIZATION_GC_GENERATIONAL) &&
+          inserted.isPointer() &&
+          inserted.getPointerValue()->generation == GC::Generation::RecentlyAllocated &&
+          this->generation != GC::Generation::RecentlyAllocated) {
+        heap.cross_generation_pointers.push_back(this);
+      }
       values[key] = inserted;
     }
 
@@ -284,10 +290,10 @@ namespace VM {
       return s;
     }
 
-    virtual void markChildren(size_t generation) {
+    virtual void markChildren(size_t generation, bool mark_recent_only) {
       for (auto& pair : values) {
         if (pair.second.isPointer()) {
-          pair.second.getPointerValue()->mark(generation);
+          pair.second.getPointerValue()->mark(generation, mark_recent_only);
         }
       }
     }
@@ -315,13 +321,23 @@ namespace VM {
       #endif
     }
 
+    void write(Value v) {
+      if (has_optimization(OPTIMIZATION_GC_GENERATIONAL) &&
+          v.isPointer() &&
+          v.getPointerValue()->generation == GC::Generation::RecentlyAllocated &&
+          this->generation != GC::Generation::RecentlyAllocated) {
+        heap.cross_generation_pointers.push_back(this);
+      }
+      value = v;
+    }
+
     virtual size_t size() {
       return sizeof(ReferenceValue);
     }
 
-    virtual void markChildren(size_t generation) {
+    virtual void markChildren(size_t generation, bool mark_recent_only) {
       if (value.isPointer()) {
-        value.getPointerValue()->mark(generation);
+        value.getPointerValue()->mark(generation, mark_recent_only);
       }
     }
   };
@@ -353,7 +369,7 @@ namespace VM {
       return sizeof(BareFunctionValue);
     }
 
-    virtual void markChildren(size_t generation) {}
+    virtual void markChildren(size_t generation, bool mark_recent_only) {}
   };
 
   struct ClosureFunctionValue : public AbstractFunctionValue {
@@ -382,9 +398,9 @@ namespace VM {
       return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
     }
 
-    virtual void markChildren(size_t generation) {
+    virtual void markChildren(size_t generation, bool mark_recent_only) {
       for (auto ref : references)
-        ref->mark(generation);
+        ref->mark(generation, mark_recent_only);
     }
   };
 
@@ -418,7 +434,7 @@ namespace VM {
       return sizeof(BuiltInFunctionValue);
     }
 
-    virtual void markChildren(size_t generation) {}
+    virtual void markChildren(size_t generation, bool mark_recent_only) {}
 
     Value call(std::vector<Value> & arguments);
   };

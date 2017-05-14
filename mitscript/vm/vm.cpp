@@ -71,9 +71,12 @@ int main(int argc, char** argv)
         } else if (strcmp(optarg, "compile-only") == 0) {
           set_optimization(OPTIMIZATION_MACHINE_CODE);
           set_optimization(OPTIMIZATION_COMPILE_ONLY);
+        } else if (strcmp(optarg, "gc-generational") == 0) {
+          set_optimization(OPTIMIZATION_GC_GENERATIONAL);
         } else if (strcmp(optarg, "all") == 0) {
           set_optimization(OPTIMIZATION_MACHINE_CODE);
           set_optimization(OPTIMIZATION_STRING_TREES);
+          set_optimization(OPTIMIZATION_GC_GENERATIONAL);
           set_optimization(OPTIMIZATION_OPTIMIZATION_PASSES);
         }
         break;
@@ -170,6 +173,10 @@ int main(int argc, char** argv)
     getrusage(RUSAGE_SELF, &usage);
     cout << interpreter->heap.max_bytes_used / KB_TO_B << " kb predicted used by allocs" << endl;
     cout << usage.ru_maxrss - (current_memory / KB_TO_B) << " kb actually used by allocs" << endl;
+    cout << interpreter->heap.fast_collections << " fast collections" << endl;
+    cout << interpreter->heap.successful_fast_collections << " successful" << endl;
+    cout << interpreter->heap.full_collections << " full collections" << endl;
+    cout << interpreter->heap.successful_full_collections << " successful" << endl;
     cout << usage.ru_maxrss << " kb actually used." << endl;
   }
   return result;
