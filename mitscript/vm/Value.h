@@ -175,8 +175,10 @@ namespace VM {
     StringValue(GC::CollectedHeap& heap, const std::string& value) : PointerValue(heap) {
       height = 0;
       length = value.size();
-      memory = static_cast<char*>(malloc(length * sizeof(char)));
-      strncpy(memory, value.c_str(), length);
+      if (length > 0) {
+        memory = static_cast<char*>(malloc(length * sizeof(char)));
+        strncpy(memory, value.c_str(), length);
+      }
       heap.increaseSize(size());
     }
 
@@ -209,7 +211,7 @@ namespace VM {
       #ifdef DEBUG
       cout << "DELETING StringValue: " << toString() << endl;
       #endif
-      if (height == 0) {
+      if (height == 0 && length > 0) {
         free(memory);
       }
       heap.decreaseSize(size());

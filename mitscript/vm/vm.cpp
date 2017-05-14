@@ -169,6 +169,7 @@ int main(int argc, char** argv)
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
     cout << interpreter->heap.max_bytes_used / KB_TO_B << " kb predicted used by allocs" << endl;
+    cout << usage.ru_maxrss - (current_memory / KB_TO_B) << " kb actually used by allocs" << endl;
     cout << usage.ru_maxrss << " kb actually used." << endl;
   }
   return result;
