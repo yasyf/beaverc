@@ -75,7 +75,6 @@ int main(int argc, char** argv)
           set_optimization(OPTIMIZATION_GC_GENERATIONAL);
         } else if (strcmp(optarg, "all") == 0) {
           set_optimization(OPTIMIZATION_MACHINE_CODE);
-          set_optimization(OPTIMIZATION_STRING_TREES);
           set_optimization(OPTIMIZATION_GC_GENERATIONAL);
           set_optimization(OPTIMIZATION_OPTIMIZATION_PASSES);
         }
