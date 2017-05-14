@@ -8,6 +8,7 @@
 #include "../gc/Collectable.h"
 #include "../gc/CollectedHeap.h"
 #include "Value.fwd.h"
+#include "Interpreter.fwd.h"
 
 namespace VM {
 

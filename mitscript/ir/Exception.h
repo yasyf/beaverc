@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Exception.h"
-#include "../vm/globals.h"
+#include "../vm/options.h"
 
 namespace IR {
   class CompilerException : public SystemException {
@@ -34,7 +34,7 @@ namespace IR {
 
   template<typename E>
   void throw_exception(E ex) {
-    if (!has_option(OPTION_NO_COMPILE_ERRORS)) {
+    if (has_option(OPTION_COMPILE_ERRORS)) {
       throw ex;
     }
   }

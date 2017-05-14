@@ -1,18 +1,16 @@
 #include "Collectable.h"
 #include "CollectedHeap.h"
 
-#define SIZEOF_TO_BYTES 4
-#define OVERHEAD_FACTOR 5
-
 namespace GC {
-  void Collectable::mark() {
-    if (marked == heap.generation)
+  void Collectable::mark(size_t generation, bool mark_recent_only) {
+    if (marked == generation || (mark_recent_only && this->generation != Generation::RecentlyAllocated))
       return;
-    this->marked = heap.generation;
-    markChildren();
+    marked = generation;
+    markChildren(generation, mark_recent_only);
   };
 
-  size_t Collectable::size() {
-    return _size() * SIZEOF_TO_BYTES * OVERHEAD_FACTOR;
-  };
+  void Collectable::forceMark(size_t generation, bool mark_recent_only) {
+    marked = generation;
+    markChildren(generation, mark_recent_only);
+  }
 }

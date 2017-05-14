@@ -6,14 +6,7 @@ RED="\033[31m"
 MAX_MEM="4096"
 
 memusg() {
-  # detect operating system and prepare measurement
-  case $(uname) in
-      Darwin|*BSD) measure() { gtime -v $@; } ;;
-      Linux) measure() { /usr/bin/time -v $@; } ;;
-      *) echo "$(uname): unsupported operating system" >&2; exit 2 ;;
-  esac
-
-  measure $@ 2>&1 >/dev/null | grep "Maximum resident set" | awk 'NF{ print $NF }';
+  $@ | tail -1 | cut -d' ' -f1
 }
 
 good() {
@@ -25,12 +18,16 @@ bad() {
 }
 
 check_memory() {
-  mem=$(memusg bin/vm --mem 4 -s "$1")
-  if [[ "$mem" -lt "$MAX_MEM" ]]; then
-    good "$1" "check_mem $mem kb"
+  mem=$(memusg bin/vm --memory-usage --mem 4 -s "$1")
+  if [[ "$mem" =~ ^[0-9]+$ ]]; then
+    if [[ "$mem" -lt "$MAX_MEM" ]]; then
+      good "$1" "check_mem $mem kb"
+    else
+      echo "used $mem > $MAX_MEM kb"
+      bad "$1" "check_mem $mem kb"
+    fi
   else
-    echo "used $mem > $MAX_MEM kb"
-    bad "$1" "check_mem $mem kb"
+    bad "$1" "program was killed or errored"
   fi
 }
 

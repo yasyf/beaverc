@@ -9,6 +9,8 @@
 #include <cstdint>
 #include <map>
 
+#include "include/x64asm.h"
+
 namespace BC {
   struct Constant {
     virtual ~Constant() {}
@@ -86,6 +88,9 @@ namespace BC {
     std::vector<std::string> names_;
 
     InstructionList instructions;
+
+    bool is_compiled = false;
+    x64asm::Function compiled_function;
 
     std::map<size_t, size_t> labels;
   };

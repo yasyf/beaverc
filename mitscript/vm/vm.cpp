@@ -4,12 +4,15 @@
 #include "../bcparser/lexer.h"
 #include "../bccompiler/Compiler.h"
 #include "Interpreter.h"
+#include "options.h"
 #include "globals.h"
 #include "mem.h"
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 using namespace std;
 
@@ -20,6 +23,7 @@ enum Mode {SOURCE, BYTECODE};
 
 int main(int argc, char** argv)
 {
+  bool print_memory = false;
   void* scanner;
   FILE* infile;
   Mode mode = SOURCE;
@@ -32,15 +36,18 @@ int main(int argc, char** argv)
       {
         /* These options don’t set a flag.
            We distinguish them by their indices. */
-        {"mem",      required_argument, 0, 'm'},
-        {"source",   no_argument,       0, 's'},
-        {"bytecode", no_argument,       0, 'b'},
-        {"opt",      required_argument, 0, 'o'},
+        {"mem",               required_argument, 0, 'm'},
+        {"source",            no_argument,       0, 's'},
+        {"bytecode",          no_argument,       0, 'b'},
+        {"opt",               required_argument, 0, 'o'},
+        {"memory-usage",      no_argument,       0, 'u'},
+        {"memory-trace",      no_argument,       0, 't'},
+        {"compile-errors",    no_argument,       0, 'e'},
         {0, 0, 0, 0}
       };
-    int option_index = 0;
+    int OPTIMIZATION_index = 0;
     int c = getopt_long (argc, argv, "m:sbo:",
-                     long_options, &option_index);
+                     long_options, &OPTIMIZATION_index);
 
     if (c == -1) {
       break;
@@ -58,20 +65,29 @@ int main(int argc, char** argv)
         break;
       case 'o':
         if (strcmp(optarg, "machine-code-only") == 0) {
-          set_option(OPTION_MACHINE_CODE);
+          set_optimization(OPTIMIZATION_MACHINE_CODE);
         } else if (strcmp(optarg, "string-trees") == 0) {
-          set_option(OPTION_STRING_TREES);
+          set_optimization(OPTIMIZATION_STRING_TREES);
         } else if (strcmp(optarg, "compile-only") == 0) {
-          set_option(OPTION_MACHINE_CODE);
-          set_option(OPTION_COMPILE_ONLY);
-        } else if (strcmp(optarg, "no-compile-errors") == 0) {
-          set_option(OPTION_NO_COMPILE_ERRORS);
+          set_optimization(OPTIMIZATION_MACHINE_CODE);
+          set_optimization(OPTIMIZATION_COMPILE_ONLY);
+        } else if (strcmp(optarg, "gc-generational") == 0) {
+          set_optimization(OPTIMIZATION_GC_GENERATIONAL);
         } else if (strcmp(optarg, "all") == 0) {
-          set_option(OPTION_MACHINE_CODE);
-          set_option(OPTION_STRING_TREES);
-          set_option(OPTION_OPTIMIZATION_PASSES);
-          set_option(OPTION_NO_COMPILE_ERRORS);
+          set_optimization(OPTIMIZATION_MACHINE_CODE);
+          set_optimization(OPTIMIZATION_STRING_TREES);
+          set_optimization(OPTIMIZATION_GC_GENERATIONAL);
+          set_optimization(OPTIMIZATION_OPTIMIZATION_PASSES);
         }
+        break;
+      case 'u':
+        set_option(OPTION_SHOW_MEMORY_USAGE);
+        break;
+      case 't':
+        set_option(OPTION_SHOW_MEMORY_TRACE);
+        break;
+      case 'e':
+        set_option(OPTION_COMPILE_ERRORS);
         break;
       case '?':
         break;
@@ -121,6 +137,11 @@ int main(int argc, char** argv)
   size_t current_memory = rss();
   size_t usable_memory = (max_memory > current_memory) ? max_memory - current_memory : 0;
 
+  if (has_option(OPTION_SHOW_MEMORY_USAGE)) {
+    cout << current_memory / KB_TO_B << " kb used for setup." << endl;
+    cout << usable_memory / KB_TO_B << " kb usable during program life" << endl;
+  }
+
   #ifdef DEBUG
     cout
       << "Starting with "
@@ -146,5 +167,17 @@ int main(int argc, char** argv)
     }
   });
 
-  return interpreter->interpret();
+  int result = interpreter->interpret();
+  if (has_option(OPTION_SHOW_MEMORY_USAGE)) {
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    cout << interpreter->heap.max_bytes_used / KB_TO_B << " kb predicted used by allocs" << endl;
+    cout << usage.ru_maxrss - (current_memory / KB_TO_B) << " kb actually used by allocs" << endl;
+    cout << interpreter->heap.fast_collections << " fast collections" << endl;
+    cout << interpreter->heap.successful_fast_collections << " successful" << endl;
+    cout << interpreter->heap.full_collections << " full collections" << endl;
+    cout << interpreter->heap.successful_full_collections << " successful" << endl;
+    cout << usage.ru_maxrss << " kb actually used." << endl;
+  }
+  return result;
 }

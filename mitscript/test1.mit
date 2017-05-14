@@ -1,0 +1,11 @@
+i = 0;
+
+iterations = intcast(input());
+
+while (i < iterations) {
+    x = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" + "xxxxxxxxxxxxxxxxx";
+    y = {};
+    y[x] = x;
+    y[y] = y;
+    i = i + 1;
+}

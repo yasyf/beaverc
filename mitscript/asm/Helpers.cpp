@@ -67,7 +67,7 @@ namespace ASM {
     #if DEBUG
       cout << "helper_write_reference" << endl;
     #endif
-    ((ReferenceValue*) reference_p)->value.value = value;
+    ((ReferenceValue*) reference_p)->write(Value(value));
   }
 
   uint64_t helper_read_function(ClosureFunctionValue* closure, int index) {

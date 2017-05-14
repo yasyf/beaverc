@@ -53,6 +53,7 @@ namespace VM {
     std::cout << "$$$ Bytes current: " << heap.bytes_current << std::endl;
     std::cout << "$$$ Bytes max: " << heap.bytes_max << std::endl;
     #endif
+
     if (heap.bytes_current >= heap.bytes_max * COLLECTION_RATIO) {
       #ifdef DEBUG
       std::cout << "$$$$$ Building roots..." << std::endl;
@@ -93,7 +94,19 @@ namespace VM {
       #ifdef DEBUG
       std::cout << "$$$$$ Collecting garbage..." << std::endl;
       #endif
-      heap.gc(roots.begin(), roots.end());
+
+      if (has_optimization(OPTIMIZATION_GC_GENERATIONAL)) {
+        heap.gcFast(roots.begin(), roots.end());
+        if (heap.bytes_current < heap.bytes_max * COLLECTION_RATIO) {
+          heap.successful_fast_collections++;
+          return;
+        }
+      }
+
+      heap.gcFull(roots.begin(), roots.end());
+      if (heap.bytes_current < heap.bytes_max * COLLECTION_RATIO) {
+        heap.successful_full_collections++;
+      }
     }
   };
 
@@ -105,9 +118,7 @@ namespace VM {
           return Value::makeInteger(c->value);
       }
       if (std::shared_ptr<String> c = std::dynamic_pointer_cast<String>(constant)) {
-          char * cstr = new char [c->value.length()+1];
-          strcpy(cstr, c->value.c_str());
-          return Value::makeStringConstant(cstr);
+          return Value::makeStringConstant(c->value.c_str());
       }
       if (std::shared_ptr<Boolean> c = std::dynamic_pointer_cast<Boolean>(constant)) {
           return Value::makeBoolean(c->value);
@@ -269,7 +280,7 @@ namespace VM {
                   Value value = safe_pop(stack);
                   int index = instruction.operand0.value();
                   ReferenceValue* rv = local_reference_vars[index];
-                  rv->value = value;
+                  rv->write(value);
               }
               break;
 

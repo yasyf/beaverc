@@ -93,7 +93,7 @@ make pprinter bccompiler vm
 #   check_interpret_vm_s "$f"
 # done
 
-for f in tests/staff/test*.mit tests/interptest*.mit tests/bytecodetest*.mit
+for f in tests/staff/test*.mit tests/bytecodetest*.mit tests/interptest*.mit 
 do
   check_interpret_vm_s "$f" "$@"
 done
