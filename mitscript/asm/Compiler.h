@@ -525,6 +525,19 @@ namespace ASM {
             write_temp(eq->dest, rax);
             break;
           }
+          case IR::Operation::FastEq: {
+            auto eq = dynamic_cast<FastEq*>(instruction);
+            auto s1 = read_temp(eq->src1);
+            auto s2 = read_temp(eq->src2);
+            assm.cmp(s2, s1);
+            assm.mov(s2, Imm64{_BOOLEAN_TAG});
+            assm.mov(s1, Imm64{0b1000 | _BOOLEAN_TAG});
+            assm.cmove(s2, s1);
+            dead(s1);
+            write_temp(eq->dest, s2);
+            dead(s2);
+            break;
+          }
           case IR::Operation::Neg: {
             auto neg = dynamic_cast<Neg*>(instruction);
             auto s1 = read_temp(neg->src);

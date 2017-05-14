@@ -260,6 +260,7 @@ namespace IR {
     Gt,
     Geq,
     Eq,
+    FastEq,
     And,
     Or,
     Not,
@@ -367,6 +368,11 @@ namespace IR {
   struct Eq : BinOp<Operation::Eq> {
     using BinOp::BinOp;
     virtual string opString() const override { return "=="; }
+  };
+
+  struct FastEq : public Eq {
+    using Eq::Eq;
+    virtual Operation op() { return Operation::FastEq; }
   };
 
   struct And : BinOp<Operation::And> {

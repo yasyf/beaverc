@@ -5,7 +5,7 @@
 using namespace std;
 
 namespace IR {
-  class IntAddOptimization : public Optimization {
+  class TypeSpecializationOptimization : public Optimization {
     using Optimization::Optimization;
 
   public:
@@ -19,6 +19,17 @@ namespace IR {
               add->dest->hintInt();
               compiler.instructions[count] = new IntAdd{add->dest, add->src1, add->src2};
               delete(add);
+            }
+            break;
+          }
+          case IR::Operation::Eq: {
+            auto eq = dynamic_cast<Eq*>(instruction);
+            if (
+              (eq->src1->isInt() && eq->src2->isInt()) ||
+              (eq->src1->isBool() && eq->src2->isBool())
+            ) {
+              compiler.instructions[count] = new FastEq{eq->dest, eq->src1, eq->src2};
+              delete(eq);
             }
             break;
           }

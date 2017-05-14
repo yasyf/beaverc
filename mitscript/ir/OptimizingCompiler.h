@@ -6,7 +6,7 @@
 
 #include "PropagateTypesOptimization.h"
 #include "ShortJumpOptimization.h"
-#include "IntAddOptimization.h"
+#include "TypeSpecializationOptimization.h"
 #include "ConstantFoldingOptimization.h"
 #include "RemoveObsoleteOptimization.h"
 #include "RemoveNoopOptimization.h"
@@ -46,7 +46,7 @@ namespace IR {
       for (size_t i = 0; i < NUM_PASSES; ++i) {
         optimize<PropagateTypesOptimization>();
         optimize<ConstantFoldingOptimization>();
-        optimize<IntAddOptimization>();
+        optimize<TypeSpecializationOptimization>();
         optimize<PropagateTypesOptimization>();
         removeObsolete();
       }
