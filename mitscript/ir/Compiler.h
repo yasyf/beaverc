@@ -18,6 +18,11 @@ namespace IR {
     InstructionList& instructions;
     size_t temp_count = 0;
 
+    shared_ptr<Temp> extraTemp() {
+      shared_ptr<Temp> t(new Temp{temp_count++});
+      return t;
+    }
+
   private:
     shared_ptr<Temp> popTemp() {
       shared_ptr<Temp> t = operands.top();

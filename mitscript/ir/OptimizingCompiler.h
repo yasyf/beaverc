@@ -55,7 +55,7 @@ namespace IR {
       optimize<DeadVariableAssignmentOptimization>();
       removeObsolete();
 
-      // optimize<CopyOptimization>();
+      optimize<CopyOptimization>();
 
       optimize<RemoveNoopOptimization>();
       optimize<ShortJumpOptimization>();

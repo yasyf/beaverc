@@ -11,6 +11,7 @@ namespace IR {
   public:
     virtual void optimize() {
       InstructionList newIr;
+      newIr.reserve(compiler.instructions.size());
       for (auto instruction : compiler.instructions) {
         switch (instruction->op()) {
           case IR::Operation::Noop: {

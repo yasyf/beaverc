@@ -407,7 +407,9 @@ namespace ASM {
             } else if (auto assign = dynamic_cast<Assign<RetVal>*>(instruction)) {
               write_temp(assign->dest, rax);
             } else if (auto assign = dynamic_cast<Assign<Temp>*>(instruction)) {
-              throw RegisterReused(assign->src->toString());
+              auto s1 = read_temp(assign->src);
+              write_temp(assign->dest, s1);
+              dead(s1);
             } else if (auto assign = dynamic_cast<Assign<Ref>*>(instruction)) {
               assign_ref(assign->src, assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Deref>*>(instruction)) {

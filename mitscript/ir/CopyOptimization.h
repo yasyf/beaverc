@@ -6,17 +6,29 @@ using namespace std;
 
 namespace IR {
   class CopyOptimization : public Optimization {
+    size_t count = 0;
+    InstructionList newIr;
+
     using Optimization::Optimization;
 
     template<typename T>
-    bool maybe_replace_copy(size_t count, Instruction* instruction) {
-      auto store = dynamic_cast<Store<T>*>(compiler.instructions[count-1]);
+    bool maybe_replace_copy(Instruction* instruction) {
+      auto store = dynamic_cast<Store<T>*>(newIr[count-1]);
       auto assign = dynamic_cast<Assign<T>*>(instruction);
 
       if (assign && store && assign->src->num == store->dest->num) {
-        #warning cannot reuse temp, use fork
-        compiler.instructions[count] = new Assign<Temp>{assign->dest, store->src};
+        auto f1 = compiler.extraTemp();
+        auto f2 = compiler.extraTemp();
+        f1->transferHint(store->src);
+        f2->transferHint(store->src);
+
+        auto fork = new Fork{store->src, f1, f2};
+
+        store->src = f1;
+        newIr[count] = new Assign<Temp>{assign->dest, f2};
         delete(assign);
+        newIr.insert(newIr.begin() + (count-1), fork);
+        count++;
         return true;
       }
 
@@ -25,8 +37,10 @@ namespace IR {
 
   public:
     virtual void optimize() {
-      size_t count = 0;
+      newIr.reserve(compiler.instructions.size());
       for (auto instruction : compiler.instructions) {
+        newIr.push_back(instruction);
+
         if (count == 0) {
           count++;
           continue;
@@ -34,13 +48,13 @@ namespace IR {
 
         switch (instruction->op()) {
           case IR::Operation::Assign: {
-            if (maybe_replace_copy<Var>(count, instruction)) {
+            if (maybe_replace_copy<Var>(instruction)) {
               break;
             }
-            if (maybe_replace_copy<Deref>(count, instruction)) {
+            if (maybe_replace_copy<Deref>(instruction)) {
               break;
             }
-            if (maybe_replace_copy<Glob>(count, instruction)) {
+            if (maybe_replace_copy<Glob>(instruction)) {
               break;
             }
             break;
@@ -48,6 +62,7 @@ namespace IR {
         }
         count++;
       }
+      compiler.instructions.swap(newIr);
     }
   };
 }

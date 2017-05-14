@@ -32,12 +32,4 @@ namespace ASM {
       return "RegistersExhausted";
     }
   };
-
-  class RegisterReused : public CompilerException {
-    using CompilerException::CompilerException;
-
-    string description() const override {
-      return "RegisterReused";
-    }
-  };
 }

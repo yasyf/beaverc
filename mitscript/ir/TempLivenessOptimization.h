@@ -27,7 +27,10 @@ namespace IR {
               alive(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Const>*>(instruction)) {
               alive(assign->dest);
-            } else if (auto assign = dynamic_cast<Assign<Ref>*>(instruction)) {
+            } else if (auto assign = dynamic_cast<Assign<Temp>*>(instruction)) {
+              dead(assign->src);
+              alive(assign->dest);
+            }  else if (auto assign = dynamic_cast<Assign<Ref>*>(instruction)) {
               alive(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Deref>*>(instruction)) {
               alive(assign->dest);
