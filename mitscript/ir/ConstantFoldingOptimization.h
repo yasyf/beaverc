@@ -8,10 +8,12 @@ using namespace std;
 
 namespace IR {
   class ConstantFoldingOptimization : public Optimization {
+    size_t count = 0;
+
     using Optimization::Optimization;
 
     template<typename T, typename F>
-    void foldIntsBinOp(T op, size_t count, F func, bool check = true) {
+    void foldIntsBinOp(T op, F func, bool check = true) {
       if (op->src1->isInt() && op->src2->isInt()) {
         int64_t i1 = op->src1->getConst().getInteger();
         int64_t i2 = op->src2->getConst().getInteger();
@@ -33,9 +35,31 @@ namespace IR {
       }
     }
 
+    template<typename T, typename F>
+    void foldBoolBinOp(T op, F func, bool check = true) {
+      if (op->src1->isBool() && op->src2->isBool()) {
+        int64_t i1 = op->src1->getConst().getBoolean();
+        int64_t i2 = op->src2->getConst().getBoolean();
+        VM::Value v = VM::Value::makeBoolean(func(i1, i2));
+
+        compiler.instructions[count] = new Assign<Const>{op->dest, make_shared<Const>(v)};
+
+        obsolete.insert(op->src1->num);
+        obsolete.insert(op->src2->num);
+        delete(op);
+      } else if (
+        check &&
+        (
+          (op->src1->hasHint() && !op->src1->canBeBool()) ||
+          (op->src2->hasHint() && !op->src2->canBeBool())
+        )
+      ) {
+        throw_exception(IllegalCastException("Value is not an bool"));
+      }
+    }
+
   public:
     virtual void optimize() {
-      size_t count = 0;
       for (auto instruction : compiler.instructions) {
         switch (instruction->op()) {
           case IR::Operation::Add: {
@@ -60,7 +84,7 @@ namespace IR {
               delete[] s2;
               delete(add);
             } else {
-              foldIntsBinOp(add, count, [] (int a, int b) { return a + b; }, false);
+              foldIntsBinOp(add, [] (int a, int b) { return a + b; }, false);
             }
 
             break;
@@ -71,7 +95,7 @@ namespace IR {
             if (!add->src1->isConst() || !add->src2->isConst()) {
               break;
             }
-            foldIntsBinOp(add, count, [] (int a, int b) { return a + b; });
+            foldIntsBinOp(add, [] (int a, int b) { return a + b; });
             break;
           }
 
@@ -80,7 +104,7 @@ namespace IR {
             if (!sub->src1->isConst() || !sub->src2->isConst()) {
               break;
             }
-            foldIntsBinOp(sub, count, [] (int a, int b) { return b - a; });
+            foldIntsBinOp(sub, [] (int a, int b) { return b - a; });
             break;
           }
 
@@ -89,7 +113,7 @@ namespace IR {
             if (!mul->src1->isConst() || !mul->src2->isConst()) {
               break;
             }
-            foldIntsBinOp(mul, count, [] (int a, int b) { return a * b; });
+            foldIntsBinOp(mul, [] (int a, int b) { return a * b; });
             break;
           }
 
@@ -105,7 +129,50 @@ namespace IR {
               break;
             }
 
-            foldIntsBinOp(div, count, [] (int a, int b) { return a / b; });
+            foldIntsBinOp(div, [] (int a, int b) { return a / b; });
+            break;
+          }
+
+          case IR::Operation::FastEq: {
+            auto feq = dynamic_cast<FastEq*>(instruction);
+            if (!feq->src1->isConst() || !feq->src2->isConst()) {
+              break;
+            }
+
+            foldBoolBinOp(feq, [] (bool a, bool b) { return a == b; }, false);
+
+            if (feq->src1->isInt() && feq->src2->isInt()) {
+              int64_t i1 = feq->src1->getConst().getInteger();
+              int64_t i2 = feq->src2->getConst().getInteger();
+              VM::Value v = VM::Value::makeBoolean(i1 == i2);
+
+              compiler.instructions[count] = new Assign<Const>{feq->dest, make_shared<Const>(v)};
+
+              obsolete.insert(feq->src1->num);
+              obsolete.insert(feq->src2->num);
+              delete(feq);
+            }
+
+            break;
+          }
+
+          case IR::Operation::And: {
+            auto andd = dynamic_cast<And*>(instruction);
+            if (!andd->src1->isConst() || !andd->src2->isConst()) {
+              break;
+            }
+
+            foldBoolBinOp(andd, [] (bool a, bool b) { return a && b; }, false);
+            break;
+          }
+
+          case IR::Operation::Or: {
+            auto orr = dynamic_cast<Or*>(instruction);
+            if (!orr->src1->isConst() || !orr->src2->isConst()) {
+              break;
+            }
+
+            foldBoolBinOp(orr, [] (bool a, bool b) { return a || b; }, false);
             break;
           }
 
