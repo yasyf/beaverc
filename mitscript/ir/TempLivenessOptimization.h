@@ -1,24 +1,21 @@
 #pragma once
 #include "Instructions.h"
 #include "Optimization.h"
-#include <typeinfo>
 
 using namespace std;
 
 namespace IR {
-  class OperandLivenessOptimization : public Optimization {
+  class TempLivenessOptimization : public Optimization {
     size_t count = 0;
 
     using Optimization::Optimization;
 
-    void alive(shared_ptr<Operand> op) {
-      if (op->live_start == 0) {
-        op->live_start = count;
-      }
+    void alive(shared_ptr<Temp> temp) {
+      temp->live_start = count;
     }
 
-    void dead(shared_ptr<Operand> op) {
-      op->live_end = count;
+    void dead(shared_ptr<Temp> temp) {
+      temp->live_end = count;
     }
 
   public:
@@ -27,22 +24,16 @@ namespace IR {
         switch (instruction->op()) {
           case IR::Operation::Assign: {
             if (auto assign = dynamic_cast<Assign<Var>*>(instruction)) {
-              alive(assign->src);
               alive(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Const>*>(instruction)) {
-              alive(assign->src);
               alive(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Ref>*>(instruction)) {
-              alive(assign->src);
               alive(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Deref>*>(instruction)) {
-              alive(assign->src);
               alive(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<Glob>*>(instruction)) {
-              alive(assign->src);
               alive(assign->dest);
             } else if (auto assign = dynamic_cast<Assign<IR::Function>*>(instruction)) {
-              alive(assign->src);
               alive(assign->dest);
             }
             break;
@@ -50,13 +41,10 @@ namespace IR {
           case IR::Operation::Store: {
             if (auto store = dynamic_cast<Store<Var>*>(instruction)) {
               dead(store->src);
-              dead(store->dest);
             } else if (auto store = dynamic_cast<Store<Deref>*>(instruction)) {
               dead(store->src);
-              dead(store->dest);
             } else if (auto store = dynamic_cast<Store<Glob>*>(instruction)) {
               dead(store->src);
-              dead(store->dest);
             }
             break;
           }

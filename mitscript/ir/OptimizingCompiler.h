@@ -11,7 +11,9 @@
 #include "RemoveObsoleteOptimization.h"
 #include "RemoveNoopOptimization.h"
 #include "CopyOptimization.h"
-#include "OperandLivenessOptimization.h"
+#include "VarLivenessOptimization.h"
+#include "TempLivenessOptimization.h"
+#include "DeadVariableAssignmentOptimization.h"
 #include "RegisterAllocationOptimization.h"
 
 using namespace std;
@@ -47,11 +49,18 @@ namespace IR {
         optimize<IntAddOptimization>();
         optimize<PropagateTypesOptimization>();
         removeObsolete();
-        // optimize<CopyOptimization>();
-        optimize<RemoveNoopOptimization>();
-        optimize<ShortJumpOptimization>();
       }
-      optimize<OperandLivenessOptimization>();
+
+      optimize<VarLivenessOptimization>();
+      optimize<DeadVariableAssignmentOptimization>();
+      removeObsolete();
+
+      // optimize<CopyOptimization>();
+
+      optimize<RemoveNoopOptimization>();
+      optimize<ShortJumpOptimization>();
+
+      optimize<TempLivenessOptimization>();
       optimize<RegisterAllocationOptimization>();
     }
 
