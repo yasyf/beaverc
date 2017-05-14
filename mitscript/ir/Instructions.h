@@ -303,7 +303,9 @@ namespace IR {
     shared_ptr<Temp> dest;
     shared_ptr<S> src;
 
-    Assign(shared_ptr<Temp> dest, shared_ptr<S> src) : dest(dest), src(src) {}
+    Assign(shared_ptr<Temp> dest, shared_ptr<S> src) : dest(dest), src(src) {
+      dest->transferHint(src);
+    }
     virtual Operation op() { return Operation::Assign; }
     virtual string toString() const override { return dest->toString() + " = " + src->toString(); }
   };
@@ -313,7 +315,9 @@ namespace IR {
     shared_ptr<D> dest;
     shared_ptr<Temp> src;
 
-    Store(shared_ptr<D> dest, shared_ptr<Temp> src) : dest(dest), src(src) {}
+    Store(shared_ptr<D> dest, shared_ptr<Temp> src) : dest(dest), src(src) {
+      dest->transferHint(src);
+    }
     virtual Operation op() { return Operation::Store; }
     virtual string toString() const override { return dest->toString() + " = " + src->toString(); }
   };
@@ -336,37 +340,51 @@ namespace IR {
   };
 
   struct IntAdd : public Add {
-    using Add::Add;
+    IntAdd(shared_ptr<Temp> dest, shared_ptr<Temp> src1, shared_ptr<Temp> src2) : Add(dest, src1, src2) {
+      dest->hintInt();
+    }
     virtual Operation op() { return Operation::IntAdd; }
   };
 
   struct Sub : BinOp<Operation::Sub> {
-    using BinOp::BinOp;
+    Sub(shared_ptr<Temp> dest, shared_ptr<Temp> src1, shared_ptr<Temp> src2) : BinOp(dest, src1, src2) {
+      dest->hintInt();
+    }
     virtual string opString() const override { return "-"; }
   };
 
   struct Mul : BinOp<Operation::Mul> {
-    using BinOp::BinOp;
+    Mul(shared_ptr<Temp> dest, shared_ptr<Temp> src1, shared_ptr<Temp> src2) : BinOp(dest, src1, src2) {
+      dest->hintInt();
+    }
     virtual string opString() const override { return "*"; }
   };
 
   struct Div : BinOp<Operation::Div> {
-    using BinOp::BinOp;
+    Div(shared_ptr<Temp> dest, shared_ptr<Temp> src1, shared_ptr<Temp> src2) : BinOp(dest, src1, src2) {
+      dest->hintInt();
+    }
     virtual string opString() const override { return "/"; }
   };
 
   struct Gt : BinOp<Operation::Gt> {
-    using BinOp::BinOp;
+    Gt(shared_ptr<Temp> dest, shared_ptr<Temp> src1, shared_ptr<Temp> src2) : BinOp(dest, src1, src2) {
+      dest->hintBool();
+    }
     virtual string opString() const override { return "<"; }
   };
 
   struct Geq : BinOp<Operation::Geq> {
-    using BinOp::BinOp;
+    Geq(shared_ptr<Temp> dest, shared_ptr<Temp> src1, shared_ptr<Temp> src2) : BinOp(dest, src1, src2) {
+      dest->hintBool();
+    }
     virtual string opString() const override { return "<="; }
   };
 
   struct Eq : BinOp<Operation::Eq> {
-    using BinOp::BinOp;
+    Eq(shared_ptr<Temp> dest, shared_ptr<Temp> src1, shared_ptr<Temp> src2) : BinOp(dest, src1, src2) {
+      dest->hintBool();
+    }
     virtual string opString() const override { return "=="; }
   };
 
@@ -376,12 +394,16 @@ namespace IR {
   };
 
   struct And : BinOp<Operation::And> {
-    using BinOp::BinOp;
+    And(shared_ptr<Temp> dest, shared_ptr<Temp> src1, shared_ptr<Temp> src2) : BinOp(dest, src1, src2) {
+      dest->hintBool();
+    }
     virtual string opString() const override { return "&"; }
   };
 
   struct Or : BinOp<Operation::Or> {
-    using BinOp::BinOp;
+    Or(shared_ptr<Temp> dest, shared_ptr<Temp> src1, shared_ptr<Temp> src2) : BinOp(dest, src1, src2) {
+      dest->hintBool();
+    }
     virtual string opString() const override { return "|"; }
   };
 
@@ -390,19 +412,26 @@ namespace IR {
     shared_ptr<Temp> dest;
     shared_ptr<Temp> src;
 
-    UnOp(shared_ptr<Temp> dest, shared_ptr<Temp> src) : dest(dest), src(src) {}
+    UnOp(shared_ptr<Temp> dest, shared_ptr<Temp> src) : dest(dest), src(src) {
+      addHint(dest);
+    }
+    virtual void addHint(shared_ptr<Temp> dest) {};
     virtual Operation op() { return Op; }
     virtual string opString() const = 0;
     virtual string toString() const override { return dest->toString() + " = " + opString() + src->toString(); }
   };
 
   struct Neg : UnOp<Operation::Neg> {
-    using UnOp::UnOp;
+    Neg(shared_ptr<Temp> dest, shared_ptr<Temp> src) : UnOp(dest, src) {
+      dest->hintInt();
+    }
     virtual string opString() const override { return "-"; }
   };
 
   struct Not : UnOp<Operation::Not> {
-    using UnOp::UnOp;
+    Not(shared_ptr<Temp> dest, shared_ptr<Temp> src) : UnOp(dest, src) {
+      dest->hintBool();
+    }
     virtual string opString() const override { return "!"; }
   };
 
@@ -541,7 +570,10 @@ namespace IR {
     shared_ptr<Temp> dest1;
     shared_ptr<Temp> dest2;
 
-    Fork(shared_ptr<Temp> src, shared_ptr<Temp> dest1, shared_ptr<Temp> dest2) : src(src), dest1(dest1), dest2(dest2) {}
+    Fork(shared_ptr<Temp> src, shared_ptr<Temp> dest1, shared_ptr<Temp> dest2) : src(src), dest1(dest1), dest2(dest2) {
+      dest1->transferHint(src);
+      dest2->transferHint(src);
+    }
     virtual Operation op() { return Operation::Fork; }
     virtual string toString() const override { return src->toString() + " -> " + dest1->toString() + " " + dest2->toString(); }
   };

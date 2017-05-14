@@ -19,8 +19,6 @@ namespace IR {
       if (assign && store && assign->src->num == store->dest->num) {
         auto f1 = compiler.extraTemp();
         auto f2 = compiler.extraTemp();
-        f1->transferHint(store->src);
-        f2->transferHint(store->src);
 
         auto fork = new Fork{store->src, f1, f2};
 
