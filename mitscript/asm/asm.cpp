@@ -88,7 +88,7 @@ int main(int argc, char** argv)
 
   IR::InstructionList ir;
   IR::OptimizingCompiler ir_compiler(bytecode, ir);
-  size_t temp_count = ir_compiler.compile(false);
+  size_t temp_count = ir_compiler.compile();
 
   ASM::Compiler asm_compiler(ir, temp_count);
   x64asm::Function assm;

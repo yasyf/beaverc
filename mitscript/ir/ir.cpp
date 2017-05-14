@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 
   IR::InstructionList instructions;
   IR::OptimizingCompiler compiler(bytecode, instructions);
-  compiler.compile(false);
+  compiler.compile();
 
   IR::PrettyPrinter printer(instructions);
   printer.print();

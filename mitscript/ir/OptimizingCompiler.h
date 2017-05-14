@@ -11,6 +11,7 @@
 #include "RemoveObsoleteOptimization.h"
 #include "RemoveNoopOptimization.h"
 #include "CopyOptimization.h"
+#include "RegisterAllocationOptimization.h"
 
 using namespace std;
 
@@ -50,6 +51,7 @@ namespace IR {
         optimize<RemoveNoopOptimization>();
         optimize<ShortJumpOptimization>();
       }
+      optimize<RegisterAllocationOptimization>();
     }
 
   public:
