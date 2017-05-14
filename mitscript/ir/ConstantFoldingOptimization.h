@@ -8,14 +8,16 @@ using namespace std;
 
 namespace IR {
   class ConstantFoldingOptimization : public Optimization {
+    using Optimization::Optimization;
+
     template<typename T, typename F>
-    void foldIntsBinOp(T op, InstructionList& ir, size_t count, F func, bool check = true) {
+    void foldIntsBinOp(T op, size_t count, F func, bool check = true) {
       if (op->src1->isInt() && op->src2->isInt()) {
         int64_t i1 = op->src1->getConst().getInteger();
         int64_t i2 = op->src2->getConst().getInteger();
         VM::Value v = VM::Value::makeInteger(func(i1, i2));
 
-        ir[count] = new Assign<Const>{op->dest, make_shared<Const>(v)};
+        compiler.instructions[count] = new Assign<Const>{op->dest, make_shared<Const>(v)};
 
         obsolete.insert(op->src1->num);
         obsolete.insert(op->src2->num);
@@ -32,9 +34,9 @@ namespace IR {
     }
 
   public:
-    virtual void optimize(shared_ptr<BC::Function> func, InstructionList& ir) {
+    virtual void optimize() {
       size_t count = 0;
-      for (auto instruction : ir) {
+      for (auto instruction : compiler.instructions) {
         switch (instruction->op()) {
           case IR::Operation::Add: {
             auto add = dynamic_cast<Add*>(instruction);
@@ -50,7 +52,7 @@ namespace IR {
               strcat(s, s2);
               VM::Value v = VM::Value::makeStringConstant(s);
 
-              ir[count] = new Assign<Const>{add->dest, make_shared<Const>(v)};
+              compiler.instructions[count] = new Assign<Const>{add->dest, make_shared<Const>(v)};
 
               obsolete.insert(add->src1->num);
               obsolete.insert(add->src2->num);
@@ -58,7 +60,7 @@ namespace IR {
               delete[] s2;
               delete(add);
             } else {
-              foldIntsBinOp(add, ir, count, [] (int a, int b) { return a + b; }, false);
+              foldIntsBinOp(add, count, [] (int a, int b) { return a + b; }, false);
             }
 
             break;
@@ -69,7 +71,7 @@ namespace IR {
             if (!add->src1->isConst() || !add->src2->isConst()) {
               break;
             }
-            foldIntsBinOp(add, ir, count, [] (int a, int b) { return a + b; });
+            foldIntsBinOp(add, count, [] (int a, int b) { return a + b; });
             break;
           }
 
@@ -78,7 +80,7 @@ namespace IR {
             if (!sub->src1->isConst() || !sub->src2->isConst()) {
               break;
             }
-            foldIntsBinOp(sub, ir, count, [] (int a, int b) { return b - a; });
+            foldIntsBinOp(sub, count, [] (int a, int b) { return b - a; });
             break;
           }
 
@@ -87,7 +89,7 @@ namespace IR {
             if (!mul->src1->isConst() || !mul->src2->isConst()) {
               break;
             }
-            foldIntsBinOp(mul, ir, count, [] (int a, int b) { return a * b; });
+            foldIntsBinOp(mul, count, [] (int a, int b) { return a * b; });
             break;
           }
 
@@ -103,7 +105,7 @@ namespace IR {
               break;
             }
 
-            foldIntsBinOp(div, ir, count, [] (int a, int b) { return a / b; });
+            foldIntsBinOp(div, count, [] (int a, int b) { return a / b; });
             break;
           }
 
@@ -123,7 +125,7 @@ namespace IR {
             int64_t i = neg->src->getConst().getInteger();
             VM::Value v = VM::Value::makeInteger(-i);
 
-            ir[count] = new Assign<Const>{neg->dest, make_shared<Const>(v)};
+            compiler.instructions[count] = new Assign<Const>{neg->dest, make_shared<Const>(v)};
 
             obsolete.insert(neg->src->num);
             delete(neg);
@@ -146,7 +148,7 @@ namespace IR {
             bool b = nott->src->getConst().getBoolean();
             VM::Value v = VM::Value::makeBoolean(!b);
 
-            ir[count] = new Assign<Const>{nott->dest, make_shared<Const>(v)};
+            compiler.instructions[count] = new Assign<Const>{nott->dest, make_shared<Const>(v)};
 
             obsolete.insert(nott->src->num);
             delete(nott);

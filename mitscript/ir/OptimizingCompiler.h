@@ -11,6 +11,7 @@
 #include "RemoveObsoleteOptimization.h"
 #include "RemoveNoopOptimization.h"
 #include "CopyOptimization.h"
+#include "OperandLivenessOptimization.h"
 #include "RegisterAllocationOptimization.h"
 
 using namespace std;
@@ -19,24 +20,23 @@ namespace IR {
   const size_t NUM_PASSES = 2;
 
   class OptimizingCompiler {
+  public:
     Compiler compiler;
-    shared_ptr<BC::Function> bytecode;
-    InstructionList& instructions;
     set<size_t> obsolete;
 
+  private:
     template<typename T>
     void optimize() {
-      T t;
-      t.optimize(bytecode, instructions);
+      T t(compiler);
+      t.optimize();
 
       for (auto temp : t.obsolete)
         obsolete.insert(temp);
     }
 
     void removeObsolete() {
-      RemoveObsoleteOptimization opt;
-      opt.obsolete = this->obsolete;
-      opt.optimize(bytecode, instructions);
+      RemoveObsoleteOptimization opt(compiler, this->obsolete);
+      opt.optimize();
       this->obsolete.clear();
     }
 
@@ -51,19 +51,20 @@ namespace IR {
         optimize<RemoveNoopOptimization>();
         optimize<ShortJumpOptimization>();
       }
+      optimize<OperandLivenessOptimization>();
       optimize<RegisterAllocationOptimization>();
     }
 
   public:
     OptimizingCompiler(shared_ptr<BC::Function> bytecode, InstructionList& instructions)
-      : compiler(bytecode, instructions), bytecode(bytecode), instructions(instructions)
+      : compiler(bytecode, instructions)
     {}
 
     size_t compile(bool optimize = true) {
-      size_t num_temps = compiler.compile();
+      compiler.compile();
       if (optimize)
         runAllPasses();
-      return num_temps;
+      return compiler.temp_count;
     }
   };
 }

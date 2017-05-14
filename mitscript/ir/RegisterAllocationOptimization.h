@@ -6,8 +6,10 @@ using namespace std;
 
 namespace IR {
   class RegisterAllocationOptimization : public Optimization {
+    using Optimization::Optimization;
+
   public:
-    virtual void optimize(shared_ptr<BC::Function> func, InstructionList& ir) {
+    virtual void optimize() {
 
     }
   };

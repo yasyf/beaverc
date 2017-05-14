@@ -12,11 +12,13 @@ using namespace std;
 
 namespace IR {
   class Compiler {
+  public:
     stack<shared_ptr<Temp>> operands;
     shared_ptr<BC::Function> bytecode;
     InstructionList& instructions;
     size_t temp_count = 0;
 
+  private:
     shared_ptr<Temp> popTemp() {
       shared_ptr<Temp> t = operands.top();
       operands.pop();

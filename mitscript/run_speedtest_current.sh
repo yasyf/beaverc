@@ -7,7 +7,7 @@ echo_commit() {
 run_single_test() {
     TIMEFORMAT='%U'
     exec 3>&1 4>&2
-    var=$( { time ./bin/vm --mem 100000 speedtest/benchmark2.mit < speedtest/benchmark2.input 1>&3 2>&4; } 2>&1 )  # Captures time only.
+    var=$( { time ./bin/vm --mem 100000 speedtest/benchmark2.mit --opt=all < speedtest/benchmark2.input 1>&3 2>&4; } 2>&1 )  # Captures time only.
     exec 3>&- 4>&-
     echo $var
 }

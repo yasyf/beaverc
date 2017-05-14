@@ -6,9 +6,11 @@ using namespace std;
 
 namespace IR {
   class PropagateTypesOptimization : public Optimization {
+    using Optimization::Optimization;
+
   public:
-    virtual void optimize(shared_ptr<BC::Function> func, InstructionList& ir) {
-      for (auto instruction : ir) {
+    virtual void optimize() {
+      for (auto instruction : compiler.instructions) {
         switch (instruction->op()) {
           case IR::Operation::Assign: {
             if (auto assign = dynamic_cast<Assign<Var>*>(instruction)) {
@@ -24,17 +26,17 @@ namespace IR {
             }
             break;
           }
-         case IR::Operation::Store: {
-          if (auto store = dynamic_cast<Store<Var>*>(instruction)) {
-            store->src->hintVar(store->dest->num);
-            store->dest->transferHint(store->src);
-          } else if (auto store = dynamic_cast<Store<Deref>*>(instruction)) {
-            store->dest->transferHint(store->src);
-          } else if (auto store = dynamic_cast<Store<Glob>*>(instruction)) {
-            store->dest->transferHint(store->src);
+          case IR::Operation::Store: {
+            if (auto store = dynamic_cast<Store<Var>*>(instruction)) {
+              store->src->hintVar(store->dest->num);
+              store->dest->transferHint(store->src);
+            } else if (auto store = dynamic_cast<Store<Deref>*>(instruction)) {
+              store->dest->transferHint(store->src);
+            } else if (auto store = dynamic_cast<Store<Glob>*>(instruction)) {
+              store->dest->transferHint(store->src);
+            }
+            break;
           }
-          break;
-        }
         }
       }
     }

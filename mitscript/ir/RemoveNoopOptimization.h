@@ -6,10 +6,12 @@ using namespace std;
 
 namespace IR {
   class RemoveNoopOptimization : public Optimization {
+    using Optimization::Optimization;
+
   public:
-    virtual void optimize(shared_ptr<BC::Function> func, InstructionList& ir) {
+    virtual void optimize() {
       InstructionList newIr;
-      for (auto instruction : ir) {
+      for (auto instruction : compiler.instructions) {
         switch (instruction->op()) {
           case IR::Operation::Noop: {
             break;
@@ -19,7 +21,7 @@ namespace IR {
           }
         }
       }
-      ir.swap(newIr);
+      compiler.instructions.swap(newIr);
     }
   };
 }

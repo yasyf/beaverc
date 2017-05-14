@@ -1,13 +1,17 @@
 #pragma once
-#include <set>
 #include "Instructions.h"
+#include "Compiler.h"
+#include <set>
 
 using namespace std;
 
 namespace IR {
   class Optimization {
   public:
+    Compiler& compiler;
     set<size_t> obsolete;
-    virtual void optimize(shared_ptr<BC::Function> bytecode, InstructionList& instructions) = 0;
+
+    Optimization(Compiler& compiler) : compiler(compiler) {}
+    virtual void optimize() = 0;
   };
 }

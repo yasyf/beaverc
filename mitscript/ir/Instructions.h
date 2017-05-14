@@ -5,6 +5,7 @@
 #include <experimental/optional>
 #include <vector>
 #include <cassert>
+#include <climits>
 
 using namespace std;
 using namespace std::experimental;
@@ -23,6 +24,8 @@ namespace IR {
   struct Var;
 
   struct Operand {
+    int live_start = 0;
+    int live_end = INT_MAX;
     int type_hint = 0;
     uint64_t src_val = 0;
     optional<x64asm::R64> reg;
