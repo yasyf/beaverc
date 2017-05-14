@@ -269,6 +269,7 @@ namespace ASM {
         assert(is_alive(arg_regs[i]));
         reg_move(arg_regs[i], args[i]);
         dead(arg_regs[i]);
+        dead(args[i]);
       }
 
       assm.mov(scratch, Imm64{(uint64_t)fn});
@@ -282,9 +283,9 @@ namespace ASM {
 
       assm.call(scratch);
 
-      for (auto reg : caller_saved_regs) {
-        if (is_alive(reg)) {
-          assm.pop(reg);
+      for (auto rit = caller_saved_regs.rbegin(); rit != caller_saved_regs.rend(); ++rit) {
+        if (is_alive(*rit)) {
+          assm.pop(*rit);
         }
       }
     }

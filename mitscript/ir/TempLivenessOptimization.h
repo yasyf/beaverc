@@ -109,6 +109,13 @@ namespace IR {
             alive(eq->dest);
             break;
           }
+          case IR::Operation::FastEq: {
+            auto feq = dynamic_cast<FastEq*>(instruction);
+            dead(feq->src1);
+            dead(feq->src2);
+            alive(feq->dest);
+            break;
+          }
           case IR::Operation::Neg: {
             auto neg = dynamic_cast<Neg*>(instruction);
             dead(neg->src);

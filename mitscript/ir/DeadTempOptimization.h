@@ -128,6 +128,13 @@ namespace IR {
             maybe_obsolete_temp(eq->dest);
             break;
           }
+          case IR::Operation::FastEq: {
+            auto feq = dynamic_cast<FastEq*>(instruction);
+            maybe_resolve_alias(&feq->src1);
+            maybe_resolve_alias(&feq->src2);
+            maybe_obsolete_temp(feq->dest);
+            break;
+          }
           case IR::Operation::Neg: {
             auto neg = dynamic_cast<Neg*>(instruction);
             maybe_resolve_alias(&neg->src);

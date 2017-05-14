@@ -101,6 +101,9 @@ bcparser/parser.cpp:
 clean:
 	rm -f bin/* *.o */*.o
 
+irclean:
+	rm -rf bin/ir ir/*.o
+
 asmclean:
 	rm -rf bin/vm bin/asm bin/ir vm/*.o asm/*.o ir/*.o
 
