@@ -259,17 +259,17 @@ namespace IR {
             break;
           }
           case BC::Operation::Label: {
-            shared_ptr<Label> label(new Label{instruction.operand0.value()});
+            shared_ptr<Label> label(new Label{(size_t) instruction.operand0.value()});
             instructions.push_back(new OutputLabel{label});
             break;
           }
           case BC::Operation::Goto: {
-            shared_ptr<Label> label(new Label{instruction.operand0.value()});
+            shared_ptr<Label> label(new Label{(size_t) instruction.operand0.value()});
             instructions.push_back(new Jump{label});
             break;
           }
           case BC::Operation::If: {
-            shared_ptr<Label> label(new Label{instruction.operand0.value()});
+            shared_ptr<Label> label(new Label{(size_t) instruction.operand0.value()});
             auto cond = popTemp();
             instructions.push_back(new CallAssert<Assert::AssertBool>{cond});
             instructions.push_back(new CondJump{cond, label});
