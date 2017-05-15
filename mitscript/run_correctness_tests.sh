@@ -31,6 +31,16 @@ check_compile() {
   fi
 }
 
+check_bcc() {
+  ./bin/bccchecker -s $1
+  if [[ $? -eq 0 ]]; then
+    good "$1" "check_bcc"
+  else
+    bad "$1" "check_bcc"
+    echo "$output"
+  fi
+}
+
 check_interpret_vm_s() {
   output=$(diff "$1.out" <(./bin/vm --mem 0 -s "$1" "${@:2}"))
   if [[ -z $output ]]; then
@@ -59,7 +69,7 @@ check_bad_parse() {
   check_parse $1 1
 }
 
-make pprinter bccompiler vm
+make pprinter bccompiler vm bccchecker
 
 # for f in tests/good*.mit
 # do
@@ -92,6 +102,11 @@ make pprinter bccompiler vm
 # do
 #   check_interpret_vm_s "$f"
 # done
+
+for f in tests/staff/test*.mit tests/bytecodetest*.mit tests/asmtest*.mit tests/interptest*.mit tests/PerfTests/*.mit
+do
+  check_bcc "$f" "$@"
+done
 
 for f in tests/staff/test*.mit tests/bytecodetest*.mit tests/asmtest*.mit tests/interptest*.mit
 do
