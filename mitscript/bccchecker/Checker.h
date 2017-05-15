@@ -38,7 +38,7 @@ namespace BC {
           case Operation::Swap:
           break;
 
-
+          case Operation::Return:
           case Operation::If:
             assertSize(current_stack_size, 1);
           case Operation::StoreLocal:
@@ -71,21 +71,13 @@ namespace BC {
             current_stack_size -= instruction.operand0.value();
           break;
 
-          case Operation::Return:
-            assertSize(current_stack_size, 1);
-            for (auto f : function->functions_) {
-              checkFunction(f);
-            }
-            return;
-          break;
-
           default:
             cout << "Unexpected opcode" << endl;
             exit(1);
           break;
         }
       }
-      assertSize(current_stack_size, 1);
+      assertSize(current_stack_size, 0);
       for (auto f : function->functions_) {
         checkFunction(f);
       }
