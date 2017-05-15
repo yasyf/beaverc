@@ -559,9 +559,11 @@ namespace ASM {
               dead(s);
             }
             auto s1 = read_temp(call->closure, rdi);
+            auto s2 = alloc_reg();
             auto s3 = rdx;
+            assm.mov(s2, rsp);
             assm.mov(s3, Imm32{(uint32_t)call->args.size()});
-            call_helper((void *)(&helper_call_function), s1, rsp, s3);
+            call_helper((void *)(&helper_call_function), s1, s2, s3);
             dead(s1);
             dead(s3);
             assm.add(rsp, Imm32{(uint32_t)call->args.size()*STACK_VALUE_SIZE});
