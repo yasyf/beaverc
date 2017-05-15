@@ -117,7 +117,7 @@ namespace ASM {
     auto reg = rdi;
     auto r2 = rsi;
     assm.mov(reg, current_closure());
-    assm.mov(r2, Imm64{(uint32_t) num});
+    assm.mov(r2, Imm64{(uint64_t) num});
     call_helper(helper, reg, r2);
     write_temp(dest, rax);
     dead(reg);
