@@ -298,7 +298,7 @@ namespace BC {
     transpile(func.body);
 
     // Default return
-    if (!parents->returned) {
+    if (!parents->returned || parents->getOut()->back().operation == Operation::Label) {
       loadNone();
       outputReturn();
     }
