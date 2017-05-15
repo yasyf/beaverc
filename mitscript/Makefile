@@ -66,12 +66,12 @@ ir: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(IROBJECTS) $(GCOBJECTS) $(OPTSOBJECTS) $(LIBS) -o bin/$@
 
 ASMOBJECTS = $(patsubst %.cpp, %.o, $(wildcard asm/*.cpp))
+IRVMOBJECTS = $(patsubst %.cpp, %.o, $(filter-out ir/ir.cpp,$(wildcard ir/*.cpp)))
 VMASMOBJECTS = $(patsubst %.cpp, %.o, $(filter-out vm/vm.cpp,$(wildcard vm/*.cpp)))
-asm: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(VMASMOBJECTS) $(GCOBJECTS) $(ASMOBJECTS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(VMASMOBJECTS) $(GCOBJECTS) $(ASMOBJECTS) $(LIBS) -o bin/$@
+asm: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(VMASMOBJECTS) $(GCOBJECTS) $(ASMOBJECTS) $(IRVMOBJECTS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(VMASMOBJECTS) $(GCOBJECTS) $(ASMOBJECTS) $(IRVMOBJECTS) $(LIBS) -o bin/$@
 
 VMOBJECTS = $(patsubst %.cpp, %.o, $(wildcard vm/*.cpp))
-IRVMOBJECTS = $(patsubst %.cpp, %.o, $(filter-out ir/ir.cpp,$(wildcard ir/*.cpp)))
 ASMVMOBJECTS = $(patsubst %.cpp, %.o, $(filter-out asm/asm.cpp,$(wildcard asm/*.cpp)))
 vm: parser bcparser $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(VMOBJECTS) $(GCOBJECTS) $(ASMVMOBJECTS) $(IRVMOBJECTS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PARSE_OBJECTS) $(BCPARSE_OBJECTS) $(OBJECTS) $(BCCOOBJECTS) $(VMOBJECTS) $(GCOBJECTS) $(ASMVMOBJECTS) $(IRVMOBJECTS) $(LIBS) -o bin/$@
