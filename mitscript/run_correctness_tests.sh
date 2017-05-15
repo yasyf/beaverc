@@ -42,13 +42,20 @@ check_bcc() {
 }
 
 check_interpret_vm_s() {
-  output=$(diff "$1.out" <(./bin/vm --mem 0 -s "$1" "${@:2}"))
-  if [[ -z $output ]]; then
-    good "$1" "interpret_vm_s"
-  else
+  ./bin/vm --mem 0 -s "$1" "${@:2}" > $1.output
+  if [[ $? -eq 139 ]]; then
     bad "$1" "interpret_vm_s"
-    echo "$output"
+    echo "Program segfaulted"
+  else
+    output=$(diff "$1.out" "$1.output")
+    if [[ -z $output ]]; then
+      good "$1" "interpret_vm_s"
+    else
+      bad "$1" "interpret_vm_s"
+      echo "$output"
+    fi
   fi
+  rm $1.output
 }
 
 check_interpret_vm_b() {
