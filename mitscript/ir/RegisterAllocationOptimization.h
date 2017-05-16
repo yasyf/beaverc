@@ -10,10 +10,10 @@ using namespace std;
 using namespace x64asm;
 
 namespace IR {
-  static constexpr std::array<R64, 8> reg_pool = {
+  static constexpr std::array<R64, 11> reg_pool = {
     r12, r13, r14, r15,
     r8,  r9,  r10, r11,
-    // rcx, rdx, rbx,
+    rcx, rdx, rbx,
     // rsi, rdi,
   };
 

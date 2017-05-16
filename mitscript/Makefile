@@ -11,7 +11,7 @@ LEX = flex
 YACC = bison
 
 CFLAGS = -std=c++14 -I../x64asm -I../udis86/libudis86
-CXXFLAGS = -std=c++14 -I../x64asm -I../udis86/libudis86
+CXXFLAGS = -std=c++14 -I../x64asm -I../udis86/libudis86 -MMD -MP
 LDFLAGS = -lstdc++ -L../x64asm/lib -L../udis86/libudis86/.libs
 LIBS = -lx64asm -ludis86
 
@@ -37,7 +37,7 @@ OBJECTS = $(patsubst %.cpp, %.o, $(CPPSOURCES)) $(patsubst %.c, %.o, $(CSOURCES)
 PARSE_OBJECTS = parser/parser.o parser/lexer.o
 BCPARSE_OBJECTS = bcparser/parser.o bcparser/lexer.o
 
-.PHONY: parser bcparser clean extraclean all
+.PHONY: parser bcparser clean extraclean irclean asmclean all
 
 default: vm bccompiler interpreter pprinter ir
 
@@ -99,6 +99,8 @@ bcparser/lexer.c:
 
 bcparser/parser.cpp:
 	$(YACC) --defines=bcparser/parser.h -o bcparser/parser.cpp bcparser/parser.yy
+
+-include $(shell find -name '*.d')
 
 %.o: %.cpp %.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
