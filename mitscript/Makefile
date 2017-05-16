@@ -106,7 +106,7 @@ bcparser/parser.cpp:
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f bin/* *.o */*.o
+	rm -f bin/* *.o */*.o *.d */*.d
 
 irclean:
 	rm -rf bin/ir ir/*.o
