@@ -90,7 +90,7 @@ namespace VM {
     }
   }
 
-  void StringValue::markChildren(size_t generation, bool mark_recent_only) {
+  void StringValue::markChildren(uint32_t generation, bool mark_recent_only) {
     if (height == 0) return;
     if (left.isPointer()) {
       left.getPointerValue()->mark(generation, mark_recent_only);
@@ -146,8 +146,8 @@ namespace VM {
   void RecordValue::insert(const char* key, Value inserted) {
     if (has_optimization(OPTIMIZATION_GC_GENERATIONAL) &&
         inserted.isPointer() &&
-        inserted.getPointerValue()->generation == GC::Generation::RecentlyAllocated &&
-        this->generation != GC::Generation::RecentlyAllocated) {
+        !inserted.getPointerValue()->is_old &&
+        this->is_old) {
       interpreter->heap.cross_generation_pointers.push_back(this);
     }
     values[key] = inserted;
@@ -173,7 +173,7 @@ namespace VM {
     return s;
   }
 
-  void RecordValue::markChildren(size_t generation, bool mark_recent_only) {
+  void RecordValue::markChildren(uint32_t generation, bool mark_recent_only) {
     for (auto& pair : values) {
       if (pair.second.isPointer()) {
         pair.second.getPointerValue()->mark(generation, mark_recent_only);
@@ -203,8 +203,8 @@ namespace VM {
   void ReferenceValue::write(Value v) {
     if (has_optimization(OPTIMIZATION_GC_GENERATIONAL) &&
         v.isPointer() &&
-        v.getPointerValue()->generation == GC::Generation::RecentlyAllocated &&
-        this->generation != GC::Generation::RecentlyAllocated) {
+        !v.getPointerValue()->is_old &&
+        this->is_old) {
       interpreter->heap.cross_generation_pointers.push_back(this);
     }
     value = v;
@@ -214,7 +214,7 @@ namespace VM {
     return sizeof(ReferenceValue);
   }
 
-  void ReferenceValue::markChildren(size_t generation, bool mark_recent_only) {
+  void ReferenceValue::markChildren(uint32_t generation, bool mark_recent_only) {
     if (value.isPointer()) {
       value.getPointerValue()->mark(generation, mark_recent_only);
     }
@@ -260,7 +260,7 @@ namespace VM {
     return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
   }
 
-  void ClosureFunctionValue::markChildren(size_t generation, bool mark_recent_only) {
+  void ClosureFunctionValue::markChildren(uint32_t generation, bool mark_recent_only) {
     for (auto ref : references)
       ref->mark(generation, mark_recent_only);
   }

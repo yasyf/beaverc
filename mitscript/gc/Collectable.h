@@ -1,25 +1,23 @@
 #pragma once
 #include <cstdio>
+#include <cstdint>
 #include "CollectedHeap.fwd.h"
 
 namespace GC {
-  enum class Generation {
-    RecentlyAllocated,
-    Old
-  };
-
   //Any object that inherits from collectable can be created and tracked by the garbage collector.
   class Collectable {
   public:
     Collectable() {}
 
-    void mark(size_t generation, bool mark_recent_only);
-    void forceMark(size_t generation, bool mark_recent_only);
+    void mark(uint32_t generation, bool mark_recent_only);
+    void forceMark(uint32_t generation, bool mark_recent_only);
     virtual size_t size() = 0;
 
-    Generation generation = Generation::RecentlyAllocated;
+    bool is_old = false;
+    uint32_t marked = 0;
+
   private:
-    virtual void markChildren(size_t generation, bool mark_recent_only) = 0;
+    virtual void markChildren(uint32_t generation, bool mark_recent_only) = 0;
   protected:
     /*
     The mark phase of the garbage collector needs to follow all pointers from the collectable objects, check
@@ -28,8 +26,6 @@ namespace GC {
     that calls heap.markSuccessors( ) on all collectable objects that this object points to.
     markSuccessors() is the one responsible for checking if the object is marked and marking it.
     */
-    size_t marked = 0;
-
     friend CollectedHeap;
   };
 }

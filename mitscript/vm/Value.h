@@ -163,7 +163,7 @@ namespace VM {
 
     std::string toString();
     virtual size_t size();
-    virtual void markChildren(size_t generation, bool mark_recent_only);
+    virtual void markChildren(uint32_t generation, bool mark_recent_only);
   };
 
   struct constCharHash {
@@ -192,7 +192,7 @@ namespace VM {
 
     std::string toString();
     virtual size_t size();
-    virtual void markChildren(size_t generation, bool mark_recent_only);
+    virtual void markChildren(uint32_t generation, bool mark_recent_only);
   };
 
   struct ReferenceValue : public PointerValue {
@@ -205,7 +205,7 @@ namespace VM {
 
     std::string toString();
     virtual size_t size();
-    virtual void markChildren(size_t generation, bool mark_recent_only);
+    virtual void markChildren(uint32_t generation, bool mark_recent_only);
   };
 
   struct AbstractFunctionValue : public PointerValue {
@@ -223,7 +223,7 @@ namespace VM {
 
     Value call(std::vector<Value> & arguments);
     virtual size_t size() { return sizeof(BareFunctionValue); }
-    virtual void markChildren(size_t generation, bool mark_recent_only) {}
+    virtual void markChildren(uint32_t generation, bool mark_recent_only) {}
   };
 
   struct ClosureFunctionValue : public AbstractFunctionValue {
@@ -237,7 +237,7 @@ namespace VM {
 
     Value call(std::vector<Value> & arguments);
     virtual size_t size();
-    virtual void markChildren(size_t generation, bool mark_recent_only);
+    virtual void markChildren(uint32_t generation, bool mark_recent_only);
   };
 
   enum class BuiltInFunctionType {
@@ -255,6 +255,6 @@ namespace VM {
 
     Value call(std::vector<Value> & arguments);
     virtual size_t size() { return sizeof(BuiltInFunctionValue); }
-    virtual void markChildren(size_t generation, bool mark_recent_only) {}
+    virtual void markChildren(uint32_t generation, bool mark_recent_only) {}
   };
 }

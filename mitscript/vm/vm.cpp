@@ -165,7 +165,17 @@ int main(int argc, char** argv)
       exit(1);
     }
   });
-  
+
+  // cout << "Value: " << sizeof(VM::Value) << endl;
+  // cout << "ReferenceValue: " << sizeof(VM::ReferenceValue) << endl;
+  // cout << "ReferenceValue marked: " << sizeof(VM::ReferenceValue::marked) << endl;
+  // cout << "ReferenceValue value: " << sizeof(VM::ReferenceValue::value) << endl;
+  // cout << "RecordValue: " << sizeof(VM::RecordValue) << endl;
+  // cout << "ClosureFunctionValue: " << sizeof(VM::ClosureFunctionValue) << endl;
+  // cout << "BareFunctionValue: " << sizeof(VM::BareFunctionValue) << endl;
+  // cout << "Unordered map: " << sizeof(std::unordered_map<const char*, VM::Value>) << endl;
+  // cout << "Vector: " << sizeof(std::vector<const char*>) << endl;
+
   int result = interpreter->interpret(function);
   if (has_option(OPTION_SHOW_MEMORY_USAGE)) {
     struct rusage usage;
