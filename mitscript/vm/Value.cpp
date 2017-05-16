@@ -279,21 +279,11 @@ namespace VM {
       local_reference_vars.push_back(var);
     }
 
-    {
-      std::map<std::string, int> reverse_index;
-      for (int i = 0; i < value->local_reference_vars_.size(); i++) {
-        reverse_index[value->local_reference_vars_[i]] = i;
-      }
-      for (int i = 0; i < arguments.size(); i++) {
-        std::string var_name = value->local_vars_[i];
-        #if DEBUG
-        std::cout << var_name << " = " << arguments[i].toString() << std::endl;
-        #endif
-        if (reverse_index.count(var_name) == 0) {
-            local_vars[i] = arguments[i];
-        } else {
-            local_reference_vars[reverse_index[var_name]]->write(arguments[i]);
-        }
+    for (int i = 0; i < arguments.size(); i++) {
+      if (value->arg_mapping[i] == -1) {
+        local_vars[i] = arguments[i];
+      } else {
+        local_reference_vars[value->arg_mapping[i]]->write(arguments[i]);
       }
     }
 

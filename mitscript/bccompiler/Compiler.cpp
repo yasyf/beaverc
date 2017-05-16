@@ -309,6 +309,19 @@ namespace BC {
 
     assert(parents->returned);
 
+    std::map<std::string, int> reverse_index;
+    for (int i = 0; i < function->local_reference_vars_.size(); i++) {
+      reverse_index[function->local_reference_vars_[i]] = i;
+    }
+    for (int i = 0; i < function->parameter_count_; i++) {
+      std::string var_name = function->local_vars_[i];
+      if (reverse_index.count(var_name) == 0) {
+        function->arg_mapping.push_back(-1);
+      } else {
+        function->arg_mapping.push_back(reverse_index[var_name]);
+      }
+    }
+
     // Restore parent function's context
     parents = parent();
 

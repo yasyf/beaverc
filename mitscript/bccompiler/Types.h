@@ -89,6 +89,8 @@ namespace BC {
 
     InstructionList instructions;
 
+    std::vector<int> arg_mapping; // 0 if local to local, index if local reference.
+
     bool is_compiled = false;
     x64asm::Function compiled_function;
 
