@@ -21,9 +21,9 @@ namespace VM {
     }
   };
 
-  void Interpreter::push_frame(std::vector<Value>* local, std::vector<ReferenceValue*>* local_reference) {
-    local_variable_stack.push_back(local);
-    local_reference_variable_stack.push_back(local_reference);
+  void Interpreter::push_frame(Value* local, int local_length, ReferenceValue** local_reference, int reference_length) {
+    local_variable_stack.push_back(std::make_pair(local, local_length));
+    local_reference_variable_stack.push_back(std::make_pair(local_reference, reference_length));
   }
 
   void Interpreter::pop_frame() {
@@ -59,15 +59,16 @@ namespace VM {
       std::vector<PointerValue*> roots;
       roots.push_back(main_closure);
       for (auto local_variables : local_variable_stack) {
-        for (auto value : *local_variables) {
-          if (value.isPointer()) {
-            roots.push_back(value.getPointerValue());
+        for (int i = 0; i < local_variables.second; i++) {
+          Value v = local_variables.first[i];
+          if (v.isPointer()) {
+            roots.push_back(v.getPointerValue());
           }
         }
       }
       for (auto local_reference_variables : local_reference_variable_stack) {
-        for (auto value : *local_reference_variables) {
-          roots.push_back(value);
+        for (int i = 0; i < local_reference_variables.second; i++) {
+          roots.push_back(local_reference_variables.first[i]);
         }
       }
       for (auto local_stack : operand_stack_stack) {

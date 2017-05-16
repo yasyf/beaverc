@@ -17,15 +17,14 @@ namespace VM {
   struct Interpreter {
       ClosureFunctionValue* main_closure;
       ValueMap global_variables;
-      std::vector<std::vector<Value>*> local_variable_stack;
-      std::vector<int> local_variable_size_stack;
-      std::vector<std::vector<ReferenceValue*>*> local_reference_variable_stack;
+      std::vector<std::pair<Value*, int>> local_variable_stack;
+      std::vector<std::pair<ReferenceValue**, int>> local_reference_variable_stack;
       std::vector<std::stack<Value>*> operand_stack_stack;
       GC::CollectedHeap heap;
       Interpreter(size_t max_size);
       int interpret(std::shared_ptr<BC::Function> main_func);
       Value run_function(ClosureFunctionValue* closure, Value* local_variables, ReferenceValue** local_reference_vars);
-      void push_frame(std::vector<Value>* local, std::vector<ReferenceValue*>* local_reference);
+      void push_frame(Value* local, int local_length, ReferenceValue** local_reference, int reference_length);
       void pop_frame();
       void push_stack(std::stack<Value>* local_stack);
       void pop_stack();

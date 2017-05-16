@@ -270,13 +270,18 @@ namespace VM {
         throw RuntimeException("An incorrect number of parameters was passed to the function");
     }
 
-    std::vector<Value> local_vars(value->local_vars_.size(), Value::makeNone());
-    std::vector<ReferenceValue*> local_reference_vars;
-    for (auto var : value->local_reference_vars_) {
-      local_reference_vars.push_back(interpreter->heap.allocate<ReferenceValue>(Value::makeNone()));
+    Value local_vars[value->local_vars_.size()];
+    ReferenceValue* local_reference_vars[value->local_reference_vars_.size() + references.size()];
+
+    for (int i = 0; i < value->local_vars_.size(); i++) {
+      local_vars[i] = Value::makeNone();
     }
-    for (auto var : references) {
-      local_reference_vars.push_back(var);
+
+    for (int i = 0; i < value->local_reference_vars_.size(); i++) {
+      local_reference_vars[i] = interpreter->heap.allocate<ReferenceValue>(Value::makeNone());
+    }
+    for (int i = 0; i < references.size(); i++) {
+      local_reference_vars[value->local_reference_vars_.size() + i] = references[i];
     }
 
     for (int i = 0; i < arguments.size(); i++) {
@@ -296,7 +301,7 @@ namespace VM {
       value->is_compiled = !has_optimization(OPTIMIZATION_COMPILE_ONLY);
     }
 
-    interpreter->push_frame(&local_vars, &local_reference_vars);
+    interpreter->push_frame(&local_vars[0], value->local_vars_.size(), &local_reference_vars[0], value->local_reference_vars_.size() + references.size());
 
     Value result;
     if (value->is_compiled) {
