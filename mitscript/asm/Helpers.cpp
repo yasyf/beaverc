@@ -115,30 +115,16 @@ namespace ASM {
     record->insert(Value(index).toString(), Value(value));
   }
 
-  void helper_assert_int(uint64_t value) {
-    #if DEBUG
-      cout << endl << "helper_assert_int" << endl;
-      cout << "Value: " << value << endl;
-    #endif
-    Value(value).getInteger();
+  void helper_throw_not_int() {
+    throw IllegalCastException("Value is not a integer");
   }
 
-  void helper_assert_not_zero(uint64_t value) {
-    #if DEBUG
-      cout << endl << "helper_assert_not_zero" << endl;
-      cout << "Value: " << value << endl;
-    #endif
-    if (value == 0) {
-      throw IllegalArithmeticException("divide by zero");
-    }
+  void helper_throw_zero() {
+    throw IllegalArithmeticException("divide by zero");
   }
 
-  void helper_assert_bool(uint64_t value) {
-    #if DEBUG
-      cout << endl << "helper_assert_bool" << endl;
-      cout << "Value: " << value << endl;
-    #endif
-    Value(value).getBoolean();
+  void helper_throw_not_bool() {
+    throw IllegalCastException("Value is not a boolean");
   }
 
   uint64_t helper_add(uint64_t left, uint64_t right) {

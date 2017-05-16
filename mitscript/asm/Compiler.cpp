@@ -1,6 +1,13 @@
 #include "Compiler.h"
 
 namespace ASM {
+  static constexpr std::array<R64, 14> reg_pool = {
+    rax, rcx, rdx, rbx,
+    rsi, rdi,
+    r8,  r9,  r10, r11,
+    r12, r13, r14, r15,
+  };
+
   M64 Compiler::current_closure() {
     return M64{rbp, Imm32{(uint32_t)(-1 * STACK_VALUE_SIZE)}};
   }
@@ -68,14 +75,14 @@ namespace ASM {
   }
 
   R64 Compiler::alloc_reg() {
-    for (auto reg : r64s) {
+    for (auto reg : reg_pool) {
       if (!is_alive(reg)) {
         debug("alloc", reg);
         alive(reg);
         return reg;
       }
     }
-    for (auto reg : r64s) {
+    for (auto reg : reg_pool) {
       if (reg_temps.count(reg)) {
         reserve(reg);
         return reg;
@@ -176,6 +183,15 @@ namespace ASM {
 
   void Compiler::assign_function(shared_ptr<IR::Function> src, shared_ptr<Temp> dest) {
     assign_helper_call_to_temp(dest, (void *)(&helper_read_function), src->num);
+  }
+
+  void Compiler::extract_bits(shared_ptr<Temp> temp, const R64& dest, size_t start, size_t length) {
+    assm.mov(dest, Imm64{start + (length << 8)});
+    if (temp->reg) {
+      assm.bextr(dest, *(temp->reg), dest);
+    } else {
+      assm.bextr(dest, temp_mem(temp->num), dest);
+    }
   }
 
   R64 Compiler::read_temp(shared_ptr<Temp> temp, const R64& reg_hint) {
@@ -321,10 +337,6 @@ namespace ASM {
 
   void Compiler::compile(IR::InstructionList& ir, x64asm::Function& function) {
     assm.start(function);
-
-    alive(rax);
-    alive(rbp);
-    alive(rsp);
 
     preamble();
 
@@ -594,22 +606,28 @@ namespace ASM {
           break;
         }
         case IR::Operation::CallAssert: {
+          x64asm::Label skip;
+          auto reg = alloc_reg();
           if (auto op = dynamic_cast<CallAssert<Assert::AssertInt>*>(instruction)) {
-            prepare_call_helper(1);
-            auto s1 = read_temp(op->arg, rdi);
-            call_helper((void *)(&helper_assert_int), s1);
-            dead(s1);
+            extract_bits(op->arg, reg, 0, 3);
+            assm.cmp(reg, Imm32{_INTEGER_TAG});
+            dead(reg);
+            assm.je_1(skip);
+            call_helper((void *)(&helper_throw_not_int));
           } else if (auto op = dynamic_cast<CallAssert<Assert::AssertNotZero>*>(instruction)) {
-            prepare_call_helper(1);
-            auto s1 = read_temp(op->arg, rdi);
-            call_helper((void *)(&helper_assert_not_zero), s1);
+            auto s1 = read_temp(op->arg, reg);
+            assm.cmp(s1, Imm32{_INTEGER_TAG});
             dead(s1);
+            assm.jne_1(skip);
+            call_helper((void *)(&helper_throw_zero));
           } else if (auto op = dynamic_cast<CallAssert<Assert::AssertBool>*>(instruction)) {
-            prepare_call_helper(1);
-            auto s1 = read_temp(op->arg, rdi);
-            call_helper((void *)(&helper_assert_bool), s1);
-            dead(s1);
+            extract_bits(op->arg, reg, 0, 3);
+            assm.cmp(reg, Imm32{_BOOLEAN_TAG});
+            dead(reg);
+            assm.je_1(skip);
+            call_helper((void *)(&helper_throw_not_bool));
           }
+          assm.bind(skip);
           break;
         }
         case IR::Operation::AllocClosure: {
@@ -662,10 +680,6 @@ namespace ASM {
         }
       }
     }
-
-    dead(rax);
-    dead(rbp);
-    dead(rsp);
 
     assm.finish();
   }

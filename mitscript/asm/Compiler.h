@@ -58,6 +58,7 @@ namespace ASM {
     void assign_glob(shared_ptr<Glob> src, shared_ptr<Temp> dest);
     void store_glob(shared_ptr<Temp> src, shared_ptr<Glob> dest);
     void assign_function(shared_ptr<IR::Function> src, shared_ptr<Temp> dest);
+    void extract_bits(shared_ptr<Temp> temp, const R64& dest, size_t start, size_t length);
     R64 read_temp(shared_ptr<Temp> temp, const R64& reg_hint);
     R64 read_temp(shared_ptr<Temp> temp);
     void write_temp(shared_ptr<Temp> temp, const R64& reg);
