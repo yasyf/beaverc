@@ -1,10 +1,10 @@
 Tree = fun(){
   Node = fun(v){
-    this= { 
-        val:v; 
-        left:None; 
+    this= {
+        val:v;
+        left:None;
         right:None;
-	len: fun(){ 
+	len: fun(){
 	   count = 1;
 	   if(!(this.left == None)){ count = count + this.left.len(); }
 	   if(!(this.right == None)){ count = count + this.right.len(); }
@@ -12,12 +12,12 @@ Tree = fun(){
 	};
 	contains: fun(x){
 	   if(x == this.val){ return true;}
-	   if(x < this.val){ 
+	   if(x < this.val){
 		if(this.left == None){ return false; }
-                else{ return this.left.contains(x); } 
+                else{ return this.left.contains(x); }
            }
            else{ if(this.right == None){ return false; }
-                 else{ return this.right.contains(x); } 
+                 else{ return this.right.contains(x); }
            }
 	};
         add:fun(x){
@@ -34,11 +34,11 @@ Tree = fun(){
         min: fun(){
 	     if(this.left==None){ return this.val;}
 	     else{ return this.left.min(); }
-	};	
+	};
         max: fun(){
 	     if(this.right==None){ return this.val;}
 	     else{ return this.right.max(); }
-	};	
+	};
         forall: fun(f){
             if(!(this.left==None)){ this.left.forall(f); }
             f(this.val);
@@ -51,54 +51,54 @@ Tree = fun(){
     root:None;
     contains: fun(x){
       if(this.root==None){
-	return false;	
+	return false;
       }else{
- 	this.root.contains(x);	
+ 	return this.root.contains(x);
       }
     };
     add:fun(x){
       if(this.root==None){
 	this.root = Node(x);
       }else{
- 	this.root.add(x);	
+ 	this.root.add(x);
       }
 
     };
-    min: fun(){ 
+    min: fun(){
        if(this.root == None){
 	return "Error";
        }else{
-          this.root.min();         
+          return this.root.min();
        }
     };
-    max: fun(){ 
+    max: fun(){
        if(this.root == None){
 	return "Error";
        }else{
-          this.root.max();         
+          return this.root.max();
        }
     };
-	
 
-    len : fun(){ 
+
+    len : fun(){
        if(this.root == None){
 	  return 0;
        }else{
-          this.root.len();         
+          return this.root.len();
        }
-	
+
     };
     forall : fun(f){
        if(this.root == None){
 
        }else{
-          this.root.forall(f);         
+          this.root.forall(f);
        }
     };
 
   };
-  
-  
+
+
 
   return this;
 };
