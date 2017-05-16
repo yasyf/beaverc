@@ -47,7 +47,7 @@ namespace GC {
     size_t fast_collections = 0;
     size_t successful_full_collections = 0;
     size_t successful_fast_collections = 0;
-    list<Collectable*> cross_generation_pointers;
+    list<uintptr_t*> cross_generation_pointers;
 
     /*
     The constructor should take as an argument the maximum size of the garbage collected heap.
@@ -131,7 +131,9 @@ namespace GC {
       }
 
       for (auto pointer : cross_generation_pointers) {
-        pointer->forceMark(generation, true);
+        if (((*pointer) & 0x4) == 0x4) {
+          ((GC::Collectable*) ((*pointer) & ~0x7))->mark(generation, true);
+        }
       }
 
       cross_generation_pointers.clear();

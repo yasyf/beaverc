@@ -145,13 +145,13 @@ namespace VM {
   };
 
   void RecordValue::insert(const char* key, Value inserted) {
+    values[key] = inserted;
     if (has_optimization(OPTIMIZATION_GC_GENERATIONAL) &&
         inserted.isPointer() &&
         !inserted.getPointerValue()->is_old &&
         this->is_old) {
-      interpreter->heap.cross_generation_pointers.push_back(this);
+      interpreter->heap.cross_generation_pointers.push_back(&(values[key].value));
     }
-    values[key] = inserted;
   }
 
   std::string RecordValue::toString() {
@@ -206,7 +206,7 @@ namespace VM {
         v.isPointer() &&
         !v.getPointerValue()->is_old &&
         this->is_old) {
-      interpreter->heap.cross_generation_pointers.push_back(this);
+      interpreter->heap.cross_generation_pointers.push_back(&this->value.value);
     }
     value = v;
   }
