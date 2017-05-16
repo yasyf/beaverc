@@ -168,8 +168,6 @@ int main(int argc, char** argv)
 
   // cout << "Value: " << sizeof(VM::Value) << endl;
   // cout << "ReferenceValue: " << sizeof(VM::ReferenceValue) << endl;
-  // cout << "ReferenceValue marked: " << sizeof(VM::ReferenceValue::marked) << endl;
-  // cout << "ReferenceValue value: " << sizeof(VM::ReferenceValue::value) << endl;
   // cout << "RecordValue: " << sizeof(VM::RecordValue) << endl;
   // cout << "ClosureFunctionValue: " << sizeof(VM::ClosureFunctionValue) << endl;
   // cout << "BareFunctionValue: " << sizeof(VM::BareFunctionValue) << endl;

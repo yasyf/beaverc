@@ -241,6 +241,7 @@ namespace VM {
   }
 
   ClosureFunctionValue::ClosureFunctionValue(std::shared_ptr<BC::Function> value) : value(value) {
+    references = new ReferenceValue*[value->free_vars_.size()];
     interpreter->heap.increaseSize(size());
   }
 
@@ -248,22 +249,23 @@ namespace VM {
     #ifdef DEBUG
     cout << "DELETING ClosureFunctionValue: " << toString() << endl;
     #endif
+    delete[] references;
     interpreter->heap.decreaseSize(size());
   }
 
 
   void ClosureFunctionValue::add_reference(ReferenceValue* reference) {
-    interpreter->heap.increaseSize(sizeof(ReferenceValue*));
-    references.push_back(reference);
+    references[index++] = reference;
   };
 
   size_t ClosureFunctionValue::size() {
-    return sizeof(ClosureFunctionValue) + references.size() * sizeof(ReferenceValue*);
+    return sizeof(ClosureFunctionValue) + value->free_vars_.size() * sizeof(ReferenceValue*);
   }
 
   void ClosureFunctionValue::markChildren(uint32_t generation, bool mark_recent_only) {
-    for (auto ref : references)
-      ref->mark(generation, mark_recent_only);
+    for (int i = 0; i < index; i++) {
+      references[i]->mark(generation, mark_recent_only);
+    }
   }
 
   Value ClosureFunctionValue::call(std::vector<Value> & arguments) {
@@ -271,8 +273,9 @@ namespace VM {
         throw RuntimeException("An incorrect number of parameters was passed to the function");
     }
 
+    int num_references = value->local_reference_vars_.size() + value->free_vars_.size();
     Value local_vars[value->local_vars_.size()];
-    ReferenceValue* local_reference_vars[value->local_reference_vars_.size() + references.size()];
+    ReferenceValue* local_reference_vars[num_references];
 
     for (int i = 0; i < value->local_vars_.size(); i++) {
       local_vars[i] = Value::makeNone();
@@ -281,7 +284,7 @@ namespace VM {
     for (int i = 0; i < value->local_reference_vars_.size(); i++) {
       local_reference_vars[i] = interpreter->heap.allocate<ReferenceValue>(Value::makeNone());
     }
-    for (int i = 0; i < references.size(); i++) {
+    for (int i = 0; i < value->free_vars_.size(); i++) {
       local_reference_vars[value->local_reference_vars_.size() + i] = references[i];
     }
 
@@ -302,7 +305,7 @@ namespace VM {
       value->is_compiled = !has_optimization(OPTIMIZATION_COMPILE_ONLY);
     }
 
-    interpreter->push_frame(&local_vars[0], value->local_vars_.size(), &local_reference_vars[0], value->local_reference_vars_.size() + references.size());
+    interpreter->push_frame(&local_vars[0], value->local_vars_.size(), &local_reference_vars[0], num_references);
 
     Value result;
     if (value->is_compiled) {

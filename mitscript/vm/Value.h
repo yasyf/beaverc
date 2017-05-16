@@ -239,7 +239,8 @@ namespace VM {
 
   struct ClosureFunctionValue : public AbstractFunctionValue {
     std::shared_ptr<BC::Function> value;
-    std::vector<ReferenceValue*> references;
+    ReferenceValue** references;
+    int index = 0;
 
     ClosureFunctionValue(std::shared_ptr<BC::Function> value);
     ~ClosureFunctionValue();
