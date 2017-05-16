@@ -5,7 +5,7 @@ function
 		function
 		{
 			functions = [],
-			constants = [5],
+			constants = [5, None],
 			parameter_count = 1,
 			local_vars = [t],
 			local_ref_vars = [],
@@ -29,6 +29,8 @@ function
 				goto	2
 				1:
 				2:
+				load_const	1
+				return
 			]
 		}
 	],
