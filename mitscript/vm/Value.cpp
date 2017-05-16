@@ -4,6 +4,7 @@
 #include "../ir/OptimizingCompiler.h"
 #include "../asm/Compiler.h"
 #include <list>
+#include <stdlib.h> 
 
 namespace VM {
 
@@ -322,13 +323,7 @@ namespace VM {
           if (!arguments[0].isString()) {
             throw IllegalCastException("A string wasn't passed to intcast");
           }
-          try {
-            return Value::makeInteger(std::stoi(arguments[0].toString()));
-          } catch (std::invalid_argument& ex) {
-            throw IllegalCastException("string passed to intcast doesn't represent int");
-          } catch (std::out_of_range& ex) {
-            throw RuntimeException("the integer to be casted is too large");
-          }
+          return Value::makeInteger(atoi(arguments[0].toString().c_str()));
         }
         break;
     }
