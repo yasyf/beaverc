@@ -166,21 +166,32 @@ namespace VM {
     virtual void markChildren(uint32_t generation, bool mark_recent_only);
   };
 
+  inline const char* unmarked_pointer(const char* val) {
+    return (const char*) (((uintptr_t) val) & ~0x1);
+  }
+
+  inline const char* marked_pointer(const char* val) {
+    return (const char*) (((uintptr_t) val) | 0x1);
+  }
+
+  inline bool is_marked(const char* val) {
+    return (bool) (((uintptr_t) val) & 1);
+  }
+
   struct constCharHash {
     size_t operator() (const char *val) const {
-      return std::hash<std::string>()(val);
+      return std::hash<std::string>()(unmarked_pointer(val));
     }
   };
 
   struct constCharCompare {
     bool operator()(const char *val1, const char *val2) const{
-      return val1 == val2 || (val1 && val2 && strcmp(val1, val2) == 0);
+      return unmarked_pointer(val1) == unmarked_pointer(val2) || (val1 && val2 && strcmp(unmarked_pointer(val1), unmarked_pointer(val2)) == 0);
     }
   };
 
   struct RecordValue : public PointerValue {
     std::unordered_map<const char*, Value, constCharHash, constCharCompare> values;
-    std::vector<const char*> allocated_strings;
 
     RecordValue();
     ~RecordValue();

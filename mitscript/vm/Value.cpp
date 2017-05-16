@@ -108,8 +108,10 @@ namespace VM {
     #ifdef DEBUG
     cout << "DELETING RecordValue: " << toString() << endl;
     #endif
-    for (auto string : allocated_strings) {
-      free((void*) string);
+    for (auto& pair : values) {
+      if (is_marked(pair.first)) {
+        free((void*) unmarked_pointer(pair.first));
+      }
     }
     interpreter->heap.decreaseSize(size());
   }
@@ -138,8 +140,7 @@ namespace VM {
     interpreter->heap.increaseSize(k.size() + 1);
     char* string = static_cast<char*>(malloc(k.size() + 1));
     strcpy(string, k.c_str());
-    const char* result = (const char*) string;
-    allocated_strings.push_back(result);
+    const char* result = marked_pointer((const char*) string);
     insert(result, inserted);
   };
 
@@ -166,9 +167,9 @@ namespace VM {
     size_t s = sizeof(RecordValue);
     for (auto pair : values) {
       s += sizeof(const char*) + sizeof(Value);
-    }
-    for (auto string : allocated_strings) {
-      s += strlen(string);
+      if (is_marked(pair.first)){
+        s += strlen(unmarked_pointer(pair.first));
+      }
     }
     return s;
   }
