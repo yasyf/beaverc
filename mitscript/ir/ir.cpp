@@ -12,7 +12,7 @@ using namespace std;
 enum Mode {SOURCE, BYTECODE};
 
 void usage() {
-  cout << "Usage: ir <-s|-b> <filename>" << endl;
+  cout << "Usage: ir <-s|-b> <filename> <indices down the parse tree>" << endl;
 }
 
 shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
@@ -22,15 +22,12 @@ shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
 
   if (argc == 2) {
     infile = stdin;
-  } else if (argc == 3) {
+  } else if (argc >= 3) {
     infile = fopen(argv[2], "r");
     if (!infile) {
       cout << "error: cannot open " << argv[2] << endl;
       exit(1);
     }
-  } else {
-    usage();
-    exit(1);
   }
 
   if (strcmp(argv[1], "-s") == 0) {
@@ -41,6 +38,8 @@ shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
     usage();
     exit(1);
   }
+
+  shared_ptr<BC::Function> result;
 
   if (mode == SOURCE) {
     yylex_init(&scanner);
@@ -55,7 +54,7 @@ shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
 
     BC::Compiler compiler;
     program->accept(compiler);
-    return compiler.result;
+    result = compiler.result;
 
   } else {
     bclex_init(&scanner);
@@ -66,8 +65,14 @@ shared_ptr<BC::Function> getBytecodeFunction(int argc, char** argv) {
       cout << "bytecode parsing failed!" << endl;
       exit(1);
     }
-    return shared_ptr<BC::Function>(funcptr);
   }
+
+  int index = 3;
+  while (index < argc) {
+    result = result->functions_[stoi(argv[index])];
+    index++;
+  }
+  return result;
 }
 
 int main(int argc, char** argv)

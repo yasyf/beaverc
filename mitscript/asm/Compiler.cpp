@@ -1,13 +1,6 @@
 #include "Compiler.h"
 
 namespace ASM {
-  static constexpr std::array<R64, 14> reg_pool = {
-    rax, rcx, rdx, rbx,
-    rsi, rdi,
-    r8,  r9,  r10, r11,
-    r12, r13, r14, r15,
-  };
-
   M64 Compiler::current_closure() {
     return M64{rbp, Imm32{(uint32_t)(-1 * STACK_VALUE_SIZE)}};
   }
@@ -25,65 +18,92 @@ namespace ASM {
       assm.mov(dest, src);
   }
 
-  void Compiler::alive(const R64& reg) {
+  void Compiler::alive(const R64& reg, bool is_shared) {
     debug("alive", reg);
-    assert(!live.count(reg));
-    live.insert(reg);
+    assert(!live.count(reg.hash()));
+    live.insert(reg.hash());
+    if (is_shared)
+      shared.insert(reg.hash());
   }
 
   void Compiler::alive(shared_ptr<Temp> temp) {
-    debug("alive", *temp);
     if (temp->reg) {
-      if (is_alive(*(temp->reg))) {
+      debug("alive", *temp);
+      if (is_allocated(*(temp->reg))) {
         debug("spill", *temp);
-        temp->reg = experimental::nullopt;
+        temp->reg = nullopt;
+      } else if (!is_alive(*(temp->reg))) {
+        alive(*(temp->reg), temp->shared_reg);
+      }
+    }
+  }
+
+  void Compiler::alive(shared_ptr<Var> var, bool load) {
+    if (var->reg && !reg_vars.count(var->num)) {
+      debug("alive", *var);
+      if (is_allocated(*(var->reg))) {
+        debug("spill", *var);
+        var->reg = nullopt;
       } else {
-        alive(*(temp->reg));
-        reg_temps[*(temp->reg)] = temp;
+        reg_vars[var->num] = var;
+        if (load)
+          assign_mem_to_reg(*(var->reg), current_locals(), var->num);
+        if (!is_alive(*(var->reg)))
+          alive(*(var->reg), true);
       }
     }
   }
 
   bool Compiler::is_alive(const R64& reg) {
-    return live.count(reg);
+    return live.count(reg.hash());
   }
 
-  void Compiler::dead(const R64& reg) {
+  bool Compiler::is_allocated(const R64& reg) {
+    return live.count(reg.hash()) && !shared.count(reg.hash());
+  }
+
+  bool Compiler::is_alive(shared_ptr<Var> var) {
+    return reg_vars.count(var->num);
+  }
+
+  void Compiler::dead(const R64& reg, bool is_shared = false) {
+    if (shared.count(reg.hash()) && !is_shared)
+      return;
     debug("dead", reg);
-    live.erase(reg);
-    reg_temps.erase(reg);
+    live.erase(reg.hash());
+    shared.erase(reg.hash());
   }
 
   void Compiler::dead(shared_ptr<Temp> temp) {
-    debug("dead", *temp);
     if (temp->reg) {
-      dead(*(temp->reg));
+      debug("dead", *temp);
+      if (temp->isVar()) {
+        if (dead(reg_vars[temp->getVar()])) {
+          reg_vars.erase(temp->getVar());
+        }
+      } else {
+        dead(*(temp->reg));
+      }
     }
   }
 
-  void Compiler::reserve(const R64& reg) {
-    debug("reserve", reg);
-    if (reg_temps.count(reg)) {
-      auto temp = reg_temps[reg];
-      debug("flush", *temp);
-      assm.mov(temp_mem(temp->num), reg);
-      temp->reg = experimental::nullopt;
-      reg_temps.erase(reg);
-    } else {
-      alive(reg);
+  bool Compiler::dead(shared_ptr<Var> var) {
+    if (var->reg && ir_count >= var->live_end) {
+      debug("dead", *var);
+      dead(*(var->reg), true);
+      return true;
     }
+    return false;
+  }
+
+  void Compiler::reserve(const R64& reg) {
+    alive(reg, false);
   }
 
   R64 Compiler::alloc_reg() {
     for (auto reg : reg_pool) {
       if (!is_alive(reg)) {
         debug("alloc", reg);
-        alive(reg);
-        return reg;
-      }
-    }
-    for (auto reg : reg_pool) {
-      if (reg_temps.count(reg)) {
         reserve(reg);
         return reg;
       }
@@ -95,22 +115,31 @@ namespace ASM {
     return M64{rbp, Imm32{(uint32_t)(-(i+RESERVED_STACK_SPACE) * STACK_VALUE_SIZE)}};
   }
 
-  void Compiler::assign_mem_to_temp(shared_ptr<Temp> dest, M64 base, int num) {
+  void Compiler::assign_mem_to_reg(const R64& dest, const M64& base, int num) {
+    assm.mov(dest, base);
+    assm.mov(dest, M64{dest, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}});
+  }
+
+  void Compiler::assign_reg_to_mem(const R64& src, const M64& base, int num) {
+    auto r2 = alloc_reg();
+    assm.mov(r2, base);
+    assm.mov(M64{r2, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}}, src);
+    dead(r2);
+  }
+
+  void Compiler::assign_mem_to_temp(shared_ptr<Temp> dest, const M64& base, int num) {
     alive(dest);
     if (dest->reg) {
-      auto reg = *(dest->reg);
-      assm.mov(reg, base);
-      assm.mov(reg, M64{reg, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}});
+      assign_mem_to_reg(*(dest->reg), base, num);
     } else {
       auto reg = alloc_reg();
-      assm.mov(reg, base);
-      assm.mov(reg, M64{reg, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}});
+      assign_mem_to_reg(reg, base, num);
       assm.mov(temp_mem(dest->num), reg);
       dead(reg);
     }
   }
 
-  void Compiler::store_temp_to_mem(shared_ptr<Temp> src, M64 base, int num) {
+  void Compiler::store_temp_to_mem(shared_ptr<Temp> src, const M64& base, int num) {
     auto reg = read_temp(src);
     auto r2 = alloc_reg();
     assm.mov(r2, base);
@@ -132,11 +161,28 @@ namespace ASM {
   }
 
   void Compiler::assign_local(shared_ptr<Var> src, shared_ptr<Temp> dest) {
-    assign_mem_to_temp(dest, current_locals(), src->num);
+    alive(src, true);
+    if (src->reg) {
+      write_temp(dest, *(src->reg));
+    } else {
+      assign_mem_to_temp(dest, current_locals(), src->num);
+    }
   }
 
   void Compiler::store_local(shared_ptr<Temp> src, shared_ptr<Var> dest) {
-    store_temp_to_mem(src, current_locals(), dest->num);
+    if (is_alive(dest)) {
+      dead(dest);
+    } else {
+      alive(dest, false);
+    }
+    if (dest->reg) {
+      auto reg = read_temp(src);
+      reg_move(*(dest->reg), reg);
+      dead(reg);
+      dest->dirty = true;
+    } else {
+      store_temp_to_mem(src, current_locals(), dest->num);
+    }
   }
 
   void Compiler::assign_ref(shared_ptr<Ref> src, shared_ptr<Temp> dest) {
@@ -194,23 +240,25 @@ namespace ASM {
     }
   }
 
-  R64 Compiler::read_temp(shared_ptr<Temp> temp, const R64& reg_hint) {
+  R64 Compiler::read_temp(shared_ptr<Temp> temp, optional<R64> reg_hint, bool scratch) {
     if (temp->reg) {
-      return *(temp->reg);
+      if (scratch && temp->shared_reg) {
+        auto reg = (reg_hint && !is_alive(*reg_hint)) ? *reg_hint : alloc_reg();
+        assm.mov(reg, *(temp->reg));
+        return reg;
+      } else {
+        return *(temp->reg);
+      }
     } else {
-      assm.mov(reg_hint, temp_mem(temp->num));
-      return reg_hint;
-    }
-  }
-
-  R64 Compiler::read_temp(shared_ptr<Temp> temp) {
-    if (temp->reg) {
-      return *(temp->reg);
-    } else {
-      auto reg = alloc_reg();
+      auto reg = reg_hint ? *reg_hint : alloc_reg();
       assm.mov(reg, temp_mem(temp->num));
       return reg;
     }
+  }
+
+  // I have no idea why this is needed, but -O2 segfaults without it
+  R64 Compiler::read_temp(shared_ptr<Temp> temp, const R64& reg_hint, bool scratch) {
+    return read_temp(temp, optional<R64>(reg_hint), scratch);
   }
 
   void Compiler::write_temp(shared_ptr<Temp> temp, const R64& reg) {
@@ -231,6 +279,25 @@ namespace ASM {
       assm.mov(scratch, Imm64{cons});
       assm.mov(temp_mem(temp->num), scratch);
       dead(scratch);
+    }
+  }
+
+  void Compiler::flush_vars() {
+    for (auto const& p : reg_vars) {
+      if (p.second->dirty) {
+        p.second->dirty = false;
+        assign_reg_to_mem(*(p.second->reg), current_locals(), p.first);
+      }
+    }
+  }
+
+  void Compiler::check_vars() {
+    for (auto it = reg_vars.begin(); it != reg_vars.end(); ) {
+      if (dead(it->second)) {
+        it = reg_vars.erase(it);
+      } else {
+        ++it;
+      }
     }
   }
 
@@ -340,13 +407,20 @@ namespace ASM {
 
     preamble();
 
+    function.reserve(function.size() + IR_INSTRUCTION_BYTE_UPPER_BOUND * ir.size());
+
     for (auto instruction : ir) {
       #ifdef DEBUG
         assm.nop();
       #endif
       debug("--");
-      function.reserve(function.size() + IR_INSTRUCTION_BYTE_UPPER_BOUND);
       switch (instruction->op()) {
+        case IR::Operation::ForceLoad: {
+          if (auto force = dynamic_cast<ForceLoad<Var>*>(instruction)) {
+            alive(force->src, true);
+          }
+          break;
+        }
         case IR::Operation::Noop: {
           break;
         }
@@ -401,37 +475,38 @@ namespace ASM {
         case IR::Operation::IntAdd: {
           auto intadd = dynamic_cast<IntAdd*>(instruction);
           auto s1 = read_temp(intadd->src1);
-          auto s2 = read_temp(intadd->src2);
+          auto s2 = read_temp(intadd->src2, intadd->dest->reg, true);
           assm.add(s2, s1);
           dead(s1);
-          write_temp(intadd->dest, s2);
           dead(s2);
+          write_temp(intadd->dest, s2);
           break;
         }
         case IR::Operation::Sub: {
           auto sub = dynamic_cast<Sub*>(instruction);
           auto s1 = read_temp(sub->src1);
-          auto s2 = read_temp(sub->src2);
+          auto s2 = read_temp(sub->src2, sub->dest->reg, true);
           assm.sub(s2, s1);
           dead(s1);
-          write_temp(sub->dest, s2);
           dead(s2);
+          write_temp(sub->dest, s2);
           break;
         }
         case IR::Operation::Mul: {
           auto mul = dynamic_cast<Mul*>(instruction);
           auto s1 = read_temp(mul->src1);
-          auto s2 = read_temp(mul->src2);
+          auto s2 = read_temp(mul->src2, mul->dest->reg, true);
           assm.imul(s2, s1);
           dead(s1);
           assm.sar(s2, Imm8{3});
-          write_temp(mul->dest, s2);
           dead(s2);
+          write_temp(mul->dest, s2);
           break;
         }
         case IR::Operation::Div: {
           auto div = dynamic_cast<Div*>(instruction);
           reserve(rdx);
+          reserve(rax);
           auto s1 = read_temp(div->src1);
           auto s2 = read_temp(div->src2);
           reg_move(rax, s1);
@@ -441,33 +516,34 @@ namespace ASM {
           dead(s2);
           dead(rdx);
           assm.sal(rax, Imm8{3});
+          dead(rax);
           write_temp(div->dest, rax);
           break;
         }
         case IR::Operation::Gt: {
           auto gt = dynamic_cast<Gt*>(instruction);
-          auto s1 = read_temp(gt->src1);
-          auto s2 = read_temp(gt->src2);
+          auto s1 = read_temp(gt->src1, nullopt, true);
+          auto s2 = read_temp(gt->src2, gt->dest->reg, true);
           assm.cmp(s2, s1);
           assm.mov(s2, Imm64{_BOOLEAN_TAG});
           assm.mov(s1, Imm64{0b1000 | _BOOLEAN_TAG});
           assm.cmovg(s2, s1);
           dead(s1);
-          write_temp(gt->dest, s2);
           dead(s2);
+          write_temp(gt->dest, s2);
           break;
         }
         case IR::Operation::Geq: {
           auto gte = dynamic_cast<Geq*>(instruction);
-          auto s1 = read_temp(gte->src1);
-          auto s2 = read_temp(gte->src2);
+          auto s1 = read_temp(gte->src1, nullopt, true);
+          auto s2 = read_temp(gte->src2, gte->dest->reg, true);
           assm.cmp(s2, s1);
           assm.mov(s2, Imm64{_BOOLEAN_TAG});
           assm.mov(s1, Imm64{0b1000 | _BOOLEAN_TAG});
           assm.cmovge(s2, s1);
           dead(s1);
-          write_temp(gte->dest, s2);
           dead(s2);
+          write_temp(gte->dest, s2);
           break;
         }
         case IR::Operation::Eq: {
@@ -483,31 +559,31 @@ namespace ASM {
         }
         case IR::Operation::FastEq: {
           auto eq = dynamic_cast<FastEq*>(instruction);
-          auto s1 = read_temp(eq->src1);
-          auto s2 = read_temp(eq->src2);
+          auto s1 = read_temp(eq->src1, nullopt, true);
+          auto s2 = read_temp(eq->src2, eq->dest->reg, true);
           assm.cmp(s2, s1);
           assm.mov(s2, Imm64{_BOOLEAN_TAG});
           assm.mov(s1, Imm64{0b1000 | _BOOLEAN_TAG});
           assm.cmove(s2, s1);
           dead(s1);
-          write_temp(eq->dest, s2);
           dead(s2);
+          write_temp(eq->dest, s2);
           break;
         }
         case IR::Operation::Neg: {
           auto neg = dynamic_cast<Neg*>(instruction);
-          auto s1 = read_temp(neg->src);
+          auto s1 = read_temp(neg->src, neg->dest->reg, true);
           assm.neg(s1);
-          write_temp(neg->dest, s1);
           dead(s1);
+          write_temp(neg->dest, s1);
           break;
         }
         case IR::Operation::Not: {
           auto nott = dynamic_cast<Not*>(instruction);
-          auto s1 = read_temp(nott->src);
+          auto s1 = read_temp(nott->src, nott->dest->reg, true);
           assm.xor_(s1, Imm32{0b1000});
-          write_temp(nott->dest, s1);
           dead(s1);
+          write_temp(nott->dest, s1);
           break;
         }
         case IR::Operation::ShortJump: {
@@ -541,8 +617,10 @@ namespace ASM {
           auto s3 = rdx;
           assm.mov(s2, rsp);
           assm.mov(s3, Imm32{(uint32_t)call->args.size()});
+          flush_vars();
           call_helper((void *)(&helper_call_function), s1, s2, s3);
           dead(s1);
+          dead(s2);
           dead(s3);
           assm.add(rsp, Imm32{(uint32_t)call->args.size()*STACK_VALUE_SIZE});
           break;
@@ -557,6 +635,7 @@ namespace ASM {
         }
         case IR::Operation::CallHelper: {
           if (auto op = dynamic_cast<CallHelper<Helper::GarbageCollect>*>(instruction)) {
+            flush_vars();
             prepare_call_helper(0);
             call_helper((void *)(&helper_garbage_collect));
           } else if (auto op = dynamic_cast<CallHelper<Helper::AllocRecord>*>(instruction)) {
@@ -632,6 +711,7 @@ namespace ASM {
         }
         case IR::Operation::AllocClosure: {
           auto op = dynamic_cast<AllocClosure*>(instruction);
+          reserve(rax);
 
           prepare_call_helper(1);
           auto s1 = read_temp(op->function, rdi);
@@ -645,26 +725,28 @@ namespace ASM {
             call_helper((void*) &helper_add_reference_to_closure, rdi, s2);
             dead(s2);
           }
+
+          dead(rax);
           break;
         }
         case IR::Operation::And: {
           auto andd = dynamic_cast<And*>(instruction);
           auto s1 = read_temp(andd->src1);
-          auto s2 = read_temp(andd->src2);
+          auto s2 = read_temp(andd->src2, andd->dest->reg, true);
           assm.and_(s2, s1);
           dead(s1);
-          write_temp(andd->dest, s2);
           dead(s2);
+          write_temp(andd->dest, s2);
           break;
         }
         case IR::Operation::Or: {
           auto orr = dynamic_cast<Or*>(instruction);
           auto s1 = read_temp(orr->src1);
-          auto s2 = read_temp(orr->src2);
+          auto s2 = read_temp(orr->src2, orr->dest->reg, true);
           assm.or_(s2, s1);
           dead(s1);
-          write_temp(orr->dest, s2);
           dead(s2);
+          write_temp(orr->dest, s2);
           break;
         }
         case IR::Operation::Fork: {
@@ -679,6 +761,9 @@ namespace ASM {
           throw UnexpectedOperation(to_string(static_cast<int>(instruction->op())));
         }
       }
+
+      check_vars();
+      ir_count++;
     }
 
     assm.finish();

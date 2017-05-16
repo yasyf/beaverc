@@ -5,41 +5,25 @@ function
 		function
 		{
 			functions = [],
-			constants = [5, None],
-			parameter_count = 1,
-			local_vars = [t],
+			constants = [1],
+			parameter_count = 0,
+			local_vars = [],
 			local_ref_vars = [],
 			free_vars = [],
-			names = [print],
+			names = [],
 			instructions = 
 			[
-				load_local	0
-				load_global	0
-				call	1
-				pop
-				gc
 				load_const	0
-				load_local	0
-				gt
-				if	0
-				goto	1
-				0:
-				load_const	0
-				return
-				goto	2
-				1:
-				2:
-				load_const	1
 				return
 			]
 		}
 	],
-	constants = [4, 6, "hello", 0],
+	constants = [1, "foo", "bar", 0],
 	parameter_count = 0,
 	local_vars = [],
 	local_ref_vars = [],
 	free_vars = [],
-	names = [print, input, intcast, x],
+	names = [print, input, intcast, x, y, f, z, a],
 	instructions = 
 	[
 		load_func	-1
@@ -48,20 +32,30 @@ function
 		store_global	1
 		load_func	-3
 		store_global	2
+		load_const	0
+		load_const	0
+		add
+		store_global	3
+		load_const	1
+		load_const	2
+		add
+		store_global	4
 		load_func	0
 		alloc_closure	0
-		store_global	3
-		load_const	0
+		store_global	5
+		load_global	5
+		call	0
+		store_global	6
+		load_global	6
 		load_global	3
+		sub
+		store_global	7
+		load_global	3
+		load_global	0
 		call	1
 		pop
 		gc
-		load_const	1
-		load_global	3
-		call	1
-		pop
-		gc
-		load_const	2
+		load_global	4
 		load_global	0
 		call	1
 		pop

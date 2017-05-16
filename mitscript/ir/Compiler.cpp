@@ -31,13 +31,22 @@ namespace IR {
   }
 
   template<typename T>
-  shared_ptr<T> Compiler::get_operand(size_t num) {
-    static map<size_t, shared_ptr<T>> operands;
-
+  shared_ptr<T> _get_operand(map<size_t, shared_ptr<T>>& operands, size_t num) {
     if (!operands.count(num)) {
       operands[num] = make_shared<T>(num);
     }
     return operands[num];
+  }
+
+  template<typename T>
+  shared_ptr<T> Compiler::get_operand(size_t num) {
+    static map<size_t, shared_ptr<T>> operands;
+    return _get_operand(operands, num);
+  }
+
+  template<>
+  shared_ptr<Var> Compiler::get_operand(size_t num) {
+    return _get_operand(vars, num);
   }
 
   template<typename T>
@@ -86,6 +95,12 @@ namespace IR {
   void Compiler::int_binop() {
     auto op = helper_binop<T, Assert::AssertInt>();
     op->dest->hintInt();
+  }
+
+  template<typename T>
+  void Compiler::int_to_bool_binop() {
+    auto op = helper_binop<T, Assert::AssertInt>();
+    op->dest->hintBool();
   }
 
   template<typename T>
@@ -178,10 +193,10 @@ namespace IR {
           break;
         }
         case BC::Operation::Gt:
-          int_binop<Gt>();
+          int_to_bool_binop<Gt>();
           break;
         case BC::Operation::Geq:
-          int_binop<Geq>();
+          int_to_bool_binop<Geq>();
           break;
         case BC::Operation::And:
           bool_binop<And>();

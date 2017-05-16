@@ -102,7 +102,7 @@ bcparser/parser.cpp:
 
 -include $(shell find -name '*.d')
 
-%.o: %.cpp %.c
+%.o: %.cpp %.c %.h
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:

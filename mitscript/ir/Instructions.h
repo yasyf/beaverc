@@ -22,10 +22,8 @@ namespace IR {
 
   const int SRC_HINT_MASK = CONST_SRC_HINT | VAR_SRC_HINT;
 
-  struct Var;
-
   struct Operand {
-    int live_start = 0;
+    int live_start = -1;
     int live_end = INT_MAX;
     int type_hint = 0;
     uint64_t src_val = 0;
@@ -34,8 +32,7 @@ namespace IR {
     virtual string toString() const = 0;
 
      virtual void transferHint(shared_ptr<Operand> op) {
-      this->type_hint = op->type_hint & ~SRC_HINT_MASK;
-      this->src_val = op->src_val;
+      this->type_hint |= op->type_hint & ~SRC_HINT_MASK;
     }
 
     bool hasHint() {
@@ -123,6 +120,15 @@ namespace IR {
       return type_hint & type_const;
     }
 
+    ostream& debugInfo(ostream& os) const {
+      os << " (" << to_string(type_hint) << ")";
+      os << " {" << to_string(live_start) << " - " << to_string(live_end) << "}";
+      if (reg) {
+        os << " [" << *reg << "]";
+      }
+      return os;
+    }
+
   private:
     void hint(int type_const) {
       this->type_hint |= type_const;
@@ -142,6 +148,7 @@ namespace IR {
 
   struct Temp : Operand {
     size_t num;
+    bool shared_reg = false;
 
     Temp(size_t num) : num(num) {}
 
@@ -154,11 +161,7 @@ namespace IR {
       virtual string toString() const override {
         ostringstream os;
         os << "t" << to_string(num);
-        os << " (" << to_string(type_hint) << ")";
-        os << " {" << to_string(live_start) << " - " << to_string(live_end) << "}";
-        if (reg) {
-          os << " [" << *reg << "]";
-        }
+        debugInfo(os);
         return os.str();
       }
     #else
@@ -172,11 +175,20 @@ namespace IR {
 
   struct Var : Operand {
     size_t num;
+    bool dirty = false;
+    optional<x64asm::R64> last_reg;
 
-    Var(size_t num) : num(num) {}
+    Var(size_t num) : num(num) {
+      hintVar(num);
+    }
 
     #ifdef DEBUG
-      virtual string toString() const override { return "%" + to_string(num) + " (" + to_string(type_hint) + ")"; }
+      virtual string toString() const override {
+        ostringstream os;
+        os << "%" << to_string(num);
+        debugInfo(os);
+        return os.str();
+      }
     #else
       virtual string toString() const override { return "%" + to_string(num); }
     #endif
@@ -261,6 +273,7 @@ namespace IR {
 
   enum class Operation {
     Assign,
+    ForceLoad,
     Store,
     Add,
     IntAdd,
@@ -318,6 +331,15 @@ namespace IR {
     }
     virtual Operation op() { return Operation::Assign; }
     virtual string toString() const override { return dest->toString() + " = " + src->toString(); }
+  };
+
+  template<typename S>
+  struct ForceLoad : Instruction {
+    shared_ptr<S> src;
+
+    ForceLoad(shared_ptr<S> src) : src(src) {}
+    virtual Operation op() { return Operation::ForceLoad; }
+    virtual string toString() const override { return "force_load " + src->toString(); }
   };
 
   template<typename D>
