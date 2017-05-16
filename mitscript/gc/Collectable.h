@@ -11,8 +11,7 @@ namespace GC {
   //Any object that inherits from collectable can be created and tracked by the garbage collector.
   class Collectable {
   public:
-    Collectable(CollectedHeap& heap) : heap(heap) {}
-    virtual ~Collectable() {}
+    Collectable() {}
 
     void mark(size_t generation, bool mark_recent_only);
     void forceMark(size_t generation, bool mark_recent_only);
@@ -29,7 +28,6 @@ namespace GC {
     that calls heap.markSuccessors( ) on all collectable objects that this object points to.
     markSuccessors() is the one responsible for checking if the object is marked and marking it.
     */
-    CollectedHeap& heap;
     size_t marked = 0;
 
     friend CollectedHeap;

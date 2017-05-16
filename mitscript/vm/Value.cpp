@@ -29,26 +29,26 @@ namespace VM {
     }
   }
 
-  StringValue::StringValue(GC::CollectedHeap& heap, const std::string& value) : PointerValue(heap) {
+  StringValue::StringValue(const std::string& value) {
     height = 0;
     length = value.size();
     if (length > 0) {
       memory = static_cast<char*>(malloc(length * sizeof(char)));
       strncpy(memory, value.c_str(), length);
     }
-    heap.increaseSize(size());
+    interpreter->heap.increaseSize(size());
   }
 
-  StringValue::StringValue(GC::CollectedHeap& heap, const Value l, const Value r) : PointerValue(heap) {
+  StringValue::StringValue(const Value l, const Value r) {
     if (l.isPointer() && !l.isStringValue()) {
       // Must be a record or function
-      left = Value::makeString(heap.allocate<StringValue>(l.toString()));
+      left = Value::makeString(interpreter->heap.allocate<StringValue>(l.toString()));
     } else {
       left = l;
     }
     if (r.isPointer() && !r.isStringValue()) {
       // Must be a record or function
-      right = Value::makeString(heap.allocate<StringValue>(r.toString()));
+      right = Value::makeString(interpreter->heap.allocate<StringValue>(r.toString()));
     } else {
       right = r;
     }
@@ -62,6 +62,7 @@ namespace VM {
       StringValue* rr = right.getPointer<StringValue>();
       height = max(height, rr->height + 1);
     }
+    interpreter->heap.increaseSize(size());
   }
 
   StringValue::~StringValue() {
@@ -71,7 +72,7 @@ namespace VM {
     if (height == 0 && length > 0) {
       free(memory);
     }
-    heap.decreaseSize(size());
+    interpreter->heap.decreaseSize(size());
   }
 
   std::string StringValue::toString() {
@@ -99,29 +100,55 @@ namespace VM {
     }
   }
 
-  RecordValue::RecordValue(GC::CollectedHeap& heap) : PointerValue(heap) {
-    heap.increaseSize(size());
+  RecordValue::RecordValue() {
+    interpreter->heap.increaseSize(size());
   }
 
   RecordValue::~RecordValue() {
     #ifdef DEBUG
     cout << "DELETING RecordValue: " << toString() << endl;
     #endif
-    heap.decreaseSize(size());
+    for (auto string : allocated_strings) {
+      free((void*) string);
+    }
+    interpreter->heap.decreaseSize(size());
   }
 
-  Value RecordValue::get(std::string key) {
+  Value RecordValue::get(Value key) {
+    if (key.isStringConstant()) {
+      return values[key.getStringConstant()];
+    }
+    return values[key.toString().c_str()];
+  }
+
+  Value RecordValue::get(const char* key) {
     return values[key];
   }
 
-  void RecordValue::insert(std::string key, Value inserted) {
-    if (values.count(key) == 0)
-      heap.increaseSize(sizeof(std::string) + key.capacity() * sizeof(char) + sizeof(Value));
+  void RecordValue::insert(Value key, Value inserted) {
+    if (key.isStringConstant()) {
+      insert(key.getStringConstant(), inserted);
+      return;
+    }
+    std::string k = key.toString();
+    if (values.count(k.c_str()) != 0) {
+      insert(k.c_str(), inserted);
+      return;
+    }
+    interpreter->heap.increaseSize(k.size() + 1);
+    char* string = static_cast<char*>(malloc(k.size() + 1));
+    strcpy(string, k.c_str());
+    const char* result = (const char*) string;
+    allocated_strings.push_back(result);
+    insert(result, inserted);
+  };
+
+  void RecordValue::insert(const char* key, Value inserted) {
     if (has_optimization(OPTIMIZATION_GC_GENERATIONAL) &&
         inserted.isPointer() &&
         inserted.getPointerValue()->generation == GC::Generation::RecentlyAllocated &&
         this->generation != GC::Generation::RecentlyAllocated) {
-      heap.cross_generation_pointers.push_back(this);
+      interpreter->heap.cross_generation_pointers.push_back(this);
     }
     values[key] = inserted;
   }
@@ -129,7 +156,7 @@ namespace VM {
   std::string RecordValue::toString() {
     std::string result = "{";
     for (auto keyvalue : values) {
-        result += keyvalue.first + ":" + keyvalue.second.toString() + " ";
+        result += std::string(keyvalue.first) + ":" + keyvalue.second.toString() + " ";
     };
     result += "}";
     return result;
@@ -138,7 +165,10 @@ namespace VM {
   size_t RecordValue::size() {
     size_t s = sizeof(RecordValue);
     for (auto pair : values) {
-      s += sizeof(std::string) + pair.first.capacity() * sizeof(char) + sizeof(Value);
+      s += sizeof(const char*) + sizeof(Value);
+    }
+    for (auto string : allocated_strings) {
+      s += strlen(string);
     }
     return s;
   }
@@ -151,15 +181,15 @@ namespace VM {
     }
   }
 
-  ReferenceValue::ReferenceValue(GC::CollectedHeap& heap, Value v) : PointerValue(heap), value(v) {
-    heap.increaseSize(size());
+  ReferenceValue::ReferenceValue(Value v) : value(v) {
+    interpreter->heap.increaseSize(size());
   }
 
   ReferenceValue::~ReferenceValue() {
     #ifdef DEBUG
     cout << "DELETING ReferenceValue: " << toString() << endl;
     #endif
-    heap.decreaseSize(size());
+    interpreter->heap.decreaseSize(size());
   }
 
   std::string ReferenceValue::toString() {
@@ -175,7 +205,7 @@ namespace VM {
         v.isPointer() &&
         v.getPointerValue()->generation == GC::Generation::RecentlyAllocated &&
         this->generation != GC::Generation::RecentlyAllocated) {
-      heap.cross_generation_pointers.push_back(this);
+      interpreter->heap.cross_generation_pointers.push_back(this);
     }
     value = v;
   }
@@ -194,35 +224,35 @@ namespace VM {
     return "FUNCTION";
   }
 
-  BareFunctionValue::BareFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {
-      heap.increaseSize(size());
+  BareFunctionValue::BareFunctionValue(std::shared_ptr<BC::Function> value) : value(value) {
+      interpreter->heap.increaseSize(size());
     }
 
   BareFunctionValue::~BareFunctionValue() {
     #ifdef DEBUG
     cout << "DELETING BareFunctionValue: " << toString() << endl;
     #endif
-    heap.decreaseSize(size());
+    interpreter->heap.decreaseSize(size());
   }
 
   Value BareFunctionValue::call(std::vector<Value> & arguments) {
     throw RuntimeException("call on a BareFunctionValue");
   }
 
-  ClosureFunctionValue::ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value) : AbstractFunctionValue(heap), value(value) {
-    heap.increaseSize(size());
+  ClosureFunctionValue::ClosureFunctionValue(std::shared_ptr<BC::Function> value) : value(value) {
+    interpreter->heap.increaseSize(size());
   }
 
   ClosureFunctionValue::~ClosureFunctionValue() {
     #ifdef DEBUG
     cout << "DELETING ClosureFunctionValue: " << toString() << endl;
     #endif
-    heap.decreaseSize(size());
+    interpreter->heap.decreaseSize(size());
   }
 
 
   void ClosureFunctionValue::add_reference(ReferenceValue* reference) {
-    heap.increaseSize(sizeof(ReferenceValue*));
+    interpreter->heap.increaseSize(sizeof(ReferenceValue*));
     references.push_back(reference);
   };
 
@@ -243,7 +273,7 @@ namespace VM {
     std::vector<Value> local_vars(value->local_vars_.size(), Value::makeNone());
     std::vector<ReferenceValue*> local_reference_vars;
     for (auto var : value->local_reference_vars_) {
-      local_reference_vars.push_back(heap.allocate<ReferenceValue>(Value::makeNone()));
+      local_reference_vars.push_back(interpreter->heap.allocate<ReferenceValue>(Value::makeNone()));
     }
     for (auto var : references) {
       local_reference_vars.push_back(var);
@@ -312,7 +342,7 @@ namespace VM {
           }
           std::string input;
           std::cin >> input;
-          return Value::makeString(heap.allocate<StringValue>(input));
+          return Value::makeString(interpreter->heap.allocate<StringValue>(input));
         }
         break;
 
@@ -331,8 +361,8 @@ namespace VM {
   }
 
 
-  BuiltInFunctionValue::BuiltInFunctionValue(GC::CollectedHeap& heap, int t) : AbstractFunctionValue(heap) {
-    heap.increaseSize(size());
+  BuiltInFunctionValue::BuiltInFunctionValue(int t) {
+    interpreter->heap.increaseSize(size());
     type = static_cast<BuiltInFunctionType>(t);
   }
 
@@ -340,6 +370,6 @@ namespace VM {
     #ifdef DEBUG
     cout << "DELETING BuiltinFunctionValue: " << toString() << endl;
     #endif
-    heap.decreaseSize(size());
+    interpreter->heap.decreaseSize(size());
   }
 }

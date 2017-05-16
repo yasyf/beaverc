@@ -22,8 +22,8 @@ namespace VM {
       std::vector<std::vector<ReferenceValue*>*> local_reference_variable_stack;
       std::vector<std::stack<Value>*> operand_stack_stack;
       GC::CollectedHeap heap;
-      Interpreter(std::shared_ptr<BC::Function> main_func, size_t max_size);
-      int interpret();
+      Interpreter(size_t max_size);
+      int interpret(std::shared_ptr<BC::Function> main_func);
       Value run_function(ClosureFunctionValue* closure, Value* local_variables, ReferenceValue** local_reference_vars);
       void push_frame(std::vector<Value>* local, std::vector<ReferenceValue*>* local_reference);
       void pop_frame();

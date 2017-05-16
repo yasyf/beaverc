@@ -88,7 +88,7 @@ namespace GC {
     */
     template<typename T>
     T* allocate() {
-      auto t = new T(*this);
+      auto t = new T();
       register_allocation(t);
       return t;
     }
@@ -99,14 +99,14 @@ namespace GC {
     */
     template<typename T, typename ARG>
     T* allocate(ARG a) {
-      auto t = new T(*this, a);
+      auto t = new T(a);
       register_allocation(t);
       return t;
     }
 
     template<typename T, typename ARG, typename ARG2>
     T* allocate(ARG a, ARG2 b) {
-      auto t = new T(*this, a, b);
+      auto t = new T(a, b);
       register_allocation(t);
       return t;
     }

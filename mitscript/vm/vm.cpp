@@ -152,7 +152,7 @@ int main(int argc, char** argv)
     ;
   #endif
 
-  interpreter = new VM::Interpreter(function, usable_memory);
+  interpreter = new VM::Interpreter(usable_memory);
 
   std::set_terminate([](){
     try {
@@ -165,8 +165,8 @@ int main(int argc, char** argv)
       exit(1);
     }
   });
-
-  int result = interpreter->interpret();
+  
+  int result = interpreter->interpret(function);
   if (has_option(OPTION_SHOW_MEMORY_USAGE)) {
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);

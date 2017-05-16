@@ -40,7 +40,7 @@ namespace VM {
   #define __IS_STRING(value) ((value & _STRING_TAG) == _STRING_TAG)
 
   struct PointerValue : GC::Collectable {
-    PointerValue(GC::CollectedHeap& heap) : GC::Collectable(heap) {};
+    PointerValue() {};
     virtual std::string toString() = 0;
   };
 
@@ -70,6 +70,10 @@ namespace VM {
 
     bool isStringValue() const {
       return __IS_STRING_VALUE(value);
+    }
+
+    bool isStringConstant() const {
+      return __IS_STRING_CONSTANT_VALUE(value);
     }
 
     bool isString() const {
@@ -153,8 +157,8 @@ namespace VM {
     Value left;
     Value right;
 
-    StringValue(GC::CollectedHeap& heap, const std::string& value);
-    StringValue(GC::CollectedHeap& heap, const Value l, const Value r);
+    StringValue(const std::string& value);
+    StringValue(const Value l, const Value r);
     ~StringValue();
 
     std::string toString();
@@ -162,14 +166,29 @@ namespace VM {
     virtual void markChildren(size_t generation, bool mark_recent_only);
   };
 
-  struct RecordValue : public PointerValue {
-    std::unordered_map<std::string, Value> values;
+  struct constCharHash {
+    size_t operator() (const char *val) const {
+      return std::hash<std::string>()(val);
+    }
+  };
 
-    RecordValue(GC::CollectedHeap& heap);
+  struct constCharCompare {
+    bool operator()(const char *val1, const char *val2) const{
+      return val1 == val2 || (val1 && val2 && strcmp(val1, val2) == 0);
+    }
+  };
+
+  struct RecordValue : public PointerValue {
+    std::unordered_map<const char*, Value, constCharHash, constCharCompare> values;
+    std::vector<const char*> allocated_strings;
+
+    RecordValue();
     ~RecordValue();
 
-    Value get(std::string key);
-    void insert(std::string key, Value inserted);
+    Value get(Value key);
+    Value get(const char* key);
+    void insert(Value key, Value inserted);
+    void insert(const char* key, Value inserted);
 
     std::string toString();
     virtual size_t size();
@@ -179,7 +198,7 @@ namespace VM {
   struct ReferenceValue : public PointerValue {
     Value value;
 
-    ReferenceValue(GC::CollectedHeap& heap, Value v);
+    ReferenceValue(Value v);
     ~ReferenceValue();
 
     void write(Value v);
@@ -190,7 +209,7 @@ namespace VM {
   };
 
   struct AbstractFunctionValue : public PointerValue {
-    AbstractFunctionValue(GC::CollectedHeap& heap) : PointerValue(heap) {}
+    AbstractFunctionValue() {}
 
     std::string toString();
     virtual Value call(std::vector<Value> & arguments) = 0;
@@ -199,7 +218,7 @@ namespace VM {
   struct BareFunctionValue : public AbstractFunctionValue {
     std::shared_ptr<BC::Function> value;
 
-    BareFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value);
+    BareFunctionValue(std::shared_ptr<BC::Function> value);
     ~BareFunctionValue();
 
     Value call(std::vector<Value> & arguments);
@@ -211,7 +230,7 @@ namespace VM {
     std::shared_ptr<BC::Function> value;
     std::vector<ReferenceValue*> references;
 
-    ClosureFunctionValue(GC::CollectedHeap& heap, std::shared_ptr<BC::Function> value);
+    ClosureFunctionValue(std::shared_ptr<BC::Function> value);
     ~ClosureFunctionValue();
 
     void add_reference(ReferenceValue* reference);
@@ -231,7 +250,7 @@ namespace VM {
   struct BuiltInFunctionValue : public AbstractFunctionValue {
     BuiltInFunctionType type;
 
-    BuiltInFunctionValue(GC::CollectedHeap& heap, int t);
+    BuiltInFunctionValue(int t);
     ~BuiltInFunctionValue();
 
     Value call(std::vector<Value> & arguments);
