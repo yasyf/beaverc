@@ -10,9 +10,9 @@ endif
 LEX = flex
 YACC = bison
 
-CFLAGS = -std=c++14 -I../x64asm -I../udis86/libudis86
-CXXFLAGS = -std=c++14 -I../x64asm -I../udis86/libudis86 -MMD -MP
-LDFLAGS = -lstdc++ -L../x64asm/lib -L../udis86/libudis86/.libs
+CFLAGS = -std=c++14 -I../x64asm -I../udis86/libudis86 -Wl,--gc-sections
+CXXFLAGS = -std=c++14 -I../x64asm -I../udis86/libudis86 -MMD -MP -Wl,--gc-sections
+LDFLAGS = -lstdc++ -L../x64asm/lib -L../udis86/libudis86/.libs -Wl,--gc-sections
 LIBS = -lx64asm -ludis86
 
 DEBUG ?= 0

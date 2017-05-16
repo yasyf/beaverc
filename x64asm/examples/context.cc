@@ -28,7 +28,7 @@ int main() {
   // Create an assembler
   Assembler assm;
 
-  // Declare a local program variable.MOV_R64_IMM64, {rax, Imm64{&x}}},
+  // Declare a local program variable.
   uint64_t x = 10;
 
   // Example 1:
