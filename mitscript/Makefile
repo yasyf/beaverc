@@ -24,6 +24,12 @@ else
     CXXFLAGS += -DNDEBUG -O2
 endif
 
+LABELS ?= 0
+ifeq ($(LABELS), 1)
+    CFLAGS += -g
+    CXXFLAGS += -g
+endif
+
 PROFILE ?= 0
 ifeq ($(PROFILE), 1)
     CFLAGS += -pg
