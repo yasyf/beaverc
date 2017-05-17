@@ -1,0 +1,32 @@
+Currently, we have a very odd bug where life.mit will segfault if --opt=all is used. It appears that x64asm is generating some bizarre assembly that we are not telling it to (example below!). Until we debug this, please use --opt=all for all tests except for life.mit, where --opt=machine-code-only should be used instead.
+
+Occasionally, only in big programs, a sequence similar to the following is inserted into our generated assembly. We have no idea why this is happening or how to solve the issue.
+
+```
+  push r8
+  push r9
+  push r10
+  push r11
+  call rcx
+  pop r11
+  pop r10
+  pop r9
+  add [rax], al
+  add [rax], al
+  add [rax], al
+  add [rax], al
+  add [rax], al
+  mov rax, 0x4320c0
+  push r8
+  push r9
+  push r10
+  push r11
+  call rax
+  pop r11
+  pop r10
+  pop r9
+  pop r8
+  cmp rax, 0x0
+```
+
+Note this sequence would make sense where it not for the several `add [rax], al` inserted.
