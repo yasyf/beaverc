@@ -4,6 +4,7 @@
 #include <cassert>
 #include <vector>
 #include <experimental/optional>
+#include "../vm/options.h"
 #include "Util.h"
 #include "Compiler.h"
 #include "Exception.h"
@@ -142,12 +143,21 @@ namespace BC {
       else
         output(Operation::LoadLocal, *i);
     } else {
+      size_t index = insert(current().names_, name.name);
       if (storing && isGlobal()) {
         insert(parents->globals_, name.name);
-        size_t i = insert(current().names_, name.name);
-        output(Operation::StoreGlobal, i);
+        output(Operation::StoreGlobal, index);
       } else {
-        throw UninitializedVariableException(name.name);
+        if (has_option(OPTION_COMPILE_ERRORS)) {
+          throw UninitializedVariableException(name.name);
+        } else {
+          if (storing) {
+            output(Operation::Pop);
+          } else {
+            output(Operation::LoadConst, 0);
+          }
+          output(Operation::ThrowUninitialized, index);
+        }
       }
     }
   }
@@ -303,9 +313,11 @@ namespace BC {
       outputReturn();
     }
 
-    // Check for errors
-    CompilerErrorsScanner errorsScanner(function);
-    errorsScanner.scan(func.body);
+    if (has_option(OPTION_COMPILE_ERRORS)) {
+      // Check for errors
+      CompilerErrorsScanner errorsScanner(function);
+      errorsScanner.scan(func.body);
+    }
 
     assert(parents->returned);
 

@@ -307,6 +307,7 @@ namespace IR {
     FieldStore,
     IndexLoad,
     IndexStore,
+    ThrowUninitialized,
   };
 
   enum class Assert {

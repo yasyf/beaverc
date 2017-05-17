@@ -577,6 +577,10 @@ namespace VM {
               case Operation::Label:
               break;
 
+              case Operation::ThrowUninitialized:
+                throw UninitializedVariableException(func.names_[instruction.operand0.value()]);
+                break;
+
               default:
                   throw RuntimeException("Found an unknown opcode.");
               break;

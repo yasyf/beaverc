@@ -281,6 +281,9 @@ namespace IR {
         case BC::Operation::Pop:
           popTemp();
           break;
+        case BC::Operation::ThrowUninitialized:
+          instructions.push_back(new CallHelper<Helper::ThrowUninitialized>{(size_t) instruction.operand0.value()});
+          break;
         default:
           throw InvalidOperationException(to_string(static_cast<int>(instruction.operation)));
           break;

@@ -127,6 +127,11 @@ namespace ASM {
     throw IllegalCastException("Value is not a boolean");
   }
 
+  void helper_throw_uninitialized(ClosureFunctionValue* closure, int index) {
+    std::string name = closure->value->names_[index];
+    throw UninitializedVariableException(name);
+  }
+
   uint64_t helper_add(uint64_t left, uint64_t right) {
     #if DEBUG
       cout << endl << "helper_add" << endl;

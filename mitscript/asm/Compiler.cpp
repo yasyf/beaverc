@@ -677,6 +677,15 @@ namespace ASM {
             dead(s1);
             dead(s2);
             dead(s3);
+          } else if (auto op = dynamic_cast<CallHelper<Helper::ThrowUninitialized>*>(instruction)) {
+            prepare_call_helper(2);
+            auto s1 = rdi;
+            auto s2 = rsi;
+            assm.mov(s1, current_closure());
+            assm.mov(s2, Imm64{op->arg0});
+            call_helper((void *)(&helper_throw_uninitialized), s1, s2);
+            dead(s1);
+            dead(s2);
           }
           break;
         }
