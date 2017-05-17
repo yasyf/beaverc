@@ -201,7 +201,7 @@ function
 							]
 						}
 					],
-					constants = [],
+					constants = [None],
 					parameter_count = 0,
 					local_vars = [clone, rv],
 					local_ref_vars = [clone],
@@ -224,6 +224,8 @@ function
 						swap
 						field_store	1
 						load_local	1
+						return
+						load_const	0
 						return
 					]
 				}
@@ -268,6 +270,8 @@ function
 				store_ref	0
 				load_ref	0
 				return
+				load_const	0
+				return
 			]
 		},
 		function
@@ -310,7 +314,7 @@ function
 					]
 				}
 			],
-			constants = [],
+			constants = [None],
 			parameter_count = 2,
 			local_vars = [lst, N, n, rv],
 			local_ref_vars = [N, rv],
@@ -331,6 +335,8 @@ function
 				pop
 				gc
 				load_ref	1
+				return
+				load_const	0
 				return
 			]
 		},
@@ -374,7 +380,7 @@ function
 					]
 				}
 			],
-			constants = [0],
+			constants = [0, None],
 			parameter_count = 2,
 			local_vars = [l1, l2, rv, state],
 			local_ref_vars = [rv, state],
@@ -442,6 +448,8 @@ function
 				gc
 				load_ref	0
 				return
+				load_const	1
+				return
 			]
 		},
 		function
@@ -504,7 +512,7 @@ function
 					]
 				}
 			],
-			constants = [0],
+			constants = [0, None],
 			parameter_count = 3,
 			local_vars = [a, b, N, rv, state, temp, v],
 			local_ref_vars = [N, rv, state],
@@ -555,12 +563,14 @@ function
 				26:
 				load_ref	1
 				return
+				load_const	1
+				return
 			]
 		},
 		function
 		{
 			functions = [],
-			constants = [0, 1],
+			constants = [0, 1, None],
 			parameter_count = 3,
 			local_vars = [a, smallb, N, i, v],
 			local_ref_vars = [],
@@ -600,6 +610,8 @@ function
 				goto	27
 				29:
 				load_local	4
+				return
+				load_const	2
 				return
 			]
 		}

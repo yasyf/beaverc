@@ -5,7 +5,8 @@
 using namespace BC;
 using namespace GC;
 
-#define COLLECTION_RATIO 0.9
+#define GC_COLLECTION_RATIO 0.9
+#define GC_THRASH_THRESHOLD 20000
 
 namespace VM {
   Interpreter::Interpreter(std::shared_ptr<BC::Function> main_func, size_t max_size) : heap(max_size) {
@@ -49,72 +50,78 @@ namespace VM {
 
   static uint32_t old_heap_size = 0;
 
+  bool Interpreter::will_garbage_collect() {
+    return (
+      (heap.bytes_current >= (old_heap_size + GC_THRASH_THRESHOLD)) &&
+      (heap.bytes_current >= heap.bytes_max * GC_COLLECTION_RATIO)
+    );
+  }
+
   void Interpreter::potentially_garbage_collect() {
     #ifdef DEBUG
     std::cout << "$$$ Bytes current: " << heap.bytes_current << std::endl;
     std::cout << "$$$ Bytes max: " << heap.bytes_max << std::endl;
     #endif
 
-    if (heap.bytes_current < old_heap_size + 20000) {
+    if (!will_garbage_collect()) {
       return;
     }
 
-    if (heap.bytes_current >= heap.bytes_max * COLLECTION_RATIO) {
-      #ifdef DEBUG
-      std::cout << "$$$$$ Building roots..." << std::endl;
-      #endif
-      std::vector<PointerValue*> roots;
-      roots.push_back(main_closure);
-      for (auto local_variables : local_variable_stack) {
-        for (int i = 0; i < local_variables.second; i++) {
-          Value v = local_variables.first[i];
+    #ifdef DEBUG
+    std::cout << "$$$$$ Building roots..." << std::endl;
+    #endif
+    std::vector<PointerValue*> roots;
+    roots.push_back(main_closure);
+    for (auto local_variables : local_variable_stack) {
+      for (int i = 0; i < local_variables.second; i++) {
+        Value v = local_variables.first[i];
+        if (v.isPointer()) {
+          roots.push_back(v.getPointerValue());
+        }
+      }
+    }
+    for (auto local_reference_variables : local_reference_variable_stack) {
+      for (int i = 0; i < local_reference_variables.second; i++) {
+        roots.push_back(local_reference_variables.first[i]);
+      }
+    }
+    for (auto local_stack : operand_stack_stack) {
+      std::vector<Value> stack_holder;
+      while (!local_stack->empty()) {
+          auto v = local_stack->top();
           if (v.isPointer()) {
             roots.push_back(v.getPointerValue());
           }
-        }
+          stack_holder.insert(stack_holder.begin(), v);
+          local_stack->pop();
       }
-      for (auto local_reference_variables : local_reference_variable_stack) {
-        for (int i = 0; i < local_reference_variables.second; i++) {
-          roots.push_back(local_reference_variables.first[i]);
-        }
-      }
-      for (auto local_stack : operand_stack_stack) {
-        std::vector<Value> stack_holder;
-        while (!local_stack->empty()) {
-            auto v = local_stack->top();
-            if (v.isPointer()) {
-              roots.push_back(v.getPointerValue());
-            }
-            stack_holder.insert(stack_holder.begin(), v);
-            local_stack->pop();
-        }
-        for (auto v : stack_holder) {
-            local_stack->push(v);
-        }
-      }
-      for (auto keyvalue : global_variables) {
-        if (keyvalue.second.isPointer()) {
-          roots.push_back(keyvalue.second.getPointerValue());
-        }
-      }
-      #ifdef DEBUG
-      std::cout << "$$$$$ Collecting garbage..." << std::endl;
-      #endif
-
-      if (has_optimization(OPTIMIZATION_GC_GENERATIONAL)) {
-        heap.gcFast(roots.begin(), roots.end());
-        if (heap.bytes_current < heap.bytes_max * COLLECTION_RATIO) {
-          heap.successful_fast_collections++;
-          old_heap_size = heap.bytes_current;
-          return;
-        }
-      }
-
-      heap.gcFull(roots.begin(), roots.end());
-      if (heap.bytes_current < heap.bytes_max * COLLECTION_RATIO) {
-        heap.successful_full_collections++;
+      for (auto v : stack_holder) {
+          local_stack->push(v);
       }
     }
+    for (auto keyvalue : global_variables) {
+      if (keyvalue.second.isPointer()) {
+        roots.push_back(keyvalue.second.getPointerValue());
+      }
+    }
+    #ifdef DEBUG
+    std::cout << "$$$$$ Collecting garbage..." << std::endl;
+    #endif
+
+    if (has_optimization(OPTIMIZATION_GC_GENERATIONAL)) {
+      heap.gcFast(roots.begin(), roots.end());
+      if (heap.bytes_current < heap.bytes_max * GC_COLLECTION_RATIO) {
+        heap.successful_fast_collections++;
+        old_heap_size = heap.bytes_current;
+        return;
+      }
+    }
+
+    heap.gcFull(roots.begin(), roots.end());
+    if (heap.bytes_current < heap.bytes_max * GC_COLLECTION_RATIO) {
+      heap.successful_full_collections++;
+    }
+
     old_heap_size = heap.bytes_current;
   };
 

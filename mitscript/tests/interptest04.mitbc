@@ -25,6 +25,8 @@ function
 				call	1
 				pop
 				gc
+				load_const	1
+				return
 			]
 		}
 	],

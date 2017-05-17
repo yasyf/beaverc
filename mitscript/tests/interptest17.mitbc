@@ -38,7 +38,7 @@ function
 				function
 				{
 					functions = [],
-					constants = [0, "[", 1, ", ", "]"],
+					constants = [0, "[", 1, ", ", "]", None],
 					parameter_count = 0,
 					local_vars = [i, x],
 					local_ref_vars = [],
@@ -92,12 +92,14 @@ function
 						load_const	4
 						add
 						return
+						load_const	5
+						return
 					]
 				},
 				function
 				{
 					functions = [],
-					constants = [1],
+					constants = [1, None],
 					parameter_count = 2,
 					local_vars = [start, stop, result],
 					local_ref_vars = [],
@@ -132,10 +134,12 @@ function
 						8:
 						load_local	2
 						return
+						load_const	1
+						return
 					]
 				}
 			],
-			constants = [0],
+			constants = [0, None],
 			parameter_count = 0,
 			local_vars = [this],
 			local_ref_vars = [this],
@@ -165,12 +169,14 @@ function
 				store_ref	0
 				load_ref	0
 				return
+				load_const	1
+				return
 			]
 		},
 		function
 		{
 			functions = [],
-			constants = [2, 0, 1],
+			constants = [2, 0, 1, None],
 			parameter_count = 1,
 			local_vars = [arr, first_half, first_i, result, second_half, second_i],
 			local_ref_vars = [],
@@ -320,6 +326,8 @@ function
 				goto	21
 				23:
 				load_local	3
+				return
+				load_const	3
 				return
 			]
 		}

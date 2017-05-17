@@ -30,6 +30,7 @@ namespace VM {
       void pop_stack();
       bool is_top_level();
 
+      bool will_garbage_collect();
       void potentially_garbage_collect();
   };
 }

@@ -1,8 +1,12 @@
 #pragma once
 #include "../vm/Value.h"
 
+#define HELPER_NO  0
+#define HELPER_YES 1
+
 namespace ASM {
   void helper_garbage_collect();
+  uint64_t helper_will_garbage_collect();
   uint64_t helper_alloc_record();
   uint64_t helper_read_reference(uint64_t reference_p);
   void helper_write_reference(uint64_t reference_p, uint64_t value);

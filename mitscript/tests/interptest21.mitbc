@@ -5,7 +5,7 @@ function
 		function
 		{
 			functions = [],
-			constants = [1],
+			constants = [1, None],
 			parameter_count = 0,
 			local_vars = [],
 			local_ref_vars = [],
@@ -14,6 +14,8 @@ function
 			instructions = 
 			[
 				load_const	0
+				return
+				load_const	1
 				return
 			]
 		}

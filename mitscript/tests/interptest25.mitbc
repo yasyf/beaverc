@@ -46,7 +46,7 @@ function
 		function
 		{
 			functions = [],
-			constants = [1, "Error", 0, 2],
+			constants = [1, "Error", 0, 2, None],
 			parameter_count = 3,
 			local_vars = [c, m, r, i, n, res],
 			local_ref_vars = [],
@@ -108,12 +108,14 @@ function
 				8:
 				load_local	5
 				return
+				load_const	4
+				return
 			]
 		},
 		function
 		{
 			functions = [],
-			constants = [0],
+			constants = [0, None],
 			parameter_count = 2,
 			local_vars = [x, y],
 			local_ref_vars = [],
@@ -135,12 +137,14 @@ function
 				load_const	0
 				field_store	3
 				return
+				load_const	1
+				return
 			]
 		},
 		function
 		{
 			functions = [],
-			constants = [0, 1, 10, 2],
+			constants = [0, 1, 10, 2, None],
 			parameter_count = 2,
 			local_vars = [n, xbnd, c, carmap, vx, vy, x, y],
 			local_ref_vars = [],
@@ -249,6 +253,8 @@ function
 				11:
 				load_local	3
 				return
+				load_const	4
+				return
 			]
 		},
 		function
@@ -262,7 +268,7 @@ function
 						function
 						{
 							functions = [],
-							constants = [],
+							constants = [None],
 							parameter_count = 2,
 							local_vars = [c1, c2],
 							local_ref_vars = [],
@@ -282,12 +288,14 @@ function
 								eq
 								and
 								return
+								load_const	0
+								return
 							]
 						},
 						function
 						{
 							functions = [],
-							constants = [],
+							constants = [None],
 							parameter_count = 1,
 							local_vars = [c],
 							local_ref_vars = [],
@@ -300,12 +308,14 @@ function
 								load_ref	1
 								call	2
 								return
+								load_const	0
+								return
 							]
 						},
 						function
 						{
 							functions = [],
-							constants = [],
+							constants = [None],
 							parameter_count = 2,
 							local_vars = [a, b],
 							local_ref_vars = [],
@@ -316,6 +326,8 @@ function
 								load_local	0
 								load_local	1
 								and
+								return
+								load_const	0
 								return
 							]
 						}

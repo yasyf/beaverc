@@ -16,6 +16,10 @@ namespace ASM {
     #endif
   };
 
+  uint64_t helper_will_garbage_collect() {
+    return interpreter->will_garbage_collect() ? HELPER_YES : HELPER_NO;
+  };
+
   uint64_t helper_alloc_record() {
     #if DEBUG
       cout << endl << "helper_alloc_record" << endl;

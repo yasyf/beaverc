@@ -9,7 +9,7 @@ function
 				function
 				{
 					functions = [],
-					constants = [],
+					constants = [None],
 					parameter_count = 0,
 					local_vars = [],
 					local_ref_vars = [],
@@ -19,10 +19,12 @@ function
 					[
 						load_ref	0
 						return
+						load_const	0
+						return
 					]
 				}
 			],
-			constants = [],
+			constants = [None],
 			parameter_count = 1,
 			local_vars = [x],
 			local_ref_vars = [x],
@@ -33,6 +35,8 @@ function
 				push_ref	0
 				load_func	0
 				alloc_closure	1
+				return
+				load_const	0
 				return
 			]
 		}

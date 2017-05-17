@@ -37,7 +37,7 @@ function
 							]
 						}
 					],
-					constants = [3, 2],
+					constants = [3, 2, None],
 					parameter_count = 1,
 					local_vars = [u, boo, x],
 					local_ref_vars = [x],
@@ -64,6 +64,8 @@ function
 						pop
 						gc
 						load_local	1
+						return
+						load_const	2
 						return
 					]
 				}

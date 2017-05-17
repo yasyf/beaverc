@@ -633,9 +633,15 @@ namespace ASM {
         }
         case IR::Operation::CallHelper: {
           if (auto op = dynamic_cast<CallHelper<Helper::GarbageCollect>*>(instruction)) {
-            flush_vars();
+            x64asm::Label skip;
             prepare_call_helper(0);
+            call_helper((void *)(&helper_will_garbage_collect));
+            assm.cmp(rax, Imm32{HELPER_NO});
+            assm.je_1(skip);
+            prepare_call_helper(0);
+            flush_vars();
             call_helper((void *)(&helper_garbage_collect));
+            assm.bind(skip);
           } else if (auto op = dynamic_cast<CallHelper<Helper::AllocRecord>*>(instruction)) {
             prepare_call_helper(0);
             call_helper((void *)(&helper_alloc_record));

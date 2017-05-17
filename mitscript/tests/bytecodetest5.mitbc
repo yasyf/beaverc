@@ -37,7 +37,7 @@ function
 					]
 				}
 			],
-			constants = [],
+			constants = [None],
 			parameter_count = 4,
 			local_vars = [x, y, a, b, this],
 			local_ref_vars = [this, x, y],
@@ -67,6 +67,8 @@ function
 				field_store	4
 				store_ref	0
 				load_ref	0
+				return
+				load_const	0
 				return
 			]
 		}

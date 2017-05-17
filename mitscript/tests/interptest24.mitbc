@@ -5,7 +5,7 @@ function
 		function
 		{
 			functions = [],
-			constants = ["world", 1],
+			constants = ["world", 1, None],
 			parameter_count = 1,
 			local_vars = [x],
 			local_ref_vars = [],
@@ -21,6 +21,8 @@ function
 				load_const	1
 				load_local	0
 				div
+				return
+				load_const	2
 				return
 			]
 		}
