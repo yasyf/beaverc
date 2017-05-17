@@ -68,7 +68,7 @@ unsorted.append(5);
 unsorted.append(30);
 unsorted.append(1);
 
-N = 1000;
+N = 10000;
 while (N > 0) {
   unsorted.append(N);
   N = N - 1;

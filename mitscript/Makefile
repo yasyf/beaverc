@@ -17,8 +17,8 @@ LIBS = -lx64asm -ludis86
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
-    CFLAGS += -DDEBUG -g -Og
-    CXXFLAGS += -DDEBUG -g -Og
+    CFLAGS += -DDEBUG -g -O0
+    CXXFLAGS += -DDEBUG -g -O0
 else
     CFLAGS += -DNDEBUG -O2
     CXXFLAGS += -DNDEBUG -O2
