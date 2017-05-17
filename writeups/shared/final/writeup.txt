@@ -8,7 +8,7 @@ Wednesday, May 17th, 2017
 
 
 
-Overview        1
+Overview        2
 Interpreter Design        2
 Components        2
 Bytecode Changes        3
@@ -18,15 +18,22 @@ Generating Machine Code        4
 General Optimizations        4
 Generational Garbage Collection        4
 Hybrid Linear Scan Register Allocator        5
-Tagged Pointers        5
-Other/Minor Optimizations        6
+Tagged Pointers        6
+Other/Minor Optimizations        7
 Ineffective Optimizations        8
 IR and Machine Code Optimizations        8
-Constant Folding        8
-Type Propagation        8
-Implementation Issues        9
-Tooling        10
-Division of Work        10
+Constant Folding        9
+Type Propagation        9
+Type Specialization        9
+Copy-On-Write        9
+Temp and Var Liveness        9
+Dead Temps        10
+Dead Variable Assignment        10
+Noop Generation and Removal        10
+Short Jumps        10
+Implementation Issues        10
+Tooling        12
+Division of Work        12
 Overview
 Over the past semester, we’ve put considerable effort into designing and implementing an interpreter for the MITScript language. This document will outline the design of our interpreter, as well as go into detail about the optimizations we have employed to make given source files execute as quickly as possible.
 Interpreter Design
@@ -207,6 +214,9 @@ While our final interpreter can run any valid MITScript program, we encountered 
 
 
 Perhaps the chief problem from the memory side of optimizations was determining the best time to garbage collect. This is because 1) estimating how much memory a program is using for everything is difficult on linux, and 2) garbage collection patterns on very similar programs can often be very different. As an example, there was one point in our interpreter where the following first program used LESS memory than the second one.
+
+
+________________
 
 
 First:
