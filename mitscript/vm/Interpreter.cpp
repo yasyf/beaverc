@@ -8,10 +8,11 @@ using namespace GC;
 #define COLLECTION_RATIO 0.9
 
 namespace VM {
-  Interpreter::Interpreter(size_t max_size) : heap(max_size) {}
-
-  int Interpreter::interpret(std::shared_ptr<BC::Function> main_func) {
+  Interpreter::Interpreter(std::shared_ptr<BC::Function> main_func, size_t max_size) : heap(max_size) {
     main_closure = heap.allocate<ClosureFunctionValue>(main_func);
+  }
+
+  int Interpreter::interpret() {
     std::vector<Value> args;
     Value val = main_closure->call(args);
     if (val.isInteger()) {
@@ -298,8 +299,9 @@ namespace VM {
               // Mnemonic: field_load i
               // Stack:     S :: operand 1 => S :: record_value_of(operand, f.names[i])
               case Operation::FieldLoad: {
+                  std::string var_name = safe_index(func.names_, instruction.operand0.value());
                   RecordValue* rv = safe_pop(stack).getPointer<RecordValue>();
-                  stack.push(rv->get((&func.names_[instruction.operand0.value()])->c_str()));
+                  stack.push(rv->get(var_name));
               }
               break;
 
@@ -310,9 +312,10 @@ namespace VM {
               // Mnemonic: field_store i
               // Stack:    S :: operand 2 :: operand 1 => S
               case Operation::FieldStore: {
+                  std::string var_name = safe_index(func.names_, instruction.operand0.value());
                   Value stored_value = safe_pop(stack);
                   RecordValue* rv = safe_pop(stack).getPointer<RecordValue>();
-                  rv->insert((&func.names_[instruction.operand0.value()])->c_str(), stored_value);
+                  rv->insert(var_name, stored_value);
               }
               break;
 
@@ -323,8 +326,9 @@ namespace VM {
               // Stack:     S :: operand 2 :: operand 1 => S
               case Operation::IndexLoad: {
                   Value index_value = safe_pop(stack);
+                  std::string var_name = index_value.toString();
                   RecordValue* rv = safe_pop(stack).getPointer<RecordValue>();
-                  stack.push(rv->get(index_value));
+                  stack.push(rv->get(var_name));
               }
               break;
 
@@ -337,8 +341,9 @@ namespace VM {
               case Operation::IndexStore: {
                   Value stored_value = safe_pop(stack);
                   Value index_value = safe_pop(stack);
+                  std::string var_name = index_value.toString();
                   RecordValue* rv = safe_pop(stack).getPointer<RecordValue>();
-                  rv->insert(index_value, stored_value);
+                  rv->insert(var_name, stored_value);
               }
               break;
 

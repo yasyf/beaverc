@@ -152,7 +152,7 @@ int main(int argc, char** argv)
     ;
   #endif
 
-  interpreter = new VM::Interpreter(usable_memory);
+  interpreter = new VM::Interpreter(function, usable_memory);
 
   std::set_terminate([](){
     try {
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
   // cout << "Unordered map: " << sizeof(std::unordered_map<const char*, VM::Value>) << endl;
   // cout << "Vector: " << sizeof(std::vector<const char*>) << endl;
 
-  int result = interpreter->interpret(function);
+  int result = interpreter->interpret();
   if (has_option(OPTION_SHOW_MEMORY_USAGE)) {
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);

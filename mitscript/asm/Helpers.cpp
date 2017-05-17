@@ -88,7 +88,7 @@ namespace ASM {
       cout << endl << "helper_field_load" << " Name: " << closure->value->names_[index] << endl;
     #endif
     RecordValue* record = Value(record_p).getPointer<RecordValue>();
-    return record->get((&closure->value->names_[index])->c_str()).value;
+    return record->get(closure->value->names_[index]).value;
   }
 
   void helper_field_store(ClosureFunctionValue* closure, uint64_t record_p, int index, uint64_t value) {
@@ -96,7 +96,7 @@ namespace ASM {
       cout << endl << "helper_field_store" << " Name: " << closure->value->names_[index] << endl;
     #endif
     RecordValue* record = Value(record_p).getPointer<RecordValue>();
-    record->insert((&closure->value->names_[index])->c_str(), Value(value));
+    record->insert(closure->value->names_[index], Value(value));
   }
 
   uint64_t helper_index_load(uint64_t record_p, uint64_t index) {
@@ -104,7 +104,7 @@ namespace ASM {
       cout << endl << "helper_index_load" << endl;
     #endif
     RecordValue* record = Value(record_p).getPointer<RecordValue>();
-    return record->get(Value(index)).value;
+    return record->get(Value(index).toString()).value;
   }
 
   void helper_index_store(uint64_t record_p, uint64_t index, uint64_t value) {
@@ -112,7 +112,7 @@ namespace ASM {
       cout << endl << "helper_index_store" << endl;
     #endif
     RecordValue* record = Value(record_p).getPointer<RecordValue>();
-    record->insert(Value(index), Value(value));
+    record->insert(Value(index).toString(), Value(value));
   }
 
   void helper_throw_not_int() {
