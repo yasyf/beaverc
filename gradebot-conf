@@ -42,5 +42,16 @@
     "tests" : "tests",
     "stdin_or_arg" : "arg",
     "feedback_dir" : "assignment4-feedback"
+  },
+  "a5" : {
+    "schema" : "v1",
+    "lang" : "cpp",
+    "root_dir" : "mitscript",
+    "makefile_dir" : ".",
+    "bin_dir" : "bin",
+    "bin" : "vm",
+    "tests" : "tests",
+    "stdin_or_arg" : "arg",
+    "feedback_dir" : "assignment5-feedback"
   }
 }
