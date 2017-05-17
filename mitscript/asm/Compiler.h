@@ -6,11 +6,12 @@
 #include "Helpers.h"
 #include "Exception.h"
 #include <experimental/optional>
-#include <set>
+#include <unordered_set>
 #include <map>
 #include <cassert>
 
 using namespace std;
+using namespace std::experimental;
 using namespace x64asm;
 using namespace IR;
 
@@ -28,27 +29,43 @@ namespace ASM {
     rdi, rsi, rdx, rcx
   };
 
+  static constexpr std::array<R64, 14> reg_pool = {
+    rax, rcx, rdx, rbx,
+    rsi, rdi,
+    r8,  r9,  r10, r11,
+    r12, r13, r14, r15,
+  };
+
+
   class Compiler {
+    size_t ir_count = 0;
+    size_t num_temps;
     IR::InstructionList& ir;
     Assembler assm;
-    size_t num_temps;
-    set<R64> live;
-    map<R64, shared_ptr<Temp>> reg_temps;
+    unordered_set<size_t> live;
+    unordered_set<size_t> shared;
+    unordered_map<size_t, shared_ptr<Var>> reg_vars;
 
     M64 current_closure();
     M64 current_locals();
     M64 current_refs();
     void reg_move(const R64& dest, const R64& src);
-    void alive(const R64& reg);
+    void alive(const R64& reg, bool is_shared);
     void alive(shared_ptr<Temp> temp);
+    void alive(shared_ptr<Var> var, bool load);
+    bool is_allocated(const R64& reg);
     bool is_alive(const R64& reg);
-    void dead(const R64& reg);
+    bool is_alive(shared_ptr<Var> var);
+    void dead(const R64& reg, bool is_shared);
     void dead(shared_ptr<Temp> temp);
+    bool dead(shared_ptr<Var> var);
     void reserve(const R64& reg);
     R64 alloc_reg();
     M64 temp_mem(size_t i);
-    void assign_mem_to_temp(shared_ptr<Temp> dest, M64 base, int num);
-    void store_temp_to_mem(shared_ptr<Temp> src, M64 base, int num);
+    void assign_reg_to_mem(const R64& src, const M64& base, int num);
+    void assign_mem_to_reg(const R64& dest, const M64& base, int num);
+    void assign_mem_to_temp(shared_ptr<Temp> dest, const M64& base, int num);
+    void store_temp_to_mem(shared_ptr<Temp> src, const M64& base, int num);
     void assign_helper_call_to_temp(shared_ptr<Temp> dest, void* helper, int num);
     void assign_local(shared_ptr<Var> src, shared_ptr<Temp> dest);
     void store_local(shared_ptr<Temp> src, shared_ptr<Var> dest);
@@ -59,10 +76,12 @@ namespace ASM {
     void store_glob(shared_ptr<Temp> src, shared_ptr<Glob> dest);
     void assign_function(shared_ptr<IR::Function> src, shared_ptr<Temp> dest);
     void extract_bits(shared_ptr<Temp> temp, const R64& dest, size_t start, size_t length);
-    R64 read_temp(shared_ptr<Temp> temp, const R64& reg_hint);
-    R64 read_temp(shared_ptr<Temp> temp);
+    R64 read_temp(shared_ptr<Temp> temp, optional<R64> reg_hint = nullopt, bool scratch = false);
+    R64 read_temp(shared_ptr<Temp> temp, const R64& reg_hint, bool scratch = false);
     void write_temp(shared_ptr<Temp> temp, const R64& reg);
     void write_temp(shared_ptr<Temp> temp, uint64_t cons);
+    void flush_vars();
+    void check_vars();
     void prepare_call_helper(size_t argc);
     void call_helper(void* fn, const R64 args[], size_t argc);
     void call_helper(void* fn);

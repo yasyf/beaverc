@@ -17,6 +17,7 @@ namespace IR {
     shared_ptr<BC::Function> bytecode;
     InstructionList& instructions;
     vector<shared_ptr<Temp>> temps;
+    map<size_t, shared_ptr<Var>> vars;
 
     shared_ptr<Temp> extraTemp();
 
@@ -47,6 +48,9 @@ namespace IR {
 
     template<typename T>
     void int_binop();
+
+    template<typename T>
+    void int_to_bool_binop();
 
     template<typename T>
     void bool_binop();

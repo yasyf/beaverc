@@ -11,6 +11,7 @@
 #include "RemoveObsoleteOptimization.h"
 #include "RemoveNoopOptimization.h"
 #include "CopyOptimization.h"
+#include "LoadParamsOptimization.h"
 #include "VarLivenessOptimization.h"
 #include "TempLivenessOptimization.h"
 #include "DeadVariableAssignmentOptimization.h"
@@ -44,6 +45,8 @@ namespace IR {
     }
 
     void runAllPasses() {
+      optimize<LoadParamsOptimization>();
+
       for (size_t i = 0; i < NUM_PASSES; ++i) {
         optimize<PropagateTypesOptimization>();
         optimize<ConstantFoldingOptimization>();
@@ -51,18 +54,20 @@ namespace IR {
         optimize<PropagateTypesOptimization>();
         removeObsolete();
 
+        optimize<RemoveNoopOptimization>();
+
         optimize<VarLivenessOptimization>();
         optimize<DeadVariableAssignmentOptimization>();
-        optimize<CopyOptimization>();
         removeObsolete();
-
-        optimize<RemoveNoopOptimization>();
-        optimize<ShortJumpOptimization>();
 
         optimize<TempLivenessOptimization>();
         optimize<DeadTempOptimization>();
         removeObsolete();
+
+        optimize<RemoveNoopOptimization>();
       }
+
+      optimize<ShortJumpOptimization>();
 
       optimize<VarLivenessOptimization>();
       optimize<TempLivenessOptimization>();

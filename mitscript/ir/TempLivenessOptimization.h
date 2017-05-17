@@ -16,6 +16,11 @@ namespace IR {
 
     void dead(shared_ptr<Temp> temp) {
       temp->live_end = count;
+      if (temp->isVar()) {
+        auto var = compiler.vars[temp->getVar()];
+        if (var->live_end < count)
+          var->live_end = count;
+      }
     }
 
   public:
