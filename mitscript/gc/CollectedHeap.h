@@ -8,7 +8,7 @@
 #include "Collectable.h"
 #include "../options.h"
 
-#define OVERHEAD_FACTOR 3
+#define OVERHEAD_FACTOR 5
 
 using namespace std;
 
