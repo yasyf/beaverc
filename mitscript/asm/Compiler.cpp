@@ -43,7 +43,7 @@ namespace ASM {
       } else {
         reg_vars[var->num] = var;
         if (load)
-          assign_mem_to_reg(*(var->reg), current_locals_reg, var->num);
+          assign_mem_to_reg_R64(*(var->reg), current_locals_reg, var->num);
         if (!is_alive(*(var->reg)))
           alive(*(var->reg), true);
       }
@@ -111,43 +111,59 @@ namespace ASM {
     return M64{rbp, Imm32{(uint32_t)(-(i+RESERVED_STACK_SPACE) * STACK_VALUE_SIZE)}};
   }
 
-  void Compiler::assign_mem_to_reg(const R64& dest, const M64& base, int num) {
+  void Compiler::assign_mem_to_reg_M64(const R64& dest, const M64& base, int num) {
     assm.mov(dest, base);
-    assign_mem_to_reg(dest, dest, num);
+    assign_mem_to_reg_R64(dest, dest, num);
   }
 
-  void Compiler::assign_mem_to_reg(const R64& dest, const R64& base, int num) {
+  void Compiler::assign_mem_to_reg_R64(const R64& dest, const R64& base, int num) {
     assm.mov(dest, M64{base, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}});
   }
 
-  void Compiler::assign_reg_to_mem(const R64& src, const M64& base, int num) {
+  void Compiler::assign_reg_to_mem_M64(const R64& src, const M64& base, int num) {
     auto r2 = alloc_reg();
     assm.mov(r2, base);
-    assign_reg_to_mem(src, r2, num);
+    assign_reg_to_mem_R64(src, r2, num);
     dead(r2);
   }
 
-  void Compiler::assign_reg_to_mem(const R64& src, const R64& base, int num) {
+  void Compiler::assign_reg_to_mem_R64(const R64& src, const R64& base, int num) {
     assm.mov(M64{base, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}}, src);
   }
 
-  template<typename T>
-  void Compiler::assign_mem_to_temp(shared_ptr<Temp> dest, const T& base, int num) {
+  void Compiler::assign_mem_to_temp_M64(shared_ptr<Temp> dest, const M64& base, int num) {
     alive(dest);
     if (dest->reg) {
-      assign_mem_to_reg(*(dest->reg), base, num);
+      assign_mem_to_reg_M64(*(dest->reg), base, num);
     } else {
       auto reg = alloc_reg();
-      assign_mem_to_reg(reg, base, num);
+      assign_mem_to_reg_M64(reg, base, num);
       assm.mov(temp_mem(dest->num), reg);
       dead(reg);
     }
   }
 
-  template<typename T>
-  void Compiler::store_temp_to_mem(shared_ptr<Temp> src, const T& base, int num) {
+  void Compiler::assign_mem_to_temp_R64(shared_ptr<Temp> dest, const R64& base, int num) {
+    alive(dest);
+    if (dest->reg) {
+      assign_mem_to_reg_R64(*(dest->reg), base, num);
+    } else {
+      auto reg = alloc_reg();
+      assign_mem_to_reg_R64(reg, base, num);
+      assm.mov(temp_mem(dest->num), reg);
+      dead(reg);
+    }
+  }
+
+  void Compiler::store_temp_to_mem_M64(shared_ptr<Temp> src, const M64& base, int num) {
     auto reg = read_temp(src);
-    assign_reg_to_mem(reg, base, num);
+    assign_reg_to_mem_M64(reg, base, num);
+    dead(reg);
+  }
+
+  void Compiler::store_temp_to_mem_R64(shared_ptr<Temp> src, const R64& base, int num) {
+    auto reg = read_temp(src);
+    assign_reg_to_mem_R64(reg, base, num);
     dead(reg);
   }
 
@@ -168,7 +184,7 @@ namespace ASM {
     if (src->reg) {
       write_temp(dest, *(src->reg));
     } else {
-      assign_mem_to_temp(dest, current_locals_reg, src->num);
+      assign_mem_to_temp_R64(dest, current_locals_reg, src->num);
     }
   }
 
@@ -183,12 +199,12 @@ namespace ASM {
       reg_move(*(dest->reg), reg);
       dead(reg);
     } else {
-      store_temp_to_mem(src, current_locals_reg, dest->num);
+      store_temp_to_mem_R64(src, current_locals_reg, dest->num);
     }
   }
 
   void Compiler::assign_ref(shared_ptr<Ref> src, shared_ptr<Temp> dest) {
-    assign_mem_to_temp(dest, current_refs(), src->num);
+    assign_mem_to_temp_M64(dest, current_refs(), src->num);
   }
 
   void Compiler::assign_deref(shared_ptr<Deref> src, shared_ptr<Temp> dest) {
@@ -242,17 +258,17 @@ namespace ASM {
     }
   }
 
-  R64 Compiler::read_temp(shared_ptr<Temp> temp, optional<R64> reg_hint, bool scratch) {
+  R64 Compiler::read_temp(shared_ptr<Temp> temp, optional<R64> reg_hint, bool scratch, bool force) {
     if (temp->reg) {
       if (scratch && temp->shared_reg) {
-        auto reg = (reg_hint && !is_alive(*reg_hint)) ? *reg_hint : alloc_reg();
+        auto reg = (reg_hint && (force || !is_alive(*reg_hint))) ? *reg_hint : alloc_reg();
         assm.mov(reg, *(temp->reg));
         return reg;
       } else {
         return *(temp->reg);
       }
     } else {
-      auto reg = reg_hint ? *reg_hint : alloc_reg();
+      auto reg = (reg_hint && (force || !is_alive(*reg_hint))) ? *reg_hint : alloc_reg();
       assm.mov(reg, temp_mem(temp->num));
       return reg;
     }
@@ -260,7 +276,7 @@ namespace ASM {
 
   // I have no idea why this is needed, but -O2 segfaults without it
   R64 Compiler::read_temp(shared_ptr<Temp> temp, const R64& reg_hint, bool scratch) {
-    return read_temp(temp, optional<R64>(reg_hint), scratch);
+    return read_temp(temp, optional<R64>(reg_hint), scratch, true);
   }
 
   void Compiler::write_temp(shared_ptr<Temp> temp, const R64& reg) {
@@ -286,7 +302,7 @@ namespace ASM {
 
   void Compiler::flush_vars() {
     for (auto const& p : reg_vars) {
-      assign_reg_to_mem(*(p.second->reg), current_locals_reg, p.first);
+      assign_reg_to_mem_R64(*(p.second->reg), current_locals_reg, p.first);
     }
   }
 

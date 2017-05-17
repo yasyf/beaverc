@@ -154,7 +154,7 @@ namespace ASM {
 
   uint64_t helper_equals(uint64_t left, uint64_t right) {
     #if DEBUG
-      cout << endl << "helper_equals" << endl;
+      cout << endl << "helper_equals " << equals(Value(left), Value(right)).toString() << endl;
     #endif
     return equals(Value(left), Value(right)).value;
   }

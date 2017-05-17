@@ -62,14 +62,14 @@ namespace ASM {
     void reserve(const R64& reg);
     R64 alloc_reg();
     M64 temp_mem(size_t i);
-    void assign_reg_to_mem(const R64& src, const M64& base, int num);
-    void assign_reg_to_mem(const R64& src, const R64& base, int num);
-    void assign_mem_to_reg(const R64& dest, const M64& base, int num);
-    void assign_mem_to_reg(const R64& dest, const R64& base, int num);
-    template<typename T>
-    void assign_mem_to_temp(shared_ptr<Temp> dest, const T& base, int num);
-    template<typename T>
-    void store_temp_to_mem(shared_ptr<Temp> src, const T& base, int num);
+    void assign_reg_to_mem_M64(const R64& src, const M64& base, int num);
+    void assign_reg_to_mem_R64(const R64& src, const R64& base, int num);
+    void assign_mem_to_reg_M64(const R64& dest, const M64& base, int num);
+    void assign_mem_to_reg_R64(const R64& dest, const R64& base, int num);
+    void assign_mem_to_temp_R64(shared_ptr<Temp> dest, const R64& base, int num);
+    void assign_mem_to_temp_M64(shared_ptr<Temp> dest, const M64& base, int num);
+    void store_temp_to_mem_R64(shared_ptr<Temp> src, const R64& base, int num);
+    void store_temp_to_mem_M64(shared_ptr<Temp> src, const M64& base, int num);
     void assign_helper_call_to_temp(shared_ptr<Temp> dest, void* helper, int num);
     void assign_local(shared_ptr<Var> src, shared_ptr<Temp> dest);
     void store_local(shared_ptr<Temp> src, shared_ptr<Var> dest);
@@ -80,7 +80,7 @@ namespace ASM {
     void store_glob(shared_ptr<Temp> src, shared_ptr<Glob> dest);
     void assign_function(shared_ptr<IR::Function> src, shared_ptr<Temp> dest);
     void extract_bits(shared_ptr<Temp> temp, const R64& dest, size_t start, size_t length);
-    R64 read_temp(shared_ptr<Temp> temp, optional<R64> reg_hint = nullopt, bool scratch = false);
+    R64 read_temp(shared_ptr<Temp> temp, optional<R64> reg_hint = nullopt, bool scratch = false, bool force = false);
     R64 read_temp(shared_ptr<Temp> temp, const R64& reg_hint, bool scratch = false);
     void write_temp(shared_ptr<Temp> temp, const R64& reg);
     void write_temp(shared_ptr<Temp> temp, uint64_t cons);
