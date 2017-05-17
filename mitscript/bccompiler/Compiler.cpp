@@ -4,7 +4,7 @@
 #include <cassert>
 #include <vector>
 #include <experimental/optional>
-#include "../vm/options.h"
+#include "../options.h"
 #include "Util.h"
 #include "Compiler.h"
 #include "Exception.h"

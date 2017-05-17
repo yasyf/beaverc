@@ -5,10 +5,6 @@ namespace ASM {
     return M64{rbp, Imm32{(uint32_t)(-1 * STACK_VALUE_SIZE)}};
   }
 
-  M64 Compiler::current_locals() {
-    return M64{rbp, Imm32{(uint32_t)(-2 * STACK_VALUE_SIZE)}};
-  }
-
   M64 Compiler::current_refs() {
     return M64{rbp, Imm32{(uint32_t)(-3 * STACK_VALUE_SIZE)}};
   }
@@ -47,7 +43,7 @@ namespace ASM {
       } else {
         reg_vars[var->num] = var;
         if (load)
-          assign_mem_to_reg(*(var->reg), current_locals(), var->num);
+          assign_mem_to_reg(*(var->reg), current_locals_reg, var->num);
         if (!is_alive(*(var->reg)))
           alive(*(var->reg), true);
       }
@@ -117,17 +113,26 @@ namespace ASM {
 
   void Compiler::assign_mem_to_reg(const R64& dest, const M64& base, int num) {
     assm.mov(dest, base);
-    assm.mov(dest, M64{dest, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}});
+    assign_mem_to_reg(dest, dest, num);
+  }
+
+  void Compiler::assign_mem_to_reg(const R64& dest, const R64& base, int num) {
+    assm.mov(dest, M64{base, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}});
   }
 
   void Compiler::assign_reg_to_mem(const R64& src, const M64& base, int num) {
     auto r2 = alloc_reg();
     assm.mov(r2, base);
-    assm.mov(M64{r2, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}}, src);
+    assign_reg_to_mem(src, r2, num);
     dead(r2);
   }
 
-  void Compiler::assign_mem_to_temp(shared_ptr<Temp> dest, const M64& base, int num) {
+  void Compiler::assign_reg_to_mem(const R64& src, const R64& base, int num) {
+    assm.mov(M64{base, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}}, src);
+  }
+
+  template<typename T>
+  void Compiler::assign_mem_to_temp(shared_ptr<Temp> dest, const T& base, int num) {
     alive(dest);
     if (dest->reg) {
       assign_mem_to_reg(*(dest->reg), base, num);
@@ -139,13 +144,11 @@ namespace ASM {
     }
   }
 
-  void Compiler::store_temp_to_mem(shared_ptr<Temp> src, const M64& base, int num) {
+  template<typename T>
+  void Compiler::store_temp_to_mem(shared_ptr<Temp> src, const T& base, int num) {
     auto reg = read_temp(src);
-    auto r2 = alloc_reg();
-    assm.mov(r2, base);
-    assm.mov(M64{r2, Imm32{(uint32_t)(STACK_VALUE_SIZE*num)}}, reg);
+    assign_reg_to_mem(reg, base, num);
     dead(reg);
-    dead(r2);
   }
 
   void Compiler::assign_helper_call_to_temp(shared_ptr<Temp> dest, void* helper, int num) {
@@ -165,7 +168,7 @@ namespace ASM {
     if (src->reg) {
       write_temp(dest, *(src->reg));
     } else {
-      assign_mem_to_temp(dest, current_locals(), src->num);
+      assign_mem_to_temp(dest, current_locals_reg, src->num);
     }
   }
 
@@ -180,7 +183,7 @@ namespace ASM {
       reg_move(*(dest->reg), reg);
       dead(reg);
     } else {
-      store_temp_to_mem(src, current_locals(), dest->num);
+      store_temp_to_mem(src, current_locals_reg, dest->num);
     }
   }
 
@@ -283,7 +286,7 @@ namespace ASM {
 
   void Compiler::flush_vars() {
     for (auto const& p : reg_vars) {
-      assign_reg_to_mem(*(p.second->reg), current_locals(), p.first);
+      assign_reg_to_mem(*(p.second->reg), current_locals_reg, p.first);
     }
   }
 
@@ -376,16 +379,16 @@ namespace ASM {
     assm.push(rbp);
     assm.mov(rbp, rsp);
 
-    assm.sub(rsp, Imm32{((uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
-    assm.mov(current_closure(), rdi);
-    assm.mov(current_locals(), rsi);
-    assm.mov(current_refs(), rdx);
-
     assm.push(rbx);
     assm.push(r12);
     assm.push(r13);
     assm.push(r14);
     assm.push(r15);
+
+    assm.sub(rsp, Imm32{((uint32_t)num_temps + RESERVED_STACK_SPACE)*STACK_VALUE_SIZE});
+    assm.mov(current_closure(), rdi);
+    assm.mov(current_locals_reg, rsi);
+    assm.mov(current_refs(), rdx);
   }
 
   void Compiler::postamble(const R64& retval) {
@@ -403,9 +406,8 @@ namespace ASM {
 
     preamble();
 
-    function.reserve(function.size() + IR_INSTRUCTION_BYTE_UPPER_BOUND * ir.size());
-
     for (auto instruction : ir) {
+      function.reserve(function.size() + IR_INSTRUCTION_BYTE_UPPER_BOUND);
       #ifdef DEBUG
         assm.nop();
       #endif

@@ -6,7 +6,7 @@
 #include <memory>
 #include <algorithm>
 #include "Collectable.h"
-#include "../vm/options.h"
+#include "../options.h"
 
 #define OVERHEAD_FACTOR 3
 

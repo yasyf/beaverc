@@ -1,7 +1,7 @@
 
 
-Ncars = 300;
-Nsteps = 500;
+Ncars = 50;
+Nsteps = 20;
 
 
 
@@ -60,7 +60,7 @@ manycars = fun(n xbnd ){
 
 step = fun(carmap){
    f=fun(car){
-	checkColision = fun(c1 c2){
+  checkColision = fun(c1 c2){
            return (c1.x == c2.x & c1.y == c2.y);
         };
         car.x = car.x + car.vx;

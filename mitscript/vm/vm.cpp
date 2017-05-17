@@ -1,10 +1,10 @@
+#include "../options.h"
 #include "../parser/parser.h"
 #include "../parser/lexer.h"
 #include "../bcparser/parser.h"
 #include "../bcparser/lexer.h"
 #include "../bccompiler/Compiler.h"
 #include "Interpreter.h"
-#include "options.h"
 #include "globals.h"
 #include "mem.h"
 #include <iostream>
