@@ -137,8 +137,8 @@ int main(int argc, char** argv)
   size_t usable_memory = (max_memory > current_memory) ? max_memory - current_memory : 0;
 
   if (has_option(OPTION_SHOW_MEMORY_USAGE)) {
-    cout << current_memory / KB_TO_B << " kb used for setup." << endl;
-    cout << usable_memory / KB_TO_B << " kb usable during program life" << endl;
+    cerr << current_memory / KB_TO_B << " kb used for setup." << endl;
+    cerr << usable_memory / KB_TO_B << " kb usable during program life" << endl;
   }
 
   #ifdef DEBUG
@@ -178,13 +178,13 @@ int main(int argc, char** argv)
   if (has_option(OPTION_SHOW_MEMORY_USAGE)) {
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
-    cout << interpreter->heap.max_bytes_used / KB_TO_B << " kb predicted used by allocs" << endl;
-    cout << usage.ru_maxrss - (current_memory / KB_TO_B) << " kb actually used by allocs" << endl;
-    cout << interpreter->heap.fast_collections << " fast collections" << endl;
-    cout << interpreter->heap.successful_fast_collections << " successful" << endl;
-    cout << interpreter->heap.full_collections << " full collections" << endl;
-    cout << interpreter->heap.successful_full_collections << " successful" << endl;
-    cout << usage.ru_maxrss << " kb actually used." << endl;
+    cerr << interpreter->heap.max_bytes_used / KB_TO_B << " kb predicted used by allocs" << endl;
+    cerr << usage.ru_maxrss - (current_memory / KB_TO_B) << " kb actually used by allocs" << endl;
+    cerr << interpreter->heap.fast_collections << " fast collections" << endl;
+    cerr << interpreter->heap.successful_fast_collections << " successful" << endl;
+    cerr << interpreter->heap.full_collections << " full collections" << endl;
+    cerr << interpreter->heap.successful_full_collections << " successful" << endl;
+    cerr << usage.ru_maxrss << " kb actually used." << endl;
   }
   return result;
 }
