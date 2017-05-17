@@ -308,10 +308,8 @@ namespace BC {
     transpile(func.body);
 
     // Default return
-    if (!parents->returned || parents->getOut()->back().operation == Operation::Label) {
-      loadNone();
-      outputReturn();
-    }
+    loadNone();
+    outputReturn();
 
     if (has_option(OPTION_COMPILE_ERRORS)) {
       // Check for errors

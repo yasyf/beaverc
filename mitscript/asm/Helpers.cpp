@@ -11,6 +11,9 @@ namespace ASM {
       cout << endl << "helper_garbage_collect" << endl;
     #endif
     interpreter->potentially_garbage_collect();
+    #if DEBUG
+      cout << "helper_garbage_collect done" << endl;
+    #endif
   };
 
   uint64_t helper_alloc_record() {
