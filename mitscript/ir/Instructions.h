@@ -175,7 +175,6 @@ namespace IR {
 
   struct Var : Operand {
     size_t num;
-    bool dirty = false;
     optional<x64asm::R64> last_reg;
 
     Var(size_t num) : num(num) {

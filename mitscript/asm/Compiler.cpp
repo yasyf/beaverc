@@ -179,7 +179,6 @@ namespace ASM {
       auto reg = read_temp(src);
       reg_move(*(dest->reg), reg);
       dead(reg);
-      dest->dirty = true;
     } else {
       store_temp_to_mem(src, current_locals(), dest->num);
     }
@@ -284,10 +283,7 @@ namespace ASM {
 
   void Compiler::flush_vars() {
     for (auto const& p : reg_vars) {
-      if (p.second->dirty) {
-        p.second->dirty = false;
-        assign_reg_to_mem(*(p.second->reg), current_locals(), p.first);
-      }
+      assign_reg_to_mem(*(p.second->reg), current_locals(), p.first);
     }
   }
 

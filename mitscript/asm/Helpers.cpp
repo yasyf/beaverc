@@ -85,7 +85,7 @@ namespace ASM {
 
   uint64_t helper_field_load(ClosureFunctionValue* closure, uint64_t record_p, int index) {
     #if DEBUG
-      cout << endl << "helper_field_load" << endl;
+      cout << endl << "helper_field_load" << " Name: " << closure->value->names_[index] << endl;
     #endif
     RecordValue* record = Value(record_p).getPointer<RecordValue>();
     return record->get((&closure->value->names_[index])->c_str()).value;
@@ -93,7 +93,7 @@ namespace ASM {
 
   void helper_field_store(ClosureFunctionValue* closure, uint64_t record_p, int index, uint64_t value) {
     #if DEBUG
-      cout << endl << "helper_field_store" << endl;
+      cout << endl << "helper_field_store" << " Name: " << closure->value->names_[index] << endl;
     #endif
     RecordValue* record = Value(record_p).getPointer<RecordValue>();
     record->insert((&closure->value->names_[index])->c_str(), Value(value));
