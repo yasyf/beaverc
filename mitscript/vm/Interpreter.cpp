@@ -47,11 +47,17 @@ namespace VM {
     return local_variable_stack.size() == 1;
   }
 
+  static uint32_t old_heap_size = 0;
+
   void Interpreter::potentially_garbage_collect() {
     #ifdef DEBUG
     std::cout << "$$$ Bytes current: " << heap.bytes_current << std::endl;
     std::cout << "$$$ Bytes max: " << heap.bytes_max << std::endl;
     #endif
+
+    if (heap.bytes_current < old_heap_size + 20000) {
+      return;
+    }
 
     if (heap.bytes_current >= heap.bytes_max * COLLECTION_RATIO) {
       #ifdef DEBUG
@@ -99,6 +105,7 @@ namespace VM {
         heap.gcFast(roots.begin(), roots.end());
         if (heap.bytes_current < heap.bytes_max * COLLECTION_RATIO) {
           heap.successful_fast_collections++;
+          old_heap_size = heap.bytes_current;
           return;
         }
       }
@@ -108,6 +115,7 @@ namespace VM {
         heap.successful_full_collections++;
       }
     }
+    old_heap_size = heap.bytes_current;
   };
 
   static Value constant_to_value(CollectedHeap& heap, std::shared_ptr<Constant> constant) {
