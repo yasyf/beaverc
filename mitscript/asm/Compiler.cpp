@@ -423,7 +423,7 @@ namespace ASM {
     preamble();
 
     for (auto instruction : ir) {
-      function.reserve(function.size() + IR_INSTRUCTION_BYTE_UPPER_BOUND);
+      function.reserve(function.size() + IR_INSTRUCTION_BYTE_UPPER_BOUND * 5);
       #ifdef DEBUG
         assm.nop();
       #endif
