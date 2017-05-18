@@ -1,4 +1,6 @@
-# 6.035 MITScript Interpreter
+# Beaver Compiler
+
+A dynamic interpreter and 6-stage JIT for MITScript, the language used for 6.035.
 
 ## Usage
 
