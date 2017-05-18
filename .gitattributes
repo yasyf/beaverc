@@ -1,0 +1,4 @@
+x64asm/* linguist-vendored
+udis86/* linguist-vendored
+mitscript/bcparser/lexer.c linguist-generated=true
+mitscript/bcparser/parser.cpp linguist-generated=true
